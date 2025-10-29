@@ -16,82 +16,58 @@ interface SalesFinalSummaryProps {
 }
 
 const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack, onStartNew }) => {
-  const { state, dispatch } = useData();
+  const { state, addClient, addItinerary } = useData();
   const { state: authState } = useAuth();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
 
-  // Save itinerary to data context
+  // Save itinerary to database
   React.useEffect(() => {
-    // Always add client and itinerary to ensure data persistence
-    const clientWithFollowUp = {
-      ...itinerary.client,
-      followUpStatus: {
-        status: 'itinerary-created' as const,
-        updatedAt: new Date().toISOString(),
-        remarks: 'Initial itinerary created by sales team',
-        nextFollowUpDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
-        nextFollowUpTime: '10:00'
-      },
-      followUpHistory: [{
-        id: Date.now().toString(),
-        status: 'itinerary-created' as const,
-        remarks: 'Initial itinerary created by sales team',
-        updatedAt: new Date().toISOString(),
-        nextFollowUpDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-        nextFollowUpTime: '10:00',
-        updatedBy: authState.user?.id || 'sales'
-      }],
-      nextFollowUpDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-      nextFollowUpTime: '10:00'
-    };
+    const saveData = async () => {
+      try {
+        // Prepare client with follow-up status
+        const clientWithFollowUp = {
+          ...itinerary.client,
+          createdBy: authState.user?.id || itinerary.client.createdBy,
+          followUpStatus: {
+            status: 'itinerary-created' as const,
+            updatedAt: new Date().toISOString(),
+            remarks: 'Initial itinerary created by sales team'
+          },
+          nextFollowUpDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
+          nextFollowUpTime: '10:00'
+        };
 
-    // Check if client already exists to prevent duplicates
-    const existingClient = state.clients.find(c => c.id === itinerary.client.id);
-    if (!existingClient) {
-      dispatch({ type: 'ADD_CLIENT', payload: clientWithFollowUp });
-    }
+        // Check if client already exists to prevent duplicates
+        const existingClient = state.clients.find(c => c.id === itinerary.client.id);
+        if (!existingClient) {
+          await addClient(clientWithFollowUp);
+        }
 
-    const itineraryWithMetadata: Itinerary = {
-      ...itinerary,
-      id: `itinerary-${itinerary.client.id}-${Date.now()}`,
-      version: 1,
-      lastUpdated: new Date().toISOString(),
-      updatedBy: 'sales',
-      changeLog: [{
-        id: Date.now().toString(),
-        version: 1,
-        changeType: 'created',
-        description: 'Initial itinerary created by sales team',
-        timestamp: new Date().toISOString(),
-        updatedBy: 'sales'
-      }]
-    };
-    
-    dispatch({ type: 'ADD_ITINERARY', payload: itineraryWithMetadata });
-    
-    // Force data persistence
-    setTimeout(() => {
-      // Get current data from localStorage and merge
-      const savedData = localStorage.getItem('appData');
-      let currentData = savedData ? JSON.parse(savedData) : { clients: [], itineraries: [] };
-      
-      // Add new client if not exists
-      const clientExists = currentData.clients.some((c: any) => c.id === clientWithFollowUp.id);
-      if (!clientExists) {
-        currentData.clients = [...currentData.clients, clientWithFollowUp];
+        // Prepare itinerary with metadata
+        const itineraryWithMetadata: Itinerary = {
+          ...itinerary,
+          id: `itinerary-${itinerary.client.id}-${Date.now()}`,
+          version: 1,
+          lastUpdated: new Date().toISOString(),
+          updatedBy: authState.user?.id || 'sales',
+          changeLog: [{
+            id: Date.now().toString(),
+            version: 1,
+            changeType: 'created',
+            description: 'Initial itinerary created by sales team',
+            timestamp: new Date().toISOString(),
+            updatedBy: authState.user?.id || 'sales'
+          }]
+        };
+
+        await addItinerary(itineraryWithMetadata);
+      } catch (error) {
+        console.error('Error saving itinerary:', error);
       }
-      
-      // Add new itinerary
-      currentData.itineraries = [...currentData.itineraries, itineraryWithMetadata];
-      
-      // Save and trigger refresh
-      localStorage.setItem('appData', JSON.stringify(currentData));
-      
-      // Trigger refresh event for admin panels
-      const refreshEvent = new CustomEvent('refreshData', { detail: currentData });
-      window.dispatchEvent(refreshEvent);
-    }, 100);
-  }, [itinerary, dispatch, authState.user?.id, state.clients]);
+    };
+
+    saveData();
+  }, [itinerary, authState.user?.id, state.clients, addClient, addItinerary]);
 
   const copyItineraryToClipboard = () => {
     const totalPax = itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children;

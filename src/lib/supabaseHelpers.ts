@@ -367,15 +367,26 @@ export const insertClient = async (client: Client) => {
   if (!supabase) return null;
   const dbData = toDbClient(client);
   const { id, ...insertData } = dbData;
+  console.log('Inserting client:', insertData);
   const { data, error } = await supabase.from('clients').insert(insertData).select().single();
-  if (error) throw error;
+  if (error) {
+    console.error('Insert client error:', error);
+    throw error;
+  }
+  console.log('Insert client success:', data);
   return fromDbClient(data);
 };
 
 export const updateClient = async (client: Client) => {
   if (!supabase) return null;
-  const { data, error } = await supabase.from('clients').update(toDbClient(client)).eq('id', client.id).select().single();
-  if (error) throw error;
+  const updateData = toDbClient(client);
+  console.log('Updating client:', client.id, updateData);
+  const { data, error } = await supabase.from('clients').update(updateData).eq('id', client.id).select().single();
+  if (error) {
+    console.error('Update client error:', error);
+    throw error;
+  }
+  console.log('Update client success:', data);
   return fromDbClient(data);
 };
 
