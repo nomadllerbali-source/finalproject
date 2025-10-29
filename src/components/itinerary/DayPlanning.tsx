@@ -152,8 +152,10 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
   const uniquePlaces = [...new Set(hotels.map(hotel => hotel.place))];
 
   const updateDayPlan = (dayIndex: number, field: keyof DayPlan, value: any) => {
+    console.log('updateDayPlan called:', { dayIndex, field, value });
     const updatedPlans = [...dayPlans];
     updatedPlans[dayIndex] = { ...updatedPlans[dayIndex], [field]: value };
+    console.log('Updated plans:', updatedPlans);
     setDayPlans(updatedPlans);
   };
 
@@ -167,22 +169,28 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
   };
 
   const handleActivitySelection = (dayIndex: number, activityId: string) => {
+    console.log('handleActivitySelection called:', { dayIndex, activityId });
     const currentActivities = dayPlans[dayIndex].activities;
     const exists = currentActivities.find(a => a.activityId === activityId);
-    
+
     if (exists) {
+      console.log('Removing activity');
       // Remove activity
       const updated = currentActivities.filter(a => a.activityId !== activityId);
       updateDayPlan(dayIndex, 'activities', updated);
     } else {
-      // Add activity with first option
+      // Add activity with first option (if available)
       const activity = activities.find(a => a.id === activityId);
-      if (activity && activity.options.length > 0) {
+      console.log('Found activity:', activity);
+      if (activity) {
         const updated = [...currentActivities, {
           activityId,
-          optionId: activity.options[0].id
+          optionId: activity.options && activity.options.length > 0 ? activity.options[0].id : ''
         }];
+        console.log('Adding activity:', updated);
         updateDayPlan(dayIndex, 'activities', updated);
+      } else {
+        console.error('Activity not found:', activityId);
       }
     }
   };
@@ -524,14 +532,25 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
               {getFilteredActivities(dayIndex).map(activity => {
                 const isSelected = dayPlan.activities.some(a => a.activityId === activity.id);
                 const selectedOption = dayPlan.activities.find(a => a.activityId === activity.id);
-                
+
+                console.log('Rendering activity:', {
+                  activityId: activity.id,
+                  activityName: activity.name,
+                  isSelected,
+                  dayIndex,
+                  currentActivities: dayPlan.activities
+                });
+
                 return (
                   <div key={activity.id} className="border-2 border-slate-200 rounded-lg p-4 hover:border-green-300 transition-all">
                     <label className="flex items-center space-x-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={() => handleActivitySelection(dayIndex, activity.id)}
+                        onChange={(e) => {
+                          console.log('Checkbox clicked!', e.target.checked);
+                          handleActivitySelection(dayIndex, activity.id);
+                        }}
                         className="h-5 w-5 text-green-600 focus:ring-green-500 border-slate-300 rounded"
                       />
                       <div className="flex-1">
