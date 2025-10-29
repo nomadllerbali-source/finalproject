@@ -23,6 +23,10 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
   // Save itinerary to database
   React.useEffect(() => {
     const saveData = async () => {
+      console.log('=== SALES FINAL SUMMARY: Starting save ===');
+      console.log('Auth user:', authState.user);
+      console.log('Itinerary client:', itinerary.client);
+
       try {
         // Prepare client with follow-up status
         const clientWithFollowUp = {
@@ -37,32 +41,53 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
           nextFollowUpTime: '10:00'
         };
 
+        console.log('Prepared client with follow-up:', clientWithFollowUp);
+
         // Check if client already exists to prevent duplicates
         const existingClient = state.clients.find(c => c.id === itinerary.client.id);
+        console.log('Existing client?', existingClient);
+
         if (!existingClient) {
+          console.log('Adding new client to database...');
           await addClient(clientWithFollowUp);
+          console.log('Client added successfully!');
+        } else {
+          console.log('Client already exists, skipping...');
         }
 
         // Prepare itinerary with metadata
+        // IMPORTANT: updated_by must be a UUID (user ID), not a string like 'sales'
+        const userId = authState.user?.id;
+        if (!userId) {
+          throw new Error('User must be authenticated to create itinerary');
+        }
+
         const itineraryWithMetadata: Itinerary = {
           ...itinerary,
           id: `itinerary-${itinerary.client.id}-${Date.now()}`,
           version: 1,
           lastUpdated: new Date().toISOString(),
-          updatedBy: authState.user?.id || 'sales',
+          updatedBy: userId,
           changeLog: [{
             id: Date.now().toString(),
             version: 1,
             changeType: 'created',
             description: 'Initial itinerary created by sales team',
             timestamp: new Date().toISOString(),
-            updatedBy: authState.user?.id || 'sales'
+            updatedBy: userId
           }]
         };
 
+        console.log('Adding itinerary to database...');
         await addItinerary(itineraryWithMetadata);
-      } catch (error) {
-        console.error('Error saving itinerary:', error);
+        console.log('Itinerary added successfully!');
+        console.log('=== SALES FINAL SUMMARY: Save complete ===');
+      } catch (error: any) {
+        console.error('=== ERROR SAVING ITINERARY ===');
+        console.error('Error details:', error);
+        console.error('Error message:', error?.message);
+        console.error('Error stack:', error?.stack);
+        alert(`Failed to save itinerary: ${error?.message || 'Unknown error'}. Check console for details.`);
       }
     };
 
