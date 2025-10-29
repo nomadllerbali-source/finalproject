@@ -21,34 +21,41 @@ const SupabaseConnectionButton: React.FC = () => {
     setMessage('Connecting to Supabase...');
 
     try {
-      // Test connection by fetching user
-      const { data: { user }, error: userError } = await supabase!.auth.getUser();
-      
-      if (userError) {
-        throw new Error(`Authentication error: ${userError.message}`);
+      // Test connection by checking auth session
+      const { data: { session }, error: sessionError } = await supabase!.auth.getSession();
+
+      if (sessionError) {
+        throw new Error(`Session error: ${sessionError.message}`);
       }
 
-      // Test database connection by fetching profiles
-      const { data: profiles, error: profilesError } = await supabase!.from('profiles').select('count').single();
-      
-      if (profilesError) {
-        throw new Error(`Database connection error: ${profilesError.message}`);
+      // If we have a session, test database connection
+      if (session?.user) {
+        // Test database connection by fetching current user's profile
+        const { error: profileError } = await supabase!
+          .from('profiles')
+          .select('id')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          throw new Error(`Database connection error: ${profileError.message}`);
+        }
       }
 
       setStatus('success');
       setMessage('Successfully connected to Supabase! Your data will now be stored in the cloud database.');
-      
+
       // Auto-hide success message after 3 seconds
       setTimeout(() => {
         setStatus('idle');
         setMessage('');
       }, 3000);
-      
+
     } catch (error: any) {
       setStatus('error');
       setMessage(`Connection failed: ${error.message || error.toString()}`);
       console.error('Supabase connection failed:', error);
-      
+
       // Auto-hide error message after 5 seconds
       setTimeout(() => {
         setStatus('idle');
