@@ -68,8 +68,13 @@ const SalesManagement: React.FC = () => {
         let team: SalesPerson[] = [];
 
         if (isSupabaseConfigured()) {
+          console.log('Fetching sales persons from Supabase...');
           team = await fetchAllSalesPersons();
           console.log('Loaded sales persons from Supabase:', team);
+
+          if (!team || team.length === 0) {
+            console.log('No sales persons found in database');
+          }
         } else {
           const savedSalesTeam = localStorage.getItem('salesTeam');
           if (savedSalesTeam) {
@@ -99,8 +104,13 @@ const SalesManagement: React.FC = () => {
         });
         console.log('Sales team with metrics:', teamWithMetrics);
         setSalesTeam(teamWithMetrics);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading sales team:', error);
+        console.error('Error details:', error.message, error.hint);
+        setMessage({
+          type: 'error',
+          text: `Failed to load sales team: ${error.message || 'Unknown error'}`
+        });
       }
     };
 
