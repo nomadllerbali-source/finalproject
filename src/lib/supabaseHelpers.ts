@@ -747,3 +747,95 @@ export const hashPassword = async (password: string): Promise<string> => {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
+
+export const fetchAllAgentRegistrations = async (): Promise<any[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('agent_registrations')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+};
+
+export const insertAgentRegistration = async (agent: {
+  company_name: string;
+  company_logo?: string;
+  address: string;
+  email: string;
+  phone_no: string;
+  username: string;
+  password_hash: string;
+}): Promise<any> => {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('agent_registrations')
+    .insert([agent])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const approveAgentRegistration = async (agentId: string, adminId: string): Promise<any> => {
+  if (!supabase) return null;
+
+  const { data: agent, error: fetchError } = await supabase
+    .from('agent_registrations')
+    .select('*')
+    .eq('id', agentId)
+    .single();
+
+  if (fetchError) throw fetchError;
+  if (!agent) throw new Error('Agent registration not found');
+
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email: agent.email,
+    password: agent.password_hash,
+    options: {
+      data: {
+        full_name: agent.username,
+        role: 'agent',
+        company_name: agent.company_name
+      }
+    }
+  });
+
+  if (authError) throw authError;
+
+  const { data, error: updateError } = await supabase
+    .from('agent_registrations')
+    .update({
+      status: 'approved',
+      approved_by: adminId,
+      approved_at: new Date().toISOString()
+    })
+    .eq('id', agentId)
+    .select()
+    .single();
+
+  if (updateError) throw updateError;
+  return data;
+};
+
+export const rejectAgentRegistration = async (agentId: string): Promise<void> => {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from('agent_registrations')
+    .update({ status: 'rejected' })
+    .eq('id', agentId);
+
+  if (error) throw error;
+};
+
+export const deleteAgentRegistration = async (agentId: string): Promise<void> => {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from('agent_registrations')
+    .delete()
+    .eq('id', agentId);
+
+  if (error) throw error;
+};

@@ -257,6 +257,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Profile fetched:', profile);
 
         if (profile) {
+          // If user is an agent, check if they're approved
+          if (profile.role === 'agent') {
+            const { data: agentData } = await supabase
+              .from('agent_registrations')
+              .select('status')
+              .eq('email', profile.email)
+              .maybeSingle();
+
+            if (!agentData || agentData.status !== 'approved') {
+              await supabase.auth.signOut();
+              dispatch({ type: 'SET_LOADING', payload: false });
+              return {
+                success: false,
+                error: 'Your agent account is pending admin approval. Please wait for approval to login.'
+              };
+            }
+          }
+
           console.log('Setting session with profile:', profile.role);
           dispatch({
             type: 'SET_SESSION',
@@ -341,22 +359,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Store agent registration in local storage for demo mode
     try {
       if (isSupabaseConfigured() && supabase) {
-        const { data: insertedData, error } = await supabase
-          .from('agent_registrations')
-          .insert([{
-            company_name: data.companyName,
-            company_logo: data.companyLogo,
-            address: data.address,
-            email: data.email,
-            phone_no: data.phoneNo,
-            username: data.username
-          }])
-          .select()
-          .single();
+        const { hashPassword, insertAgentRegistration } = await import('../lib/supabaseHelpers');
 
-        if (error) {
-          return { success: false, message: error.message };
-        }
+        const passwordHash = await hashPassword(data.password);
+
+        const insertedData = await insertAgentRegistration({
+          company_name: data.companyName,
+          company_logo: data.companyLogo,
+          address: data.address,
+          email: data.email,
+          phone_no: data.phoneNo,
+          username: data.username,
+          password_hash: passwordHash
+        });
 
         dispatch({ type: 'ADD_AGENT_REGISTRATION', payload: insertedData as AgentRegistration });
         return { success: true, message: 'Registration successful! Your account is pending admin approval.' };
