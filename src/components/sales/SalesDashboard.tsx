@@ -55,8 +55,9 @@ const SalesDashboard: React.FC = () => {
   };
 
   const handleWhatsApp = (client: Client) => {
-    const phone = client.phone.replace(/\D/g, '');
-    window.open(`https://wa.me/${phone}`, '_blank');
+    const phone = client.whatsapp.replace(/\D/g, '');
+    const phoneWithCountry = client.countryCode ? `${client.countryCode}${phone}` : phone;
+    window.open(`https://wa.me/${phoneWithCountry}`, '_blank');
   };
 
   return (
@@ -143,9 +144,9 @@ const SalesDashboard: React.FC = () => {
                           <div className="font-medium text-slate-900">{client.name}</div>
                           <div className="text-sm text-slate-500">{client.email}</div>
                         </td>
-                        <td className="py-3 px-4 text-slate-700">{client.phone}</td>
+                        <td className="py-3 px-4 text-slate-700">{client.whatsapp}</td>
                         <td className="py-3 px-4 text-slate-700">
-                          {new Date(client.travelDates.start).toLocaleDateString()}
+                          {new Date(client.travelDates.startDate).toLocaleDateString()}
                         </td>
                         <td className="py-3 px-4 text-slate-700">{client.numberOfDays}</td>
                         <td className="py-3 px-4">
@@ -224,16 +225,16 @@ const SalesDashboard: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-                <p className="text-slate-900">{selectedClient.phone}</p>
+                <p className="text-slate-900">{selectedClient.whatsapp}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                <p className="text-slate-900">{selectedClient.email}</p>
+                <p className="text-slate-900">{selectedClient.email || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Travel Date</label>
                 <p className="text-slate-900">
-                  {new Date(selectedClient.travelDates.start).toLocaleDateString()} - {new Date(selectedClient.travelDates.end).toLocaleDateString()}
+                  {new Date(selectedClient.travelDates.startDate).toLocaleDateString()} - {new Date(selectedClient.travelDates.endDate).toLocaleDateString()}
                 </p>
               </div>
               <div>
@@ -242,7 +243,7 @@ const SalesDashboard: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Transportation Type</label>
-                <p className="text-slate-900">{selectedClient.transportationType}</p>
+                <p className="text-slate-900">{selectedClient.transportationMode}</p>
               </div>
               {selectedClient.itineraryId && (
                 <div>
