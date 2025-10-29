@@ -19,7 +19,7 @@ const SalesDashboard: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [showItineraryModal, setShowItineraryModal] = useState(false);
-  const [selectedItineraryId, setSelectedItineraryId] = useState<string | null>(null);
+  const [selectedClientForItinerary, setSelectedClientForItinerary] = useState<Client | null>(null);
 
   const myClients = allClients.filter(c => c.createdBy === authState.user?.id);
 
@@ -76,7 +76,7 @@ const SalesDashboard: React.FC = () => {
       alert('No itinerary found for this client');
       return;
     }
-    setSelectedItineraryId(latestItinerary.id);
+    setSelectedClientForItinerary(client);
     setShowItineraryModal(true);
   };
 
@@ -299,12 +299,12 @@ const SalesDashboard: React.FC = () => {
         />
       )}
 
-      {showItineraryModal && selectedItineraryId && (
+      {showItineraryModal && selectedClientForItinerary && (
         <ItineraryViewModal
-          itineraryId={selectedItineraryId}
+          client={selectedClientForItinerary}
           onClose={() => {
             setShowItineraryModal(false);
-            setSelectedItineraryId(null);
+            setSelectedClientForItinerary(null);
           }}
         />
       )}
