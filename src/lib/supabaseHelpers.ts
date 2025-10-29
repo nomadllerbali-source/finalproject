@@ -677,12 +677,21 @@ export const insertSalesPerson = async (
 
     // Now insert into sales_persons table with the auth user's ID
     const { raw_password, ...salesPersonData } = salesPerson;
+
+    // Explicitly construct the data object to ensure all fields are present
+    const insertData = {
+      id: authData.user.id,
+      email: salesPerson.email,
+      full_name: salesPerson.full_name,
+      password_hash: salesPerson.password_hash,
+      company_name: salesPerson.company_name,
+      is_active: salesPerson.is_active,
+      created_by: salesPerson.created_by
+    };
+
     const { data, error } = await supabase
       .from('sales_persons')
-      .insert({
-        ...salesPersonData,
-        id: authData.user.id // Use the auth user's ID
-      })
+      .insert(insertData)
       .select()
       .single();
 
