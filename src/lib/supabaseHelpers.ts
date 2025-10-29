@@ -662,8 +662,25 @@ export const insertSalesPerson = async (
     // Note: Profile is automatically created by the handle_new_user() trigger
     // The trigger reads role='sales' from raw_user_meta_data
 
-    // Wait a moment for the trigger to complete
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Wait for the profile to be created by the trigger
+    let profileCreated = false;
+    for (let i = 0; i < 10; i++) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', authData.user.id)
+        .maybeSingle();
+
+      if (profile) {
+        profileCreated = true;
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    if (!profileCreated) {
+      throw new Error('Profile creation timeout - please try again');
+    }
 
     // Now insert into sales_persons table with the auth user's ID
     const { raw_password, ...salesPersonData } = salesPerson;
