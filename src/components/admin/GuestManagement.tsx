@@ -232,7 +232,7 @@ const GuestManagement: React.FC = () => {
   };
 
   return (
-    <Layout title="Guest Management" subtitle="Manage client relationships and follow-ups">
+    <Layout title="Guest Management" subtitle="Manage client relationships and follow-ups" hideHeader={true}>
       <div className="space-y-6">
         {/* Tab Navigation */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">

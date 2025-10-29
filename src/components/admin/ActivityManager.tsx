@@ -113,7 +113,7 @@ const ActivityManager: React.FC = () => {
   };
 
   return (
-    <Layout title="Activity Management" subtitle="Manage activities and their pricing options">
+    <Layout title="Activity Management" subtitle="Manage activities and their pricing options" hideHeader={true}>
       <div className="space-y-6">
         {/* Search and Add Section */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">

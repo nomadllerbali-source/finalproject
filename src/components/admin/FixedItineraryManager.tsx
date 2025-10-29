@@ -171,7 +171,7 @@ const FixedItineraryManager: React.FC = () => {
   };
 
   return (
-    <Layout title="Fixed Itinerary Management" subtitle="Manage pre-defined itinerary templates">
+    <Layout title="Fixed Itinerary Management" subtitle="Manage pre-defined itinerary templates" hideHeader={true}>
       <div className="space-y-6">
         {/* Header Section with Search and Add Button */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">

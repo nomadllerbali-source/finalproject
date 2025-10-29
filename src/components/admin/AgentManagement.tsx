@@ -74,7 +74,7 @@ const AgentManagement: React.FC = () => {
   };
 
   return (
-    <Layout title="Agent Management" subtitle="Manage registered travel agents and their accounts">
+    <Layout title="Agent Management" subtitle="Manage registered travel agents and their accounts" hideHeader={true}>
       <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

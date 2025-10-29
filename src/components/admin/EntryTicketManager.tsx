@@ -57,7 +57,7 @@ const EntryTicketManager: React.FC = () => {
   };
 
   return (
-    <Layout title="Entry Ticket Management" subtitle="Manage entry tickets for sightseeing locations">
+    <Layout title="Entry Ticket Management" subtitle="Manage entry tickets for sightseeing locations" hideHeader={true}>
       <div className="space-y-6">
         {/* Search and Add Section */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">

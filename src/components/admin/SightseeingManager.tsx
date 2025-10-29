@@ -124,7 +124,7 @@ const SightseeingManager: React.FC = () => {
   };
 
   return (
-    <Layout title="Sightseeing Management" subtitle="Manage sightseeing spots and transportation costs">
+    <Layout title="Sightseeing Management" subtitle="Manage sightseeing spots and transportation costs" hideHeader={true}>
       <div className="space-y-6">
         {/* Search and Add Section */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">

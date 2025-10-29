@@ -592,7 +592,7 @@ const SalesManagement: React.FC = () => {
   };
 
   return (
-    <Layout title="Sales Management" subtitle="Manage sales team, performance, and client relationships">
+    <Layout title="Sales Management" subtitle="Manage sales team, performance, and client relationships" hideHeader={true}>
       <div className="space-y-6">
         {/* Create Sales Person */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">

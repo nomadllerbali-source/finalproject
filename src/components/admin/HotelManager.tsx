@@ -109,7 +109,7 @@ const HotelManager: React.FC = () => {
   };
 
   return (
-    <Layout title="Hotel Management" subtitle="Manage hotels, room types, and seasonal pricing">
+    <Layout title="Hotel Management" subtitle="Manage hotels, room types, and seasonal pricing" hideHeader={true}>
       <div className="space-y-6">
         {/* Search and Add Section */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">

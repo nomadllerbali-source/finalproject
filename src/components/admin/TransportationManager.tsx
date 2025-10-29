@@ -55,7 +55,7 @@ const TransportationManager: React.FC = () => {
   };
 
   return (
-    <Layout title="Transportation Management" subtitle="Manage vehicle types and pricing">
+    <Layout title="Transportation Management" subtitle="Manage vehicle types and pricing" hideHeader={true}>
       <div className="space-y-6">
         {/* Add New Transportation */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">

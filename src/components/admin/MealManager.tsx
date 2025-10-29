@@ -72,7 +72,7 @@ const MealManager: React.FC = () => {
   };
 
   return (
-    <Layout title="Meal Management" subtitle="Manage meal options and restaurant partnerships">
+    <Layout title="Meal Management" subtitle="Manage meal options and restaurant partnerships" hideHeader={true}>
       <div className="space-y-6">
         {/* Search and Filter Section */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">
