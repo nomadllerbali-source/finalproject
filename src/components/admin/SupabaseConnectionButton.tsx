@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,18 +7,43 @@ import { CheckCircle, XCircle, Loader, Database, AlertTriangle } from 'lucide-re
 const SupabaseConnectionButton: React.FC = () => {
   const { state } = useData();
   const { state: authState } = useAuth();
-  const [status, setStatus] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [errorDetails, setErrorDetails] = useState('');
+
+  // Check connection status on mount and when auth state changes
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (!isSupabaseConfigured()) {
+        setStatus('idle');
+        return;
+      }
+
+      try {
+        const { data: { session } } = await supabase!.auth.getSession();
+        if (session?.user) {
+          setStatus('connected');
+          setMessage('Connected to Supabase');
+        }
+      } catch (error) {
+        console.error('Connection check failed:', error);
+      }
+    };
+
+    checkConnection();
+  }, [authState.isAuthenticated]);
 
   const handleConnectToSupabase = async () => {
     if (!isSupabaseConfigured()) {
       setStatus('error');
-      setMessage('Supabase is not configured. Please add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.');
+      setMessage('Supabase is not configured');
+      setErrorDetails('Please add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.');
       return;
     }
 
     setStatus('connecting');
-    setMessage('Connecting to Supabase...');
+    setMessage('Testing connection...');
+    setErrorDetails('');
 
     try {
       // Test connection by checking auth session
@@ -28,39 +53,24 @@ const SupabaseConnectionButton: React.FC = () => {
         throw new Error(`Session error: ${sessionError.message}`);
       }
 
-      // If we have a session, test database connection
-      if (session?.user) {
-        // Test database connection by fetching current user's profile
-        const { error: profileError } = await supabase!
-          .from('profiles')
-          .select('id')
-          .eq('id', session.user.id)
-          .maybeSingle();
+      // Test database connection
+      const { error: dbError } = await supabase!
+        .from('profiles')
+        .select('count')
+        .limit(1);
 
-        if (profileError) {
-          throw new Error(`Database connection error: ${profileError.message}`);
-        }
+      if (dbError) {
+        throw new Error(`Database connection error: ${dbError.message}`);
       }
 
-      setStatus('success');
-      setMessage('Successfully connected to Supabase! Your data will now be stored in the cloud database.');
-
-      // Auto-hide success message after 3 seconds
-      setTimeout(() => {
-        setStatus('idle');
-        setMessage('');
-      }, 3000);
+      setStatus('connected');
+      setMessage('Successfully connected to Supabase');
 
     } catch (error: any) {
       setStatus('error');
-      setMessage(`Connection failed: ${error.message || error.toString()}`);
+      setMessage('Connection failed');
+      setErrorDetails(error.message || error.toString());
       console.error('Supabase connection failed:', error);
-
-      // Auto-hide error message after 5 seconds
-      setTimeout(() => {
-        setStatus('idle');
-        setMessage('');
-      }, 5000);
     }
   };
 
@@ -82,75 +92,74 @@ const SupabaseConnectionButton: React.FC = () => {
 
   return (
     <div className={`border rounded-lg p-4 mb-6 ${
-      status === 'success' ? 'bg-green-50 border-green-200' :
+      status === 'connected' ? 'bg-green-50 border-green-200' :
       status === 'error' ? 'bg-red-50 border-red-200' :
       status === 'connecting' ? 'bg-blue-50 border-blue-200' :
       'bg-blue-50 border-blue-200'
     }`}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
           <Database className={`h-5 w-5 flex-shrink-0 ${
-            status === 'success' ? 'text-green-600' :
+            status === 'connected' ? 'text-green-600' :
             status === 'error' ? 'text-red-600' :
             status === 'connecting' ? 'text-blue-600' :
             'text-blue-600'
           }`} />
-          <div>
+          <div className="min-w-0 flex-1">
             <h4 className={`font-medium ${
-              status === 'success' ? 'text-green-800' :
+              status === 'connected' ? 'text-green-800' :
               status === 'error' ? 'text-red-800' :
               status === 'connecting' ? 'text-blue-800' :
               'text-blue-800'
             }`}>
-              {status === 'success' ? 'Connected to Supabase' :
+              {status === 'connected' ? 'Connected to Supabase' :
                status === 'error' ? 'Connection Failed' :
                status === 'connecting' ? 'Connecting...' :
-               'Supabase Ready'}
+               'Supabase Database'}
             </h4>
             <p className={`text-sm mt-1 ${
-              status === 'success' ? 'text-green-700' :
+              status === 'connected' ? 'text-green-700' :
               status === 'error' ? 'text-red-700' :
               status === 'connecting' ? 'text-blue-700' :
               'text-blue-700'
             }`}>
-              {message || (status === 'idle' ? 'Click to test your Supabase connection and enable cloud database features.' : '')}
+              {message || (status === 'idle' ? 'Test your Supabase connection' : '')}
             </p>
+            {errorDetails && (
+              <p className="text-xs mt-1 text-red-600 break-words">
+                {errorDetails}
+              </p>
+            )}
           </div>
         </div>
-        
-        {status === 'idle' && (
+
+        {(status === 'idle' || status === 'connected') && (
           <button
             onClick={handleConnectToSupabase}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
+            className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ml-4 ${
+              status === 'connected'
+                ? 'bg-green-600 text-white hover:bg-green-700'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
           >
-            Connect to Supabase
+            {status === 'connected' ? 'Test Again' : 'Test Connection'}
           </button>
         )}
-        
+
         {status === 'connecting' && (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
             <Loader className="h-4 w-4 animate-spin text-blue-600" />
-            <span className="text-blue-700 text-sm">Testing connection...</span>
+            <span className="text-blue-700 text-sm">Testing...</span>
           </div>
         )}
-        
-        {status === 'success' && (
-          <div className="flex items-center space-x-2">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <span className="text-green-700 text-sm font-medium">Connected</span>
-          </div>
-        )}
-        
+
         {status === 'error' && (
-          <div className="flex items-center space-x-2">
-            <XCircle className="h-5 w-5 text-red-600" />
-            <button
-              onClick={handleConnectToSupabase}
-              className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors"
-            >
-              Retry
-            </button>
-          </div>
+          <button
+            onClick={handleConnectToSupabase}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex-shrink-0 ml-4"
+          >
+            Retry
+          </button>
         )}
       </div>
     </div>
