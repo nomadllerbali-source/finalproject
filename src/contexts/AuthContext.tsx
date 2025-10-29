@@ -359,10 +359,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Store agent registration in local storage for demo mode
     try {
       if (isSupabaseConfigured() && supabase) {
-        const { hashPassword } = await import('../lib/supabaseHelpers');
-
-        const passwordHash = await hashPassword(data.password);
-
         const { data: insertedData, error } = await supabase
           .from('agent_registrations')
           .insert({
@@ -372,7 +368,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: data.email,
             phone_no: data.phoneNo,
             username: data.username,
-            password_hash: passwordHash
+            password_hash: data.password
           })
           .select()
           .single();
