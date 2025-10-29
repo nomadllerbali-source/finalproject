@@ -672,68 +672,33 @@ export const insertSalesPerson = async (
 
     // Note: Profile is automatically created by the handle_new_user() trigger
     // The trigger reads role='sales' from raw_user_meta_data
+    // Then auto_create_sales_person() trigger creates the sales_persons entry
 
-    // Wait for the profile to be created by the trigger
-    console.log('Waiting for profile creation...');
-    let profileCreated = false;
-    for (let i = 0; i < 10; i++) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
+    // Wait for both profile and sales_persons entry to be created
+    console.log('Waiting for profile and sales_persons entry creation...');
+    let recordCreated = false;
+    for (let i = 0; i < 15; i++) {
+      const { data: salesPersonRecord } = await supabase
+        .from('sales_persons')
+        .select('*')
         .eq('id', authData.user.id)
         .maybeSingle();
 
-      if (profile) {
-        profileCreated = true;
-        console.log('Profile created successfully');
-        break;
+      if (salesPersonRecord) {
+        recordCreated = true;
+        console.log('Sales person created successfully:', salesPersonRecord);
+        return salesPersonRecord;
       }
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
 
-    if (!profileCreated) {
-      console.error('Profile creation timeout');
-      throw new Error('Profile creation timeout - please try again');
+    if (!recordCreated) {
+      console.error('Sales person creation timeout');
+      throw new Error('Sales person creation timeout - please try again');
     }
-
-    // Now insert into sales_persons table with the auth user's ID
-    const { raw_password, ...salesPersonData } = salesPerson;
-
-    // Explicitly construct the data object to ensure all fields are present
-    const insertData = {
-      id: authData.user.id,
-      email: salesPerson.email,
-      full_name: salesPerson.full_name,
-      password_hash: salesPerson.password_hash,
-      company_name: salesPerson.company_name,
-      is_active: salesPerson.is_active,
-      created_by: salesPerson.created_by
-    };
-
-    console.log('Inserting into sales_persons table:', { ...insertData, password_hash: '***' });
-    const { data, error } = await supabase
-      .from('sales_persons')
-      .insert(insertData)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error inserting into sales_persons:', error);
-      throw error;
-    }
-    console.log('Sales person inserted successfully:', data);
-    return data;
   }
 
-  // Fallback: insert without creating auth user (shouldn't happen in production)
-  const { data, error } = await supabase
-    .from('sales_persons')
-    .insert(salesPerson)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+  return null;
 };
 
 export const updateSalesPerson = async (salesPerson: Partial<SalesPerson> & { id: string }): Promise<SalesPerson | null> => {
@@ -876,8 +841,11 @@ export const insertOperationsPerson = async (
 ): Promise<OperationsPerson | null> => {
   if (!supabase) return null;
 
+  console.log('insertOperationsPerson called with:', { ...operationsPerson, raw_password: '***' });
+
   // If raw_password is provided, create Supabase Auth user
   if (operationsPerson.raw_password) {
+    console.log('Creating Supabase auth user for:', operationsPerson.email);
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: operationsPerson.email,
       password: operationsPerson.raw_password,
@@ -891,47 +859,45 @@ export const insertOperationsPerson = async (
       }
     });
 
-    if (authError) throw new Error(`Failed to create auth user: ${authError.message}`);
-    if (!authData.user) throw new Error('Failed to create auth user');
+    if (authError) {
+      console.error('Auth signup error:', authError);
+      throw new Error(`Failed to create auth user: ${authError.message}`);
+    }
+    if (!authData.user) {
+      console.error('No user data returned from signup');
+      throw new Error('Failed to create auth user');
+    }
 
-    // Wait for the profile to be created by the trigger
-    let profileCreated = false;
-    for (let i = 0; i < 10; i++) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
+    console.log('Auth user created successfully:', authData.user.id);
+
+    // Note: Profile is automatically created by the handle_new_user() trigger
+    // Then auto_create_operations_person() trigger creates the operations_persons entry
+
+    // Wait for both profile and operations_persons entry to be created
+    console.log('Waiting for profile and operations_persons entry creation...');
+    let recordCreated = false;
+    for (let i = 0; i < 15; i++) {
+      const { data: operationsPersonRecord } = await supabase
+        .from('operations_persons')
+        .select('*')
         .eq('id', authData.user.id)
         .maybeSingle();
 
-      if (profile) {
-        profileCreated = true;
-        break;
+      if (operationsPersonRecord) {
+        recordCreated = true;
+        console.log('Operations person created successfully:', operationsPersonRecord);
+        return operationsPersonRecord;
       }
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
 
-    if (!profileCreated) {
-      throw new Error('Profile creation timeout');
+    if (!recordCreated) {
+      console.error('Operations person creation timeout');
+      throw new Error('Operations person creation timeout - please try again');
     }
   }
 
-  // Insert into operations_persons table
-  const { data, error } = await supabase
-    .from('operations_persons')
-    .insert([{
-      email: operationsPerson.email,
-      full_name: operationsPerson.full_name,
-      password_hash: operationsPerson.raw_password || 'auth-based',
-      phone_number: operationsPerson.phone_number,
-      company_name: operationsPerson.company_name,
-      is_active: operationsPerson.is_active,
-      created_by: operationsPerson.created_by
-    }])
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+  return null;
 };
 
 export const fetchAllOperationsPersons = async (): Promise<OperationsPerson[]> => {
