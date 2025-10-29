@@ -11,7 +11,7 @@ import Layout from '../Layout';
 import FixedItineraryBuilder from './FixedItineraryBuilder';
 
 const FixedItineraryManager: React.FC = () => {
-  const { state, dispatch } = useData();
+  const { state, addFixedItinerary, updateFixedItineraryData, deleteFixedItineraryData } = useData();
   const { state: authState } = useAuth();
   const { fixedItineraries } = state;
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,8 +26,8 @@ const FixedItineraryManager: React.FC = () => {
     itinerary.transportationMode.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSaveFixedItinerary = (fixedItinerary: FixedItinerary) => {
-    dispatch({ type: 'ADD_FIXED_ITINERARY', payload: fixedItinerary });
+  const handleSaveFixedItinerary = async (fixedItinerary: FixedItinerary) => {
+    await addFixedItinerary(fixedItinerary);
     setShowBuilderModal(false);
   };
 
@@ -36,22 +36,22 @@ const FixedItineraryManager: React.FC = () => {
     setEditForm(itinerary);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isEditing && editForm.id) {
       const updatedItinerary = {
         ...editForm,
         updatedAt: new Date().toISOString()
       } as FixedItinerary;
-      
-      dispatch({ type: 'UPDATE_FIXED_ITINERARY', payload: updatedItinerary });
+
+      await updateFixedItineraryData(updatedItinerary);
       setIsEditing(null);
       setEditForm({});
     }
   };
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete the fixed itinerary "${name}"?`)) {
-      dispatch({ type: 'DELETE_FIXED_ITINERARY', payload: id });
+      await deleteFixedItineraryData(id);
     }
   };
 

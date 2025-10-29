@@ -5,7 +5,7 @@ import { MapPin, Plus, Edit2, Trash2, Save, X, Search, Car } from 'lucide-react'
 import Layout from '../Layout';
 
 const SightseeingManager: React.FC = () => {
-  const { state, dispatch } = useData();
+  const { state, addSightseeing, updateSightseeingData, deleteSightseeingData } = useData();
   const { sightseeings } = state;
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -29,11 +29,11 @@ const SightseeingManager: React.FC = () => {
     sight.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     // Create sightseeing for all transportation modes
     const transportationModes = ['cab', 'self-drive-car', 'self-drive-scooter'];
-    
-    transportationModes.forEach(mode => {
+
+    for (const mode of transportationModes) {
       const sightseeing: Sightseeing = {
         id: `${Date.now()}-${mode}`,
         name: newSightseeing.name,
@@ -41,9 +41,9 @@ const SightseeingManager: React.FC = () => {
         transportationMode: mode as 'cab' | 'self-drive-car' | 'self-drive-scooter',
         vehicleCosts: mode === 'cab' ? newSightseeing.vehicleCosts : undefined
       };
-      dispatch({ type: 'ADD_SIGHTSEEING', payload: sightseeing });
-    });
-    
+      await addSightseeing(sightseeing);
+    }
+
     setNewSightseeing({
       name: '',
       description: '',
@@ -58,17 +58,17 @@ const SightseeingManager: React.FC = () => {
     setEditForm(sightseeing);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isEditing && editForm.id) {
-      dispatch({ type: 'UPDATE_SIGHTSEEING', payload: editForm as Sightseeing });
+      await updateSightseeingData(editForm as Sightseeing);
       setIsEditing(null);
       setEditForm({});
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this sightseeing spot?')) {
-      dispatch({ type: 'DELETE_SIGHTSEEING', payload: id });
+      await deleteSightseeingData(id);
     }
   };
 

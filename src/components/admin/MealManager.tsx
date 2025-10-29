@@ -5,7 +5,7 @@ import { Utensils, Plus, Edit2, Trash2, Save, X, Search } from 'lucide-react';
 import Layout from '../Layout';
 
 const MealManager: React.FC = () => {
-  const { state, dispatch } = useData();
+  const { state, addMeal, updateMealData, deleteMealData } = useData();
   const { meals } = state;
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
@@ -24,12 +24,12 @@ const MealManager: React.FC = () => {
     return matchesSearch && matchesType;
   });
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const meal: Meal = {
       ...newMeal,
       id: Date.now().toString()
     };
-    dispatch({ type: 'ADD_MEAL', payload: meal });
+    await addMeal(meal);
     setNewMeal({ type: 'breakfast', place: '', cost: 0 });
     setShowAddForm(false);
   };
@@ -39,17 +39,17 @@ const MealManager: React.FC = () => {
     setEditForm(meal);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isEditing && editForm.id) {
-      dispatch({ type: 'UPDATE_MEAL', payload: editForm as Meal });
+      await updateMealData(editForm as Meal);
       setIsEditing(null);
       setEditForm({});
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this meal option?')) {
-      dispatch({ type: 'DELETE_MEAL', payload: id });
+      await deleteMealData(id);
     }
   };
 

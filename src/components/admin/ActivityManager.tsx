@@ -5,7 +5,7 @@ import { Camera, Plus, Edit2, Trash2, Save, X, Search } from 'lucide-react';
 import Layout from '../Layout';
 
 const ActivityManager: React.FC = () => {
-  const { state, dispatch } = useData();
+  const { state, addActivity, updateActivityData, deleteActivityData } = useData();
   const { activities, sightseeings } = state;
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -78,7 +78,7 @@ const ActivityManager: React.FC = () => {
     }
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (newActivity.options.length === 0) {
       alert('Please add at least one activity option.');
       return;
@@ -88,7 +88,7 @@ const ActivityManager: React.FC = () => {
       ...newActivity,
       id: Date.now().toString()
     };
-    dispatch({ type: 'ADD_ACTIVITY', payload: activity });
+    await addActivity(activity);
     setNewActivity({ name: '', location: '', options: [] });
     setShowAddForm(false);
   };
@@ -98,17 +98,17 @@ const ActivityManager: React.FC = () => {
     setEditForm(activity);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isEditing && editForm.id) {
-      dispatch({ type: 'UPDATE_ACTIVITY', payload: editForm as Activity });
+      await updateActivityData(editForm as Activity);
       setIsEditing(null);
       setEditForm({});
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this activity?')) {
-      dispatch({ type: 'DELETE_ACTIVITY', payload: id });
+      await deleteActivityData(id);
     }
   };
 

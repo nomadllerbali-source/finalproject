@@ -5,7 +5,7 @@ import { Building2, Plus, Edit2, Trash2, Save, X, Star, Search } from 'lucide-re
 import Layout from '../Layout';
 
 const HotelManager: React.FC = () => {
-  const { state, dispatch } = useData();
+  const { state, addHotel, updateHotelData, deleteHotelData } = useData();
   const { hotels } = state;
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -67,7 +67,7 @@ const HotelManager: React.FC = () => {
     }
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (newHotel.roomTypes.length === 0) {
       alert('Please add at least one room type.');
       return;
@@ -77,7 +77,7 @@ const HotelManager: React.FC = () => {
       ...newHotel,
       id: Date.now().toString()
     };
-    dispatch({ type: 'ADD_HOTEL', payload: hotel });
+    await addHotel(hotel);
     setNewHotel({ name: '', place: '', starCategory: '3-star', roomTypes: [] });
     setShowAddForm(false);
   };
@@ -87,17 +87,17 @@ const HotelManager: React.FC = () => {
     setEditForm(hotel);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isEditing && editForm.id) {
-      dispatch({ type: 'UPDATE_HOTEL', payload: editForm as Hotel });
+      await updateHotelData(editForm as Hotel);
       setIsEditing(null);
       setEditForm({});
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this hotel?')) {
-      dispatch({ type: 'DELETE_HOTEL', payload: id });
+      await deleteHotelData(id);
     }
   };
 

@@ -5,7 +5,7 @@ import { Ticket, Plus, Edit2, Trash2, Save, X, Search, MapPin } from 'lucide-rea
 import Layout from '../Layout';
 
 const EntryTicketManager: React.FC = () => {
-  const { state, dispatch } = useData();
+  const { state, addEntryTicket, updateEntryTicketData, deleteEntryTicketData } = useData();
   const { entryTickets, sightseeings } = state;
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -27,12 +27,12 @@ const EntryTicketManager: React.FC = () => {
     return sightseeing ? sightseeing.name : 'Unknown Location';
   }
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const ticket: EntryTicket = {
       ...newTicket,
       id: Date.now().toString()
     };
-    dispatch({ type: 'ADD_ENTRY_TICKET', payload: ticket });
+    await addEntryTicket(ticket);
     setNewTicket({ name: '', cost: 0, sightseeingId: '' });
     setShowAddForm(false);
   };
@@ -42,17 +42,17 @@ const EntryTicketManager: React.FC = () => {
     setEditForm(ticket);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isEditing && editForm.id) {
-      dispatch({ type: 'UPDATE_ENTRY_TICKET', payload: editForm as EntryTicket });
+      await updateEntryTicketData(editForm as EntryTicket);
       setIsEditing(null);
       setEditForm({});
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this entry ticket?')) {
-      dispatch({ type: 'DELETE_ENTRY_TICKET', payload: id });
+      await deleteEntryTicketData(id);
     }
   };
 

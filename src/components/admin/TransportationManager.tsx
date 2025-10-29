@@ -5,7 +5,7 @@ import { Car, Truck, Bike, Plus, Edit2, Trash2, Save, X } from 'lucide-react';
 import Layout from '../Layout';
 
 const TransportationManager: React.FC = () => {
-  const { state, dispatch } = useData();
+  const { state, addTransportation, updateTransportationData, deleteTransportationData } = useData();
   const { transportations } = state;
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Transportation>>({});
@@ -16,12 +16,12 @@ const TransportationManager: React.FC = () => {
     costPerDay: 0
   });
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const transportation: Transportation = {
       ...newTransportation,
       id: Date.now().toString()
     };
-    dispatch({ type: 'ADD_TRANSPORTATION', payload: transportation });
+    await addTransportation(transportation);
     setNewTransportation({ type: 'cab', vehicleName: '', costPerDay: 0 });
     setShowAddForm(false);
   };
@@ -31,17 +31,17 @@ const TransportationManager: React.FC = () => {
     setEditForm(transportation);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isEditing && editForm.id) {
-      dispatch({ type: 'UPDATE_TRANSPORTATION', payload: editForm as Transportation });
+      await updateTransportationData(editForm as Transportation);
       setIsEditing(null);
       setEditForm({});
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this transportation option?')) {
-      dispatch({ type: 'DELETE_TRANSPORTATION', payload: id });
+      await deleteTransportationData(id);
     }
   };
 
