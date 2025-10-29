@@ -359,19 +359,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Store agent registration in local storage for demo mode
     try {
       if (isSupabaseConfigured() && supabase) {
-        const { hashPassword, insertAgentRegistration } = await import('../lib/supabaseHelpers');
+        const { hashPassword } = await import('../lib/supabaseHelpers');
 
         const passwordHash = await hashPassword(data.password);
 
-        const insertedData = await insertAgentRegistration({
-          company_name: data.companyName,
-          company_logo: data.companyLogo,
-          address: data.address,
-          email: data.email,
-          phone_no: data.phoneNo,
-          username: data.username,
-          password_hash: passwordHash
-        });
+        const { data: insertedData, error } = await supabase
+          .from('agent_registrations')
+          .insert({
+            company_name: data.companyName,
+            company_logo: data.companyLogo || null,
+            address: data.address,
+            email: data.email,
+            phone_no: data.phoneNo,
+            username: data.username,
+            password_hash: passwordHash
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Agent registration error:', error);
+          return { success: false, message: error.message || 'Registration failed. Please try again.' };
+        }
 
         dispatch({ type: 'ADD_AGENT_REGISTRATION', payload: insertedData as AgentRegistration });
         return { success: true, message: 'Registration successful! Your account is pending admin approval.' };
