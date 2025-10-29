@@ -41,11 +41,17 @@ const OperationsManagement: React.FC = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Fetched operations persons:', data);
       setOperationsPersons(data || []);
     } catch (error: any) {
       console.error('Error fetching operations persons:', error);
-      setMessage({ type: 'error', text: 'Failed to load operations persons' });
+      const errorMessage = error.message || error.hint || 'Failed to load operations persons';
+      setMessage({ type: 'error', text: `Error: ${errorMessage}` });
     } finally {
       setLoading(false);
     }
