@@ -167,7 +167,23 @@ const LoginForm: React.FC = () => {
               </button>
             </form>
 
-            {/* Register Link */}
+            {/* Agent Registration Link */}
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <div className="text-center">
+                <p className="text-slate-600 text-sm mb-3">
+                  Are you a travel agency?
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('register')}
+                  className="w-full bg-gradient-to-r from-teal-600 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-teal-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 text-sm md:text-base flex items-center justify-center space-x-2"
+                  disabled={state.isLoading}
+                >
+                  <UserPlus className="h-5 w-5" />
+                  <span>Register as Travel Agent</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

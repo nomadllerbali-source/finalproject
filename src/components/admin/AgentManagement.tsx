@@ -166,38 +166,6 @@ const AgentManagement: React.FC = () => {
           </div>
         )}
 
-        {/* Agent Registration Link */}
-        <div className="bg-gradient-to-r from-teal-50 to-blue-50 border border-teal-200 rounded-xl p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start space-x-4">
-              <div className="bg-teal-100 p-3 rounded-lg">
-                <Building2 className="h-6 w-6 text-teal-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">Agent Registration</h3>
-                <p className="text-slate-600 mt-1">
-                  Share this link with travel agencies to register as agents. You'll review and approve their registrations here.
-                </p>
-                <div className="mt-3 flex items-center space-x-2">
-                  <code className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700">
-                    {window.location.origin}/register-agent
-                  </code>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/register-agent`);
-                      setMessage({ type: 'success', text: 'Registration link copied!' });
-                      setTimeout(() => setMessage(null), 2000);
-                    }}
-                    className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
-                  >
-                    Copy Link
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
