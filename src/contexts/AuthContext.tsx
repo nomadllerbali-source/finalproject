@@ -3,7 +3,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 import { Database } from '../types/database';
 
-export type UserRole = 'admin' | 'agent' | 'sales';
+export type UserRole = 'admin' | 'agent' | 'sales' | 'operations';
 
 export interface UserProfile {
   id: string;
@@ -235,6 +235,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Supabase not configured');
         dispatch({ type: 'SET_LOADING', payload: false });
         return { success: false, error: 'Supabase not configured' };
+      }
+
+      // Check if this is an operations person login
+      const { data: operationsPerson } = await supabase
+        .from('operations_persons')
+        .select('*')
+        .eq('email', email)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (operationsPerson && operationsPerson.password_hash === password) {
+        // Operations person login successful
+        const operationsProfile: UserProfile = {
+          id: operationsPerson.id,
+          email: operationsPerson.email,
+          full_name: operationsPerson.full_name,
+          role: 'operations' as UserRole,
+          company_name: operationsPerson.company_name
+        };
+
+        dispatch({
+          type: 'SET_SESSION',
+          payload: { user: operationsProfile, session: null }
+        });
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { success: true };
       }
 
       console.log('Attempting login for:', email);

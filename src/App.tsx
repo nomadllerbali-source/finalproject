@@ -6,6 +6,7 @@ import LoginForm from './components/auth/LoginForm';
 import AdminApp from './components/admin/AdminApp';
 import AgentApp from './components/agent/AgentApp';
 import SalesApp from './components/sales/SalesApp';
+import OperationsApp from './components/operations/OperationsApp';
 
 function AppContent() {
   const { state: authState } = useAuth();
@@ -22,6 +23,8 @@ function AppContent() {
     return <AgentApp />;
   } else if (authState.user?.role === 'sales') {
     return <SalesApp />;
+  } else if (authState.user?.role === 'operations') {
+    return <OperationsApp />;
   }
 
   // Fallback (shouldn't happen)
