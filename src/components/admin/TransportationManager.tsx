@@ -59,24 +59,24 @@ const TransportationManager: React.FC = () => {
       <div className="space-y-6">
         {/* Add New Transportation */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="px-6 py-4 border-b border-slate-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">Add New Transportation</h3>
+          <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900">Add New Transportation</h3>
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center justify-center px-4 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base touch-target w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Transportation
+                <span>Add Transportation</span>
               </button>
             </div>
           </div>
 
           {showAddForm && (
-            <div className="p-6 border-b border-slate-200 bg-slate-50">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-3 sm:p-6 border-b border-slate-200 bg-slate-50">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     Transportation Type
                   </label>
                   <select
@@ -85,7 +85,7 @@ const TransportationManager: React.FC = () => {
                       ...newTransportation,
                       type: e.target.value as Transportation['type']
                     })}
-                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
                   >
                     <option value="cab">Cab</option>
                     <option value="self-drive-car">Self-drive Car</option>
@@ -93,7 +93,7 @@ const TransportationManager: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     Vehicle Name
                   </label>
                   <input
@@ -104,21 +104,22 @@ const TransportationManager: React.FC = () => {
                       vehicleName: e.target.value
                     })}
                     placeholder="e.g., Avanza, Honda Activa"
-                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     Cost per Day ($)
                   </label>
                   <input
                     type="number"
+                    inputMode="decimal"
                     value={newTransportation.costPerDay}
                     onChange={(e) => setNewTransportation({
                       ...newTransportation,
                       costPerDay: parseFloat(e.target.value) || 0
                     })}
-                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
                   />
                   {newTransportation.type === 'cab' && (
                     <p className="text-xs text-slate-500 mt-1">
@@ -127,20 +128,20 @@ const TransportationManager: React.FC = () => {
                   )}
                 </div>
               </div>
-              <div className="flex justify-end space-x-3 mt-4">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 mt-4">
                 <button
                   onClick={() => setShowAddForm(false)}
-                  className="px-4 py-2 text-slate-600 hover:text-slate-800 transition-colors"
+                  className="w-full sm:w-auto px-4 py-2.5 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors touch-target"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAdd}
                   disabled={!newTransportation.vehicleName}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-target"
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  Add Transportation
+                  <span>Add Transportation</span>
                 </button>
               </div>
             </div>
@@ -149,47 +150,47 @@ const TransportationManager: React.FC = () => {
 
         {/* Transportation List */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="px-6 py-4 border-b border-slate-200">
-            <h3 className="text-lg font-semibold text-slate-900">All Transportation Options</h3>
+          <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
+            <h3 className="text-base sm:text-lg font-semibold text-slate-900">All Transportation Options</h3>
           </div>
 
           {transportations.length === 0 ? (
-            <div className="p-12 text-center">
-              <Car className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-              <h4 className="text-slate-900 font-medium">No transportation options yet</h4>
-              <p className="text-slate-500 mt-1">Add your first transportation option to get started.</p>
+            <div className="p-6 sm:p-12 text-center">
+              <Car className="h-10 w-10 sm:h-12 sm:w-12 text-slate-400 mx-auto mb-3 sm:mb-4" />
+              <h4 className="text-base sm:text-lg text-slate-900 font-medium">No transportation options yet</h4>
+              <p className="text-sm sm:text-base text-slate-500 mt-1">Add your first transportation option to get started.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto -mx-3 sm:mx-0">
+              <table className="w-full min-w-full">
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Vehicle</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Cost/Day</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
+                    <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                    <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Vehicle</th>
+                    <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Cost/Day</th>
+                    <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {transportations.map((transport) => (
-                    <tr key={transport.id} className="hover:bg-slate-50">
+                    <tr key={transport.id} className="hover:bg-slate-50 transition-colors">
                       {isEditing === transport.id ? (
                         <>
-                          <td className="px-6 py-4">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <select
                               value={editForm.type}
                               onChange={(e) => setEditForm({
                                 ...editForm,
                                 type: e.target.value as Transportation['type']
                               })}
-                              className="w-full p-2 border border-slate-300 rounded-lg"
+                              className="w-full p-2 text-base border border-slate-300 rounded-lg touch-target"
                             >
                               <option value="cab">Cab</option>
                               <option value="self-drive-car">Self-drive Car</option>
                               <option value="self-drive-scooter">Self-drive Scooter</option>
                             </select>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <input
                               type="text"
                               value={editForm.vehicleName || ''}
@@ -197,25 +198,27 @@ const TransportationManager: React.FC = () => {
                                 ...editForm,
                                 vehicleName: e.target.value
                               })}
-                              className="w-full p-2 border border-slate-300 rounded-lg"
+                              className="w-full p-2 text-base border border-slate-300 rounded-lg touch-target"
                             />
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <input
                               type="number"
+                              inputMode="decimal"
                               value={editForm.costPerDay || 0}
                               onChange={(e) => setEditForm({
                                 ...editForm,
                                 costPerDay: parseFloat(e.target.value) || 0
                               })}
-                              className="w-full p-2 border border-slate-300 rounded-lg"
+                              className="w-full p-2 text-base border border-slate-300 rounded-lg touch-target"
                             />
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="flex space-x-2">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <div className="flex gap-1 sm:gap-2">
                               <button
                                 onClick={handleSave}
-                                className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                                className="p-2 sm:p-2.5 text-green-600 hover:bg-green-100 rounded-lg transition-colors touch-target"
+                                aria-label="Save"
                               >
                                 <Save className="h-4 w-4" />
                               </button>
@@ -224,7 +227,8 @@ const TransportationManager: React.FC = () => {
                                   setIsEditing(null);
                                   setEditForm({});
                                 }}
-                                className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                className="p-2 sm:p-2.5 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors touch-target"
+                                aria-label="Cancel"
                               >
                                 <X className="h-4 w-4" />
                               </button>
@@ -233,33 +237,35 @@ const TransportationManager: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-3">
-                              <div className="text-slate-600">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <div className="flex items-center space-x-2 sm:space-x-3">
+                              <div className="text-slate-600 flex-shrink-0">
                                 {getIcon(transport.type)}
                               </div>
-                              <span className="capitalize text-slate-900">
+                              <span className="capitalize text-sm sm:text-base text-slate-900 truncate">
                                 {transport.type.replace('-', ' ')}
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 font-medium text-slate-900">
-                            {transport.vehicleName}
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-sm sm:text-base text-slate-900">
+                            <div className="truncate max-w-[150px] sm:max-w-none">{transport.vehicleName}</div>
                           </td>
-                          <td className="px-6 py-4 text-slate-900">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-slate-900 font-semibold whitespace-nowrap">
                             ${transport.costPerDay}
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="flex space-x-2">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <div className="flex gap-1 sm:gap-2">
                               <button
                                 onClick={() => handleEdit(transport)}
-                                className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                className="p-2 sm:p-2.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors touch-target"
+                                aria-label="Edit"
                               >
                                 <Edit2 className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => handleDelete(transport.id)}
-                                className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                className="p-2 sm:p-2.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors touch-target"
+                                aria-label="Delete"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
