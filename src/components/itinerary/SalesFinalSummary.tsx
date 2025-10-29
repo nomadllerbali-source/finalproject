@@ -51,9 +51,13 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
           console.log('Client added successfully!');
         } catch (error: any) {
           // If client already exists (unique constraint violation), that's OK
-          if (error.code === '23505') {
+          const isDuplicate = error.message?.includes('duplicate key') ||
+                            error.message?.includes('already exists') ||
+                            error.code === '23505';
+          if (isDuplicate) {
             console.log('Client already exists in database, continuing...');
           } else {
+            console.error('Failed to add client:', error);
             throw error;
           }
         }

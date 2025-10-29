@@ -1128,11 +1128,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const newClient = await insertClient(client);
         if (newClient) {
           dispatch({ type: 'ADD_CLIENT', payload: newClient });
-          // Refresh all data from Supabase to ensure consistency
-          const data = await fetchAllData();
-          if (data) {
-            dispatch({ type: 'SET_DATA', payload: data });
-          }
         }
       } catch (error) {
         console.error('Error adding client to Supabase:', error);

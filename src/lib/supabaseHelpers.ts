@@ -369,13 +369,12 @@ export const insertClient = async (client: Client) => {
     throw new Error('Supabase is not configured');
   }
   const dbData = toDbClient(client);
-  const { id, ...insertData } = dbData;
   console.log('=== INSERT CLIENT TO SUPABASE ===');
-  console.log('Client ID:', id);
-  console.log('Insert data:', JSON.stringify(insertData, null, 2));
-  console.log('created_by field:', insertData.created_by);
+  console.log('Client ID:', dbData.id);
+  console.log('Insert data:', JSON.stringify(dbData, null, 2));
+  console.log('created_by field:', dbData.created_by);
 
-  const { data, error } = await supabase.from('clients').insert(insertData).select().single();
+  const { data, error } = await supabase.from('clients').insert(dbData).select().single();
 
   if (error) {
     console.error('=== INSERT CLIENT ERROR ===');
