@@ -585,11 +585,58 @@ export const deleteMeal = async (id: string) => {
 };
 
 export const insertItinerary = async (i: Itinerary) => {
-  if (!supabase) return null;
+  if (!supabase) {
+    console.error('insertItinerary: Supabase not initialized!');
+    throw new Error('Supabase is not configured');
+  }
+
   const dbItinerary = toDbItinerary(i);
   const { id, ...itineraryInsertData } = dbItinerary;
-  const { data: itineraryData, error: itineraryError } = await supabase.from('itineraries').insert(itineraryInsertData).select().single();
-  if (itineraryError) throw itineraryError;
+
+  console.log('=== INSERT ITINERARY TO SUPABASE ===');
+  console.log('Itinerary ID:', id);
+  console.log('Client ID:', itineraryInsertData.client_id);
+  console.log('Insert data:', JSON.stringify(itineraryInsertData, null, 2));
+
+  // Check if client exists
+  const { data: clientCheck, error: clientCheckError } = await supabase
+    .from('clients')
+    .select('id, created_by')
+    .eq('id', itineraryInsertData.client_id)
+    .maybeSingle();
+
+  console.log('Client check:', clientCheck);
+  console.log('Current user:', (await supabase.auth.getUser()).data.user?.id);
+
+  if (clientCheckError) {
+    console.error('Error checking client:', clientCheckError);
+  }
+
+  if (!clientCheck) {
+    console.error('CLIENT NOT FOUND IN DATABASE!');
+    throw new Error(`Client ${itineraryInsertData.client_id} does not exist in database`);
+  }
+
+  if (clientCheck.created_by !== (await supabase.auth.getUser()).data.user?.id) {
+    console.error('CLIENT CREATED_BY MISMATCH!');
+    console.error('Client created_by:', clientCheck.created_by);
+    console.error('Current user:', (await supabase.auth.getUser()).data.user?.id);
+  }
+
+  const { data: itineraryData, error: itineraryError } = await supabase
+    .from('itineraries')
+    .insert(itineraryInsertData)
+    .select()
+    .single();
+
+  if (itineraryError) {
+    console.error('=== INSERT ITINERARY ERROR ===');
+    console.error('Error code:', itineraryError.code);
+    console.error('Error message:', itineraryError.message);
+    console.error('Error details:', itineraryError.details);
+    console.error('Error hint:', itineraryError.hint);
+    throw new Error(`Failed to insert itinerary: ${itineraryError.message}`);
+  }
 
   if (i.dayPlans.length > 0) {
     const dayPlansToInsert = i.dayPlans.map(dp => toDbDayPlan(dp, itineraryData.id));
