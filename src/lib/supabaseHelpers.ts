@@ -5,6 +5,17 @@ import {
 } from '../types';
 import { Database } from '../types/database';
 
+export interface SalesPerson {
+  id: string;
+  email: string;
+  full_name: string;
+  company_name: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+}
+
 type Profiles = Database['public']['Tables']['profiles']['Row'];
 type ClientsRow = Database['public']['Tables']['clients']['Row'];
 type ClientsInsert = Database['public']['Tables']['clients']['Insert'];
@@ -613,4 +624,58 @@ export const insertFollowUpRecord = async (fur: FollowUpRecord) => {
   const { data, error } = await supabase.from('follow_up_records').insert(toDbFollowUpRecord(fur)).select().single();
   if (error) throw error;
   return fromDbFollowUpRecord(data);
+};
+
+export const fetchAllSalesPersons = async (): Promise<SalesPerson[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('sales_persons')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+};
+
+export const insertSalesPerson = async (salesPerson: Omit<SalesPerson, 'id' | 'created_at' | 'updated_at'>): Promise<SalesPerson | null> => {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('sales_persons')
+    .insert(salesPerson)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const updateSalesPerson = async (salesPerson: Partial<SalesPerson> & { id: string }): Promise<SalesPerson | null> => {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('sales_persons')
+    .update(salesPerson)
+    .eq('id', salesPerson.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const deleteSalesPerson = async (id: string): Promise<void> => {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from('sales_persons')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+};
+
+export const hashPassword = async (password: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };

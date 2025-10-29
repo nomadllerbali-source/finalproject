@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { Client, UserProfile } from '../../types';
+import {
+  SalesPerson,
+  fetchAllSalesPersons,
+  insertSalesPerson,
+  updateSalesPerson,
+  deleteSalesPerson,
+  hashPassword
+} from '../../lib/supabaseHelpers';
+import { isSupabaseConfigured } from '../../lib/supabase';
 import { 
   TrendingUp, Plus, Users, Eye, Ban, Check, Trash2, Calendar, 
   Phone, MapPin, Clock, AlertCircle, CheckCircle, UserX, 
@@ -10,9 +19,15 @@ import {
 import Layout from '../Layout';
 import ItineraryViewModal from './ItineraryViewModal';
 
-interface SalesProfile extends UserProfile {
-  createdAt: string;
-  isActive: boolean;
+interface SalesProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  company_name: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
   todayLeads: number;
   todayFollowups: number;
   confirmedLeads: number;
@@ -45,60 +60,50 @@ const SalesManagement: React.FC = () => {
 
   // Load sales team data
   useEffect(() => {
-    const loadSalesTeam = () => {
-      const savedSalesTeam = localStorage.getItem('salesTeam');
-      if (savedSalesTeam) {
-        try {
-          const team = JSON.parse(savedSalesTeam);
-          // Calculate metrics for each salesperson
-          const teamWithMetrics = team.map((person: SalesProfile) => {
-            const personClients = clients.filter(c => c.createdBy === person.id);
-            const todayClients = personClients.filter(c => 
-              new Date(c.createdAt).toISOString().split('T')[0] === today
-            );
-            const todayFollowups = personClients.filter(c => 
-              c.nextFollowUpDate === today
-            );
-            const confirmedClients = personClients.filter(c => 
-              c.followUpStatus?.status === 'advance-paid-confirmed'
-            );
+    const loadSalesTeam = async () => {
+      try {
+        let team: SalesPerson[] = [];
 
-            return {
-              ...person,
-              todayLeads: todayClients.length,
-              todayFollowups: todayFollowups.length,
-              confirmedLeads: confirmedClients.length,
-              totalLeads: personClients.length
-            };
-          });
-          setSalesTeam(teamWithMetrics);
-        } catch (error) {
-          console.error('Error loading sales team:', error);
+        if (isSupabaseConfigured()) {
+          team = await fetchAllSalesPersons();
+        } else {
+          const savedSalesTeam = localStorage.getItem('salesTeam');
+          if (savedSalesTeam) {
+            team = JSON.parse(savedSalesTeam);
+          }
         }
+
+        const teamWithMetrics = team.map((person: SalesPerson) => {
+          const personClients = clients.filter(c => c.createdBy === person.id);
+          const todayClients = personClients.filter(c =>
+            new Date(c.createdAt).toISOString().split('T')[0] === today
+          );
+          const todayFollowups = personClients.filter(c =>
+            c.nextFollowUpDate === today
+          );
+          const confirmedClients = personClients.filter(c =>
+            c.followUpStatus?.status === 'advance-paid-confirmed'
+          );
+
+          return {
+            ...person,
+            todayLeads: todayClients.length,
+            todayFollowups: todayFollowups.length,
+            confirmedLeads: confirmedClients.length,
+            totalLeads: personClients.length
+          };
+        });
+        setSalesTeam(teamWithMetrics);
+      } catch (error) {
+        console.error('Error loading sales team:', error);
       }
     };
 
     loadSalesTeam();
-    
-    // Set up interval to refresh data every 2 seconds for real-time updates
+
     const interval = setInterval(() => {
       loadSalesTeam();
-      
-      // Also refresh client data from localStorage
-      const savedData = localStorage.getItem('appData');
-      if (savedData) {
-        try {
-          const parsedData = JSON.parse(savedData);
-          if (parsedData.clients || parsedData.itineraries) {
-            // Update the data context with latest data
-            const event = new CustomEvent('refreshData', { detail: parsedData });
-            window.dispatchEvent(event);
-          }
-        } catch (error) {
-          console.error('Error loading sales management data:', error);
-        }
-      }
-    }, 2000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [clients, today]);
@@ -114,95 +119,131 @@ const SalesManagement: React.FC = () => {
       return;
     }
 
-    // Check if email already exists
-    const savedCredentials = localStorage.getItem('salesCredentials') || '[]';
-    try {
-      const credentials = JSON.parse(savedCredentials);
-      const emailExists = credentials.some((c: any) => c.email === newSalesForm.email);
-      if (emailExists) {
-        setMessage({ type: 'error', text: 'Email already exists. Please use a different email.' });
-        return;
-      }
-    } catch (error) {
-      console.error('Error checking existing credentials:', error);
+    if (!authState.user) {
+      setMessage({ type: 'error', text: 'You must be logged in to create a sales person' });
+      return;
     }
 
     setIsCreating(true);
     setMessage(null);
 
     try {
-      // Create new sales profile
-      const newSalesperson: SalesProfile = {
-        id: `sales-${Date.now()}`,
-        email: newSalesForm.email,
-        full_name: newSalesForm.fullName,
-        role: 'sales',
-        company_name: newSalesForm.companyName || null,
-        company_logo: null,
-        phone_number: null,
-        address: null,
-        createdAt: new Date().toISOString(),
-        isActive: true,
-        todayLeads: 0,
-        todayFollowups: 0,
-        confirmedLeads: 0,
-        totalLeads: 0
-      };
+      const passwordHash = await hashPassword(newSalesForm.password);
 
-      // Save to localStorage
-      const updatedTeam = [...salesTeam, newSalesperson];
-      setSalesTeam(updatedTeam);
-      localStorage.setItem('salesTeam', JSON.stringify(updatedTeam));
+      if (isSupabaseConfigured()) {
+        const newSalesPerson = await insertSalesPerson({
+          email: newSalesForm.email,
+          full_name: newSalesForm.fullName,
+          password_hash: passwordHash,
+          company_name: newSalesForm.companyName || null,
+          is_active: true,
+          created_by: authState.user.id
+        });
 
-      // Also save login credentials for demo
-      const savedCredentials = localStorage.getItem('salesCredentials') || '[]';
-      const credentials = JSON.parse(savedCredentials);
-      credentials.push({
-        email: newSalesForm.email,
-        password: newSalesForm.password,
-        profile: newSalesperson
-      });
-      localStorage.setItem('salesCredentials', JSON.stringify(credentials));
+        if (newSalesPerson) {
+          setSalesTeam([...salesTeam, {
+            ...newSalesPerson,
+            todayLeads: 0,
+            todayFollowups: 0,
+            confirmedLeads: 0,
+            totalLeads: 0
+          }]);
+        }
+      } else {
+        const newSalesperson: SalesProfile = {
+          id: `sales-${Date.now()}`,
+          email: newSalesForm.email,
+          full_name: newSalesForm.fullName,
+          company_name: newSalesForm.companyName || null,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          created_by: authState.user.id,
+          todayLeads: 0,
+          todayFollowups: 0,
+          confirmedLeads: 0,
+          totalLeads: 0
+        };
 
-      setMessage({ 
-        type: 'success', 
-        text: `Sales person created successfully!\n\nLogin Credentials:\nEmail: ${newSalesForm.email}\nPassword: ${newSalesForm.password}\n\nThey can now login to the sales portal. All their data will be isolated from other users.` 
+        const updatedTeam = [...salesTeam, newSalesperson];
+        setSalesTeam(updatedTeam);
+        localStorage.setItem('salesTeam', JSON.stringify(updatedTeam));
+
+        const savedCredentials = localStorage.getItem('salesCredentials') || '[]';
+        const credentials = JSON.parse(savedCredentials);
+        credentials.push({
+          email: newSalesForm.email,
+          password: newSalesForm.password,
+          profile: newSalesperson
+        });
+        localStorage.setItem('salesCredentials', JSON.stringify(credentials));
+      }
+
+      setMessage({
+        type: 'success',
+        text: `Sales person created successfully!\n\nLogin Credentials:\nEmail: ${newSalesForm.email}\nPassword: ${newSalesForm.password}\n\nThey can now login to the sales portal.`
       });
       setNewSalesForm({ fullName: '', email: '', password: '', companyName: '' });
       setShowCreateForm(false);
-      
+
       setTimeout(() => setMessage(null), 3000);
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to create sales person. Please try again.' });
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message || 'Failed to create sales person. Please try again.' });
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleSuspendSalesperson = (salespersonId: string) => {
+  const handleSuspendSalesperson = async (salespersonId: string) => {
     const person = salesTeam.find(p => p.id === salespersonId);
     if (!person) return;
 
-    if (confirm(`Are you sure you want to ${person.isActive ? 'suspend' : 'activate'} ${person.full_name}?`)) {
-      const updatedTeam = salesTeam.map(p => 
-        p.id === salespersonId ? { ...p, isActive: !p.isActive } : p
-      );
-      setSalesTeam(updatedTeam);
-      localStorage.setItem('salesTeam', JSON.stringify(updatedTeam));
+    if (confirm(`Are you sure you want to ${person.is_active ? 'suspend' : 'activate'} ${person.full_name}?`)) {
+      try {
+        if (isSupabaseConfigured()) {
+          await updateSalesPerson({
+            id: salespersonId,
+            is_active: !person.is_active
+          });
+        }
+
+        const updatedTeam = salesTeam.map(p =>
+          p.id === salespersonId ? { ...p, is_active: !p.is_active } : p
+        );
+        setSalesTeam(updatedTeam);
+
+        if (!isSupabaseConfigured()) {
+          localStorage.setItem('salesTeam', JSON.stringify(updatedTeam));
+        }
+      } catch (error) {
+        console.error('Error updating sales person:', error);
+        alert('Failed to update sales person status');
+      }
     }
   };
 
-  const handleDeleteSalesperson = (salespersonId: string, name: string) => {
+  const handleDeleteSalesperson = async (salespersonId: string, name: string) => {
     if (confirm(`Are you sure you want to permanently delete sales person "${name}"? This action cannot be undone.`)) {
-      const updatedTeam = salesTeam.filter(p => p.id !== salespersonId);
-      setSalesTeam(updatedTeam);
-      localStorage.setItem('salesTeam', JSON.stringify(updatedTeam));
-      
-      // Also remove from credentials
-      const savedCredentials = localStorage.getItem('salesCredentials') || '[]';
-      const credentials = JSON.parse(savedCredentials);
-      const updatedCredentials = credentials.filter((c: any) => c.profile.id !== salespersonId);
-      localStorage.setItem('salesCredentials', JSON.stringify(updatedCredentials));
+      try {
+        if (isSupabaseConfigured()) {
+          await deleteSalesPerson(salespersonId);
+        }
+
+        const updatedTeam = salesTeam.filter(p => p.id !== salespersonId);
+        setSalesTeam(updatedTeam);
+
+        if (!isSupabaseConfigured()) {
+          localStorage.setItem('salesTeam', JSON.stringify(updatedTeam));
+
+          const savedCredentials = localStorage.getItem('salesCredentials') || '[]';
+          const credentials = JSON.parse(savedCredentials);
+          const updatedCredentials = credentials.filter((c: any) => c.profile.id !== salespersonId);
+          localStorage.setItem('salesCredentials', JSON.stringify(updatedCredentials));
+        }
+      } catch (error) {
+        console.error('Error deleting sales person:', error);
+        alert('Failed to delete sales person');
+      }
     }
   };
 
@@ -314,9 +355,9 @@ const SalesManagement: React.FC = () => {
                     <div>
                       <span className="text-sm font-medium text-slate-700">Status:</span>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        salesperson.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        salesperson.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
-                        {salesperson.isActive ? 'Active' : 'Suspended'}
+                        {salesperson.is_active ? 'Active' : 'Suspended'}
                       </span>
                     </div>
                   </div>
@@ -819,9 +860,9 @@ const SalesManagement: React.FC = () => {
                         </div>
                         <div className="flex flex-col items-end space-y-2">
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            person.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            person.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                           }`}>
-                            {person.isActive ? 'Active' : 'Suspended'}
+                            {person.is_active ? 'Active' : 'Suspended'}
                           </span>
                           <div className="flex space-x-1">
                             <button
@@ -830,13 +871,13 @@ const SalesManagement: React.FC = () => {
                                 handleSuspendSalesperson(person.id);
                               }}
                               className={`p-1 rounded transition-colors ${
-                                person.isActive 
-                                  ? 'text-red-600 hover:bg-red-100' 
+                                person.is_active
+                                  ? 'text-red-600 hover:bg-red-100'
                                   : 'text-green-600 hover:bg-green-100'
                               }`}
-                              title={person.isActive ? 'Suspend' : 'Activate'}
+                              title={person.is_active ? 'Suspend' : 'Activate'}
                             >
-                              {person.isActive ? <Ban className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                              {person.is_active ? <Ban className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                             </button>
                             <button
                               onClick={(e) => {
