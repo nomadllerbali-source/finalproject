@@ -1,309 +1,267 @@
 import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Calendar, MapPin, TrendingUp, Clock, Users, DollarSign, Target, Award } from 'lucide-react';
+import { Eye, Edit2, Trash2, MessageCircle, Calendar, Phone, MapPin, Clock, DollarSign, Users } from 'lucide-react';
 import Layout from '../Layout';
+import { Client } from '../../types';
 
 const SalesDashboard: React.FC = () => {
   const { state } = useData();
   const { state: authState } = useAuth();
-  const { clients: allClients, itineraries: allItineraries } = state;
-  const [activeFilter, setActiveFilter] = useState<'all' | 'itineraries'>('all');
+  const { clients: allClients } = state;
 
-  // Filter data to show only current sales person's data
-  const clients = allClients.filter(c => c.createdBy === authState.user?.id);
-  const itineraries = allItineraries.filter(i => i.client.createdBy === authState.user?.id);
+  const [activeTab, setActiveTab] = useState<'all' | 'confirmed' | 'followups'>('all');
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
 
-  // Sales-specific metrics
-  const totalRevenue = itineraries.reduce((sum, itinerary) => sum + itinerary.finalPrice, 0);
-  const averageItineraryValue = itineraries.length > 0 ? totalRevenue / itineraries.length : 0;
-  const conversionRate = clients.length > 0 ? (itineraries.length / clients.length) * 100 : 0;
-  const totalProfit = itineraries.reduce((sum, itinerary) => sum + itinerary.profitMargin, 0);
+  const myClients = allClients.filter(c => c.createdBy === authState.user?.id);
 
-  const filteredData = () => {
-    switch (activeFilter) {
-      case 'itineraries':
-        return { clients: [], itineraries };
+  const today = new Date().toISOString().split('T')[0];
+
+  const getFilteredClients = () => {
+    switch (activeTab) {
+      case 'confirmed':
+        return myClients.filter(c => c.followUpStatus?.status === 'advance-paid-confirmed');
+      case 'followups':
+        return myClients.filter(c => c.nextFollowUpDate === today);
       default:
-        return { clients, itineraries };
+        return myClients;
     }
   };
 
-  const { clients: displayClients, itineraries: displayItineraries } = filteredData();
+  const filteredClients = getFilteredClients();
+
+  const handleView = (client: Client) => {
+    setSelectedClient(client);
+    setShowViewModal(true);
+  };
+
+  const handleEdit = (client: Client) => {
+    setSelectedClient(client);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = (client: Client) => {
+    if (window.confirm(`Are you sure you want to delete ${client.name}?`)) {
+      console.log('Delete client:', client.id);
+    }
+  };
+
+  const handleFollowUp = (client: Client) => {
+    setSelectedClient(client);
+    setShowFollowUpModal(true);
+  };
+
+  const handleWhatsApp = (client: Client) => {
+    const phone = client.phone.replace(/\D/g, '');
+    window.open(`https://wa.me/${phone}`, '_blank');
+  };
 
   return (
-    <Layout 
-      title="Sales Dashboard" 
-      subtitle="Track your sales performance and client conversions"
+    <Layout
+      title="Sales Dashboard"
+      subtitle="Manage your clients and track follow-ups"
     >
-      {/* Sales Performance Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Total Leads</p>
-              <p className="text-2xl font-bold text-slate-900">{clients.length}</p>
-            </div>
-            <div className="bg-purple-100 p-3 rounded-lg">
-              <Users className="h-6 w-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
-
-        <div 
-          className={`bg-white rounded-xl p-6 shadow-sm border cursor-pointer transition-all hover:shadow-md ${
-            activeFilter === 'itineraries' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-slate-200'
-          }`}
-          onClick={() => setActiveFilter(activeFilter === 'itineraries' ? 'all' : 'itineraries')}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Converted Sales</p>
-              <p className="text-2xl font-bold text-slate-900">{itineraries.length}</p>
-            </div>
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <MapPin className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Total Revenue</p>
-              <p className="text-2xl font-bold text-slate-900">${totalRevenue.toFixed(0)}</p>
-            </div>
-            <div className="bg-green-100 p-3 rounded-lg">
-              <DollarSign className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Conversion Rate</p>
-              <p className="text-2xl font-bold text-slate-900">{conversionRate.toFixed(1)}%</p>
-            </div>
-            <div className="bg-amber-100 p-3 rounded-lg">
-              <Target className="h-6 w-6 text-amber-600" />
+      <div className="space-y-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+          <div className="border-b border-slate-200">
+            <div className="flex">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`px-6 py-4 font-medium transition-colors ${
+                  activeTab === 'all'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  All Clients ({myClients.length})
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('confirmed')}
+                className={`px-6 py-4 font-medium transition-colors ${
+                  activeTab === 'confirmed'
+                    ? 'text-green-600 border-b-2 border-green-600'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Confirmed Clients ({myClients.filter(c => c.followUpStatus?.status === 'advance-paid-confirmed').length})
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('followups')}
+                className={`px-6 py-4 font-medium transition-colors ${
+                  activeTab === 'followups'
+                    ? 'text-amber-600 border-b-2 border-amber-600'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Follow-ups Today ({myClients.filter(c => c.nextFollowUpDate === today).length})
+                </div>
+              </button>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Sales Performance Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Average Deal Size</p>
-              <p className="text-2xl font-bold text-slate-900">${averageItineraryValue.toFixed(0)}</p>
-            </div>
-            <div className="bg-teal-100 p-3 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-teal-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Total Profit</p>
-              <p className="text-2xl font-bold text-slate-900">${totalProfit.toFixed(0)}</p>
-            </div>
-            <div className="bg-emerald-100 p-3 rounded-lg">
-              <Award className="h-6 w-6 text-emerald-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Active Prospects</p>
-              <p className="text-2xl font-bold text-slate-900">
-                {clients.filter(c => !['advance-paid-confirmed', 'dead'].includes(c.followUpStatus?.status || '')).length}
-              </p>
-            </div>
-            <div className="bg-indigo-100 p-3 rounded-lg">
-              <Clock className="h-6 w-6 text-indigo-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Buttons */}
-      <div className="mb-6">
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => setActiveFilter('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeFilter === 'all'
-                ? 'bg-purple-600 text-white'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            All Data
-          </button>
-          <button
-            onClick={() => setActiveFilter('itineraries')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeFilter === 'itineraries'
-                ? 'bg-purple-600 text-white'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            Converted Sales Only ({itineraries.length})
-          </button>
-        </div>
-      </div>
-
-      {/* Recent Data */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-        <div className="px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">
-            {activeFilter === 'itineraries' ? 'All Converted Sales' : 'Recent Sales Activity'}
-          </h3>
-          <p className="text-slate-500 text-sm">
-            {activeFilter === 'itineraries' ? 'All successfully converted sales and quotes' : 'Latest sales leads and conversions'}
-          </p>
-        </div>
-        
-        {displayClients.length === 0 && displayItineraries.length === 0 ? (
-          <div className="p-12 text-center">
-            <Clock className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <h4 className="text-slate-900 font-medium">
-              {activeFilter === 'itineraries' ? 'No converted sales yet' : 'No sales activity yet'}
-            </h4>
-            <p className="text-slate-500 mt-1">
-              {activeFilter === 'itineraries' ? 'Converted sales will appear here.' : 'Sales leads and conversions will appear here when created through the itinerary builder.'}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    {activeFilter === 'itineraries' ? 'Sale Details' : 'Lead Details'}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Travel Dates
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Pax & Duration
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    {activeFilter === 'itineraries' ? 'Sale Value' : 'Transportation'}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Created
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {displayClients.map((client) => (
-                  <tr key={client.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-slate-900">{client.name}</p>
-                        <div className="flex items-center text-slate-500 text-sm">
-                          <Users className="h-4 w-4 mr-1" />
-                          Sales Lead
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center text-sm">
-                        <Calendar className="h-4 w-4 mr-2 text-slate-400" />
-                        {client.travelDates.isFlexible ? (
-                          <span className="text-slate-600">Flexible ({client.travelDates.flexibleMonth})</span>
-                        ) : (
-                          <div>
-                            <div className="text-slate-900">
-                              {new Date(client.travelDates.startDate).toLocaleDateString()}
-                            </div>
-                            <div className="text-slate-500">
-                              to {new Date(client.travelDates.endDate).toLocaleDateString()}
-                            </div>
+          <div className="p-6">
+            {filteredClients.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-slate-400 mb-2">
+                  {activeTab === 'all' && 'No clients yet'}
+                  {activeTab === 'confirmed' && 'No confirmed clients'}
+                  {activeTab === 'followups' && 'No follow-ups scheduled for today'}
+                </div>
+                <p className="text-slate-500 text-sm">
+                  {activeTab === 'all' && 'Start by adding your first client'}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Client Name</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Phone</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Travel Date</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Days</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Status</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Next Follow-up</th>
+                      <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredClients.map(client => (
+                      <tr key={client.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-slate-900">{client.name}</div>
+                          <div className="text-sm text-slate-500">{client.email}</div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-700">{client.phone}</td>
+                        <td className="py-3 px-4 text-slate-700">
+                          {new Date(client.travelDates.start).toLocaleDateString()}
+                        </td>
+                        <td className="py-3 px-4 text-slate-700">{client.numberOfDays}</td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            client.followUpStatus?.status === 'advance-paid-confirmed'
+                              ? 'bg-green-100 text-green-800'
+                              : client.followUpStatus?.status === 'dead'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {client.followUpStatus?.status || 'Itinerary Created'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-slate-700">
+                          {client.nextFollowUpDate ? new Date(client.nextFollowUpDate).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleView(client)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleEdit(client)}
+                              className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              title="Edit Client"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleFollowUp(client)}
+                              className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                              title="Follow Up"
+                            >
+                              <Calendar className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleWhatsApp(client)}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="WhatsApp"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(client)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div className="text-slate-900">
-                          {client.numberOfPax.adults + client.numberOfPax.children} pax
-                        </div>
-                        <div className="text-slate-500">
-                          {client.numberOfDays} days
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        {client.transportationMode}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">
-                      {new Date(client.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-                {displayItineraries.map((itinerary, index) => (
-                  <tr key={index} className="hover:bg-slate-50">
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-slate-900">{itinerary.client.name}</p>
-                        <div className="flex items-center text-slate-500 text-sm">
-                          <Award className="h-4 w-4 mr-1" />
-                          Converted Sale
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center text-sm">
-                        <Calendar className="h-4 w-4 mr-2 text-slate-400" />
-                        {itinerary.client.travelDates.isFlexible ? (
-                          <span className="text-slate-600">Flexible ({itinerary.client.travelDates.flexibleMonth})</span>
-                        ) : (
-                          <div>
-                            <div className="text-slate-900">
-                              {new Date(itinerary.client.travelDates.startDate).toLocaleDateString()}
-                            </div>
-                            <div className="text-slate-500">
-                              to {new Date(itinerary.client.travelDates.endDate).toLocaleDateString()}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div className="text-slate-900">
-                          {itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} pax
-                        </div>
-                        <div className="text-slate-500">
-                          {itinerary.client.numberOfDays} days
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div className="font-medium text-green-600">Rp {itinerary.finalPrice.toLocaleString('id-ID')}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">
-                      {new Date(itinerary.client.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
+
+      {showViewModal && selectedClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-200">
+              <h3 className="text-xl font-bold text-slate-900">Client Details</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                <p className="text-slate-900">{selectedClient.name}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+                <p className="text-slate-900">{selectedClient.phone}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <p className="text-slate-900">{selectedClient.email}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Travel Date</label>
+                <p className="text-slate-900">
+                  {new Date(selectedClient.travelDates.start).toLocaleDateString()} - {new Date(selectedClient.travelDates.end).toLocaleDateString()}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Number of Days</label>
+                <p className="text-slate-900">{selectedClient.numberOfDays}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Transportation Type</label>
+                <p className="text-slate-900">{selectedClient.transportationType}</p>
+              </div>
+              {selectedClient.itineraryId && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Itinerary Created</label>
+                  <p className="text-green-600">✓ Yes</p>
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                onClick={() => setShowViewModal(false)}
+                className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
