@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Users, Plus, Edit2, Trash2, Save, X, Search, Shield, ShieldCheck } from 'lucide-react';
 import Layout from '../Layout';
+import { insertOperationsPerson, fetchAllOperationsPersons } from '../../lib/supabaseHelpers';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface OperationsPerson {
   id: string;
@@ -14,6 +16,7 @@ interface OperationsPerson {
 }
 
 const OperationsManagement: React.FC = () => {
+  const { state: authState } = useAuth();
   const [operationsPersons, setOperationsPersons] = useState<OperationsPerson[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -36,16 +39,7 @@ const OperationsManagement: React.FC = () => {
   const fetchOperationsPersons = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('operations_persons')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
-
+      const data = await fetchAllOperationsPersons();
       console.log('Fetched operations persons:', data);
       setOperationsPersons(data || []);
     } catch (error: any) {
@@ -64,25 +58,22 @@ const OperationsManagement: React.FC = () => {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const newOperationsPerson = await insertOperationsPerson({
+        email: newPerson.email,
+        full_name: newPerson.full_name,
+        phone_number: newPerson.phone_number || null,
+        company_name: newPerson.company_name || null,
+        is_active: true,
+        created_by: authState.user.id,
+        raw_password: newPerson.password
+      });
 
-      const { error } = await supabase
-        .from('operations_persons')
-        .insert([{
-          email: newPerson.email,
-          full_name: newPerson.full_name,
-          password_hash: newPerson.password,
-          phone_number: newPerson.phone_number || null,
-          company_name: newPerson.company_name || null,
-          created_by: user?.id
-        }]);
-
-      if (error) throw error;
-
-      setMessage({ type: 'success', text: 'Operations person added successfully' });
-      setNewPerson({ email: '', full_name: '', password: '', phone_number: '', company_name: '' });
-      setShowAddForm(false);
-      fetchOperationsPersons();
+      if (newOperationsPerson) {
+        setMessage({ type: 'success', text: 'Operations person added successfully! They can now login with their email and password.' });
+        setNewPerson({ email: '', full_name: '', password: '', phone_number: '', company_name: '' });
+        setShowAddForm(false);
+        fetchOperationsPersons();
+      }
     } catch (error: any) {
       console.error('Error adding operations person:', error);
       setMessage({ type: 'error', text: error.message || 'Failed to add operations person' });

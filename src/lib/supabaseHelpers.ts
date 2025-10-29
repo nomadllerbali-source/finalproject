@@ -839,3 +839,90 @@ export const deleteAgentRegistration = async (agentId: string): Promise<void> =>
 
   if (error) throw error;
 };
+
+export interface OperationsPerson {
+  id: string;
+  email: string;
+  full_name: string;
+  company_name: string | null;
+  phone_number: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+}
+
+export const insertOperationsPerson = async (
+  operationsPerson: Omit<OperationsPerson, 'id' | 'created_at' | 'updated_at'> & { raw_password?: string }
+): Promise<OperationsPerson | null> => {
+  if (!supabase) return null;
+
+  // If raw_password is provided, create Supabase Auth user
+  if (operationsPerson.raw_password) {
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: operationsPerson.email,
+      password: operationsPerson.raw_password,
+      options: {
+        data: {
+          full_name: operationsPerson.full_name,
+          role: 'operations',
+          company_name: operationsPerson.company_name,
+          phone_number: operationsPerson.phone_number
+        }
+      }
+    });
+
+    if (authError) throw new Error(`Failed to create auth user: ${authError.message}`);
+    if (!authData.user) throw new Error('Failed to create auth user');
+
+    // Wait for the profile to be created by the trigger
+    let profileCreated = false;
+    for (let i = 0; i < 10; i++) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', authData.user.id)
+        .maybeSingle();
+
+      if (profile) {
+        profileCreated = true;
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    if (!profileCreated) {
+      throw new Error('Profile creation timeout');
+    }
+  }
+
+  // Insert into operations_persons table
+  const { data, error } = await supabase
+    .from('operations_persons')
+    .insert([{
+      email: operationsPerson.email,
+      full_name: operationsPerson.full_name,
+      password_hash: operationsPerson.raw_password || 'auth-based',
+      phone_number: operationsPerson.phone_number,
+      company_name: operationsPerson.company_name,
+      is_active: operationsPerson.is_active,
+      created_by: operationsPerson.created_by
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const fetchAllOperationsPersons = async (): Promise<OperationsPerson[]> => {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('operations_persons')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+};
