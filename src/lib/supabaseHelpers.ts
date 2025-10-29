@@ -659,21 +659,11 @@ export const insertSalesPerson = async (
     if (authError) throw new Error(`Failed to create auth user: ${authError.message}`);
     if (!authData.user) throw new Error('Failed to create auth user');
 
-    // Create profile for the sales person
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: authData.user.id,
-        email: salesPerson.email,
-        full_name: salesPerson.full_name,
-        role: 'sales',
-        company_name: salesPerson.company_name
-      });
+    // Note: Profile is automatically created by the handle_new_user() trigger
+    // The trigger reads role='sales' from raw_user_meta_data
 
-    if (profileError) {
-      console.error('Profile creation error:', profileError);
-      // Don't fail if profile already exists (might be auto-created by trigger)
-    }
+    // Wait a moment for the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Now insert into sales_persons table with the auth user's ID
     const { raw_password, ...salesPersonData } = salesPerson;
