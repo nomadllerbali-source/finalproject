@@ -230,34 +230,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Use Supabase authentication only
       if (!isSupabaseConfigured() || !supabase) {
+        console.error('Supabase not configured');
         dispatch({ type: 'SET_LOADING', payload: false });
         return { success: false, error: 'Supabase not configured' };
       }
 
+      console.log('Attempting login for:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
+        console.error('Login error:', error);
         dispatch({ type: 'SET_LOADING', payload: false });
         return { success: false, error: error.message };
       }
 
+      console.log('Login successful, user:', data.user?.id);
+
       if (data.user) {
+        console.log('Fetching profile for user:', data.user.id);
         const profile = await getUserProfile(data.user.id);
+        console.log('Profile fetched:', profile);
+
         if (profile) {
-          dispatch({ 
-            type: 'SET_SESSION', 
-            payload: { user: profile, session: data.session } 
+          console.log('Setting session with profile:', profile.role);
+          dispatch({
+            type: 'SET_SESSION',
+            payload: { user: profile, session: data.session }
           });
+          dispatch({ type: 'SET_LOADING', payload: false });
           return { success: true };
+        } else {
+          console.error('Profile not found for user:', data.user.id);
         }
       }
 
       dispatch({ type: 'SET_LOADING', payload: false });
       return { success: false, error: 'Profile not found' };
     } catch (error) {
+      console.error('Unexpected login error:', error);
       dispatch({ type: 'SET_LOADING', payload: false });
       return { success: false, error: 'An unexpected error occurred' };
     }
