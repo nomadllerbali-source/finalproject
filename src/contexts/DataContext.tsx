@@ -1032,7 +1032,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Load data from localStorage on mount
+  // Load data from Supabase on mount
   useEffect(() => {
     const loadInitialData = async () => {
       if (isSupabaseConfigured()) {
@@ -1040,13 +1040,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const data = await fetchAllData();
           if (data) {
             dispatch({ type: 'SET_DATA', payload: data });
+          } else {
+            // If no data from Supabase, use demo data
+            dispatch({ type: 'SET_DATA', payload: initialState });
           }
         } catch (error) {
           console.error('Error fetching data from Supabase:', error);
-          // Fallback to demo data if Supabase fetch fails
+          // Use demo data if Supabase fetch fails
           dispatch({ type: 'SET_DATA', payload: initialState });
         }
       } else {
+        // Only use localStorage if Supabase is NOT configured
         const savedData = localStorage.getItem('appData');
         if (savedData) {
           try {
@@ -1054,26 +1058,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Merge with demo data to ensure we have all the new demo items
             const mergedData = {
               clients: parsedData.clients || [],
-              transportations: [...demoTransportations, ...(parsedData.transportations || [])].filter((item, index, self) => 
+              transportations: [...demoTransportations, ...(parsedData.transportations || [])].filter((item, index, self) =>
                 index === self.findIndex(t => t.id === item.id)
               ),
-              hotels: [...demoHotels, ...(parsedData.hotels || [])].filter((item, index, self) => 
+              hotels: [...demoHotels, ...(parsedData.hotels || [])].filter((item, index, self) =>
                 index === self.findIndex(h => h.id === item.id)
               ),
-              sightseeings: [...demoSightseeings, ...(parsedData.sightseeings || [])].filter((item, index, self) => 
+              sightseeings: [...demoSightseeings, ...(parsedData.sightseeings || [])].filter((item, index, self) =>
                 index === self.findIndex(s => s.id === item.id)
               ),
-              activities: [...demoActivities, ...(parsedData.activities || [])].filter((item, index, self) => 
+              activities: [...demoActivities, ...(parsedData.activities || [])].filter((item, index, self) =>
                 index === self.findIndex(a => a.id === item.id)
               ),
-              entryTickets: [...demoEntryTickets, ...(parsedData.entryTickets || [])].filter((item, index, self) => 
+              entryTickets: [...demoEntryTickets, ...(parsedData.entryTickets || [])].filter((item, index, self) =>
                 index === self.findIndex(e => e.id === item.id)
               ),
-              meals: [...demoMeals, ...(parsedData.meals || [])].filter((item, index, self) => 
+              meals: [...demoMeals, ...(parsedData.meals || [])].filter((item, index, self) =>
                 index === self.findIndex(m => m.id === item.id)
               ),
               itineraries: parsedData.itineraries || [],
-              fixedItineraries: [...demoFixedItineraries, ...(parsedData.fixedItineraries || [])].filter((item, index, self) => 
+              fixedItineraries: [...demoFixedItineraries, ...(parsedData.fixedItineraries || [])].filter((item, index, self) =>
                 index === self.findIndex(f => f.id === item.id)
               )
             };
@@ -1122,11 +1126,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isSupabaseConfigured()) {
       try {
         const newClient = await insertClient(client);
-        if (newClient) dispatch({ type: 'ADD_CLIENT', payload: newClient });
+        if (newClient) {
+          dispatch({ type: 'ADD_CLIENT', payload: newClient });
+          // Refresh all data from Supabase to ensure consistency
+          const data = await fetchAllData();
+          if (data) {
+            dispatch({ type: 'SET_DATA', payload: data });
+          }
+        }
       } catch (error) {
         console.error('Error adding client to Supabase:', error);
-        // Fallback to local storage
-        dispatch({ type: 'ADD_CLIENT', payload: client });
+        throw error;
       }
     } else {
       dispatch({ type: 'ADD_CLIENT', payload: client });
@@ -1137,10 +1147,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isSupabaseConfigured()) {
       try {
         const updatedClient = await updateClient(client);
-        if (updatedClient) dispatch({ type: 'UPDATE_CLIENT', payload: updatedClient });
+        if (updatedClient) {
+          dispatch({ type: 'UPDATE_CLIENT', payload: updatedClient });
+          // Refresh all data from Supabase to ensure consistency
+          const data = await fetchAllData();
+          if (data) {
+            dispatch({ type: 'SET_DATA', payload: data });
+          }
+        }
       } catch (error) {
         console.error('Error updating client in Supabase:', error);
-        dispatch({ type: 'UPDATE_CLIENT', payload: client });
+        throw error;
       }
     } else {
       dispatch({ type: 'UPDATE_CLIENT', payload: client });
@@ -1152,9 +1169,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         await deleteClient(clientId);
         dispatch({ type: 'DELETE_CLIENT', payload: clientId });
+        // Refresh all data from Supabase to ensure consistency
+        const data = await fetchAllData();
+        if (data) {
+          dispatch({ type: 'SET_DATA', payload: data });
+        }
       } catch (error) {
         console.error('Error deleting client from Supabase:', error);
-        dispatch({ type: 'DELETE_CLIENT', payload: clientId });
+        throw error;
       }
     } else {
       dispatch({ type: 'DELETE_CLIENT', payload: clientId });

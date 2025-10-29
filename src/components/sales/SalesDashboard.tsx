@@ -246,13 +246,23 @@ const SalesDashboard: React.FC = () => {
             setShowFollowUpModal(false);
             setSelectedClient(null);
           }}
-          onSave={async (updatedClient) => {
+          onSave={async (clientId, status, remarks, nextFollowUpDate, nextFollowUpTime) => {
             try {
+              const updatedClient: Client = {
+                ...selectedClient,
+                followUpStatus: {
+                  status,
+                  remarks,
+                  updatedAt: new Date().toISOString()
+                },
+                nextFollowUpDate: nextFollowUpDate || null,
+                nextFollowUpTime: nextFollowUpTime || null
+              };
               await updateClientData(updatedClient);
               setShowFollowUpModal(false);
               setSelectedClient(null);
             } catch (error) {
-              console.error('Error updating client:', error);
+              console.error('Error updating follow-up:', error);
               alert('Failed to update follow-up. Please try again.');
             }
           }}
