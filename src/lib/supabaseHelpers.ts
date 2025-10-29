@@ -354,7 +354,9 @@ export const fetchAllData = async () => {
 
 export const insertClient = async (client: Client) => {
   if (!supabase) return null;
-  const { data, error } = await supabase.from('clients').insert(toDbClient(client)).select().single();
+  const dbData = toDbClient(client);
+  const { id, ...insertData } = dbData;
+  const { data, error } = await supabase.from('clients').insert(insertData).select().single();
   if (error) throw error;
   return fromDbClient(data);
 };
@@ -374,7 +376,9 @@ export const deleteClient = async (id: string) => {
 
 export const insertTransportation = async (t: Transportation) => {
   if (!supabase) return null;
-  const { data, error } = await supabase.from('transportations').insert(toDbTransportation(t)).select().single();
+  const dbData = toDbTransportation(t);
+  const { id, ...insertData } = dbData;
+  const { data, error } = await supabase.from('transportations').insert(insertData).select().single();
   if (error) throw error;
   return fromDbTransportation(data);
 };
@@ -394,15 +398,20 @@ export const deleteTransportation = async (id: string) => {
 
 export const insertHotel = async (h: Hotel) => {
   if (!supabase) return null;
-  const { data: hotelData, error: hotelError } = await supabase.from('hotels').insert(toDbHotel(h)).select().single();
+  const dbHotel = toDbHotel(h);
+  const { id, ...hotelInsertData } = dbHotel;
+  const { data: hotelData, error: hotelError } = await supabase.from('hotels').insert(hotelInsertData).select().single();
   if (hotelError) throw hotelError;
 
   if (h.roomTypes.length > 0) {
-    const roomTypesToInsert = h.roomTypes.map(rt => toDbRoomType(rt, hotelData.id));
+    const roomTypesToInsert = h.roomTypes.map(rt => {
+      const { id, ...roomData } = toDbRoomType(rt, hotelData.id);
+      return roomData;
+    });
     const { error: roomTypesError } = await supabase.from('room_types').insert(roomTypesToInsert);
     if (roomTypesError) throw roomTypesError;
   }
-  
+
   return fromDbHotel({ ...hotelData, room_types: h.roomTypes.map(rt => toDbRoomType(rt, hotelData.id)) });
 };
 
@@ -432,7 +441,9 @@ export const deleteHotel = async (id: string) => {
 
 export const insertSightseeing = async (s: Sightseeing) => {
   if (!supabase) return null;
-  const { data, error } = await supabase.from('sightseeings').insert(toDbSightseeing(s)).select().single();
+  const dbData = toDbSightseeing(s);
+  const { id, ...insertData } = dbData;
+  const { data, error } = await supabase.from('sightseeings').insert(insertData).select().single();
   if (error) throw error;
   return fromDbSightseeing(data);
 };
@@ -452,15 +463,20 @@ export const deleteSightseeing = async (id: string) => {
 
 export const insertActivity = async (a: Activity) => {
   if (!supabase) return null;
-  const { data: activityData, error: activityError } = await supabase.from('activities').insert(toDbActivity(a)).select().single();
+  const dbActivity = toDbActivity(a);
+  const { id, ...activityInsertData } = dbActivity;
+  const { data: activityData, error: activityError } = await supabase.from('activities').insert(activityInsertData).select().single();
   if (activityError) throw activityError;
 
   if (a.options.length > 0) {
-    const optionsToInsert = a.options.map(ao => toDbActivityOption(ao, activityData.id));
+    const optionsToInsert = a.options.map(ao => {
+      const { id, ...optionData } = toDbActivityOption(ao, activityData.id);
+      return optionData;
+    });
     const { error: optionsError } = await supabase.from('activity_options').insert(optionsToInsert);
     if (optionsError) throw optionsError;
   }
-  
+
   return fromDbActivity({ ...activityData, activity_options: a.options.map(ao => toDbActivityOption(ao, activityData.id)) });
 };
 
@@ -489,7 +505,9 @@ export const deleteActivity = async (id: string) => {
 
 export const insertEntryTicket = async (et: EntryTicket) => {
   if (!supabase) return null;
-  const { data, error } = await supabase.from('entry_tickets').insert(toDbEntryTicket(et)).select().single();
+  const dbData = toDbEntryTicket(et);
+  const { id, ...insertData } = dbData;
+  const { data, error } = await supabase.from('entry_tickets').insert(insertData).select().single();
   if (error) throw error;
   return fromDbEntryTicket(data);
 };
@@ -509,7 +527,9 @@ export const deleteEntryTicket = async (id: string) => {
 
 export const insertMeal = async (m: Meal) => {
   if (!supabase) return null;
-  const { data, error } = await supabase.from('meals').insert(toDbMeal(m)).select().single();
+  const dbData = toDbMeal(m);
+  const { id, ...insertData } = dbData;
+  const { data, error } = await supabase.from('meals').insert(insertData).select().single();
   if (error) throw error;
   return fromDbMeal(data);
 };
@@ -529,7 +549,9 @@ export const deleteMeal = async (id: string) => {
 
 export const insertItinerary = async (i: Itinerary) => {
   if (!supabase) return null;
-  const { data: itineraryData, error: itineraryError } = await supabase.from('itineraries').insert(toDbItinerary(i)).select().single();
+  const dbItinerary = toDbItinerary(i);
+  const { id, ...itineraryInsertData } = dbItinerary;
+  const { data: itineraryData, error: itineraryError } = await supabase.from('itineraries').insert(itineraryInsertData).select().single();
   if (itineraryError) throw itineraryError;
 
   if (i.dayPlans.length > 0) {
@@ -537,7 +559,7 @@ export const insertItinerary = async (i: Itinerary) => {
     const { error: dayPlansError } = await supabase.from('day_plans').insert(dayPlansToInsert);
     if (dayPlansError) throw dayPlansError;
   }
-  
+
   return fromDbItinerary({ ...itineraryData, day_plans: i.dayPlans.map(dp => toDbDayPlan(dp, itineraryData.id)) });
 };
 
@@ -566,7 +588,9 @@ export const deleteItinerary = async (id: string) => {
 
 export const insertFixedItinerary = async (fi: FixedItinerary) => {
   if (!supabase) return null;
-  const { data, error } = await supabase.from('fixed_itineraries').insert(toDbFixedItinerary(fi)).select().single();
+  const dbData = toDbFixedItinerary(fi);
+  const { id, ...insertData } = dbData;
+  const { data, error } = await supabase.from('fixed_itineraries').insert(insertData).select().single();
   if (error) throw error;
   return fromDbFixedItinerary(data);
 };
