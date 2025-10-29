@@ -187,16 +187,46 @@ const AgentDashboard: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="flex items-center space-x-6">
-              {authState.user?.companyName && (
-                <div className="flex items-center space-x-4">
-                  <div className="bg-teal-100 p-4 rounded-lg">
-                    <Building2 className="h-8 w-8 text-teal-600" />
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                {authState.user?.company_logo ? (
+                  <img
+                    src={authState.user.company_logo}
+                    alt="Company Logo"
+                    className="h-16 w-16 object-cover rounded-lg border-2 border-teal-200"
+                  />
+                ) : (
+                  <div className="bg-gradient-to-br from-teal-100 to-teal-200 p-4 rounded-lg">
+                    <Building2 className="h-8 w-8 text-teal-700" />
                   </div>
-                  <div>
-                    <h4 className="text-xl font-bold text-slate-900">{authState.user.companyName}</h4>
-                    <p className="text-slate-600">Travel Agency</p>
-                  </div>
+                )}
+                <div>
+                  <h4 className="text-2xl font-bold text-slate-900">
+                    {authState.user?.company_name || authState.user?.companyName || 'Your Company Name'}
+                  </h4>
+                  <p className="text-slate-600 font-medium">Travel Agency</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-200">
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase mb-1">Contact Person</p>
+                  <p className="text-sm text-slate-900 font-medium">{authState.user?.full_name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase mb-1">Email</p>
+                  <p className="text-sm text-slate-900">{authState.user?.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase mb-1">Phone</p>
+                  <p className="text-sm text-slate-900">{authState.user?.phone_number || 'Not provided'}</p>
+                </div>
+              </div>
+
+              {authState.user?.address && (
+                <div className="pt-2">
+                  <p className="text-xs font-medium text-slate-500 uppercase mb-1">Address</p>
+                  <p className="text-sm text-slate-900">{authState.user.address}</p>
                 </div>
               )}
             </div>
