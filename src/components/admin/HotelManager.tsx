@@ -113,24 +113,22 @@ const HotelManager: React.FC = () => {
       <div className="space-y-6">
         {/* Search and Add Section */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="px-6 py-4 border-b border-slate-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 flex-1">
-                <h3 className="text-lg font-semibold text-slate-900">Hotel Management</h3>
-                <div className="relative max-w-md">
-                  <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search hotels by name or place..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+          <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900 flex-shrink-0">Hotel Management</h3>
+              <div className="relative flex-1 max-w-full sm:max-w-md">
+                <Search className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search hotels by name or place..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 sm:py-2 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
+                />
               </div>
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors touch-target flex-shrink-0"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Hotel
