@@ -642,8 +642,11 @@ export const insertSalesPerson = async (
 ): Promise<SalesPerson | null> => {
   if (!supabase) return null;
 
+  console.log('insertSalesPerson called with:', { ...salesPerson, raw_password: '***' });
+
   // If raw_password is provided, create Supabase Auth user
   if (salesPerson.raw_password) {
+    console.log('Creating Supabase auth user for:', salesPerson.email);
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: salesPerson.email,
       password: salesPerson.raw_password,
@@ -656,13 +659,22 @@ export const insertSalesPerson = async (
       }
     });
 
-    if (authError) throw new Error(`Failed to create auth user: ${authError.message}`);
-    if (!authData.user) throw new Error('Failed to create auth user');
+    if (authError) {
+      console.error('Auth signup error:', authError);
+      throw new Error(`Failed to create auth user: ${authError.message}`);
+    }
+    if (!authData.user) {
+      console.error('No user data returned from signup');
+      throw new Error('Failed to create auth user');
+    }
+
+    console.log('Auth user created successfully:', authData.user.id);
 
     // Note: Profile is automatically created by the handle_new_user() trigger
     // The trigger reads role='sales' from raw_user_meta_data
 
     // Wait for the profile to be created by the trigger
+    console.log('Waiting for profile creation...');
     let profileCreated = false;
     for (let i = 0; i < 10; i++) {
       const { data: profile } = await supabase
@@ -673,12 +685,14 @@ export const insertSalesPerson = async (
 
       if (profile) {
         profileCreated = true;
+        console.log('Profile created successfully');
         break;
       }
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 
     if (!profileCreated) {
+      console.error('Profile creation timeout');
       throw new Error('Profile creation timeout - please try again');
     }
 
@@ -696,13 +710,18 @@ export const insertSalesPerson = async (
       created_by: salesPerson.created_by
     };
 
+    console.log('Inserting into sales_persons table:', { ...insertData, password_hash: '***' });
     const { data, error } = await supabase
       .from('sales_persons')
       .insert(insertData)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error inserting into sales_persons:', error);
+      throw error;
+    }
+    console.log('Sales person inserted successfully:', data);
     return data;
   }
 
