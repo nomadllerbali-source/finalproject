@@ -44,16 +44,18 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
 
         console.log('Prepared client with follow-up:', clientWithFollowUp);
 
-        // Check if client already exists to prevent duplicates
-        const existingClient = state.clients.find(c => c.id === itinerary.client.id);
-        console.log('Existing client?', existingClient);
-
-        if (!existingClient) {
-          console.log('Adding new client to database...');
+        // Always try to insert the client - database will handle uniqueness
+        console.log('Adding client to database...');
+        try {
           await addClient(clientWithFollowUp);
           console.log('Client added successfully!');
-        } else {
-          console.log('Client already exists, skipping...');
+        } catch (error: any) {
+          // If client already exists (unique constraint violation), that's OK
+          if (error.code === '23505') {
+            console.log('Client already exists in database, continuing...');
+          } else {
+            throw error;
+          }
         }
 
         // Prepare itinerary with metadata
