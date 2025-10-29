@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Eye, Edit2, Trash2, MessageCircle, Calendar, Phone, MapPin, Clock, DollarSign, Users } from 'lucide-react';
+import { Eye, Edit2, Trash2, MessageCircle, Calendar, Phone, MapPin, Clock, DollarSign, Users, FileText } from 'lucide-react';
 import Layout from '../Layout';
 import { Client } from '../../types';
 import ClientEditModal from '../admin/ClientEditModal';
 import FollowUpModal from '../admin/FollowUpModal';
+import ItineraryViewModal from '../admin/ItineraryViewModal';
 
 const SalesDashboard: React.FC = () => {
   const { state, updateClientData, deleteClientData } = useData();
@@ -17,6 +18,8 @@ const SalesDashboard: React.FC = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [showItineraryModal, setShowItineraryModal] = useState(false);
+  const [selectedItineraryId, setSelectedItineraryId] = useState<string | null>(null);
 
   const myClients = allClients.filter(c => c.createdBy === authState.user?.id);
 
@@ -65,6 +68,24 @@ const SalesDashboard: React.FC = () => {
     const phone = client.whatsapp.replace(/\D/g, '');
     const phoneWithCountry = client.countryCode ? `${client.countryCode}${phone}` : phone;
     window.open(`https://wa.me/${phoneWithCountry}`, '_blank');
+  };
+
+  const handleViewItinerary = (client: Client) => {
+    const latestItinerary = getLatestItinerary(client.id);
+    if (!latestItinerary) {
+      alert('No itinerary found for this client');
+      return;
+    }
+    setSelectedItineraryId(latestItinerary.id);
+    setShowItineraryModal(true);
+  };
+
+  const getLatestItinerary = (clientId: string) => {
+    const clientItineraries = state.itineraries.filter(i => i.client.id === clientId);
+    if (clientItineraries.length === 0) return null;
+    return clientItineraries.sort((a, b) =>
+      new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+    )[0];
   };
 
   return (
@@ -179,6 +200,15 @@ const SalesDashboard: React.FC = () => {
                             >
                               <Eye className="h-4 w-4" />
                             </button>
+                            {getLatestItinerary(client.id) && (
+                              <button
+                                onClick={() => handleViewItinerary(client)}
+                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                title="View Latest Itinerary"
+                              >
+                                <FileText className="h-4 w-4" />
+                              </button>
+                            )}
                             <button
                               onClick={() => handleEdit(client)}
                               className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
@@ -188,7 +218,7 @@ const SalesDashboard: React.FC = () => {
                             </button>
                             <button
                               onClick={() => handleFollowUp(client)}
-                              className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                              className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                               title="Follow Up"
                             >
                               <Calendar className="h-4 w-4" />
@@ -265,6 +295,16 @@ const SalesDashboard: React.FC = () => {
               console.error('Error updating follow-up:', error);
               alert('Failed to update follow-up. Please try again.');
             }
+          }}
+        />
+      )}
+
+      {showItineraryModal && selectedItineraryId && (
+        <ItineraryViewModal
+          itineraryId={selectedItineraryId}
+          onClose={() => {
+            setShowItineraryModal(false);
+            setSelectedItineraryId(null);
           }}
         />
       )}
