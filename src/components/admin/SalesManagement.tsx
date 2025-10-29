@@ -66,6 +66,7 @@ const SalesManagement: React.FC = () => {
 
         if (isSupabaseConfigured()) {
           team = await fetchAllSalesPersons();
+          console.log('Loaded sales persons from Supabase:', team);
         } else {
           const savedSalesTeam = localStorage.getItem('salesTeam');
           if (savedSalesTeam) {
@@ -93,6 +94,7 @@ const SalesManagement: React.FC = () => {
             totalLeads: personClients.length
           };
         });
+        console.log('Sales team with metrics:', teamWithMetrics);
         setSalesTeam(teamWithMetrics);
       } catch (error) {
         console.error('Error loading sales team:', error);
