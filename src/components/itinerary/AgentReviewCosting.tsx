@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Client, DayPlan, Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
-import { calculateItineraryCost, convertToINR, formatCurrency } from '../../utils/calculations';
+import { calculateItineraryCost, formatCurrency } from '../../utils/calculations';
 import { DollarSign, Calendar, Users, MapPin, Building2, Camera, Ticket, Utensils, TrendingUp } from 'lucide-react';
 
 interface AgentReviewCostingProps {
@@ -15,15 +15,14 @@ const AgentReviewCosting: React.FC<AgentReviewCostingProps> = ({ client, dayPlan
   const { state } = useData();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
   const [agentProfit, setAgentProfit] = useState(0);
-  const [exchangeRate, setExchangeRate] = useState(83); // Default USD to INR rate
 
   // Calculate base cost (hidden from agent)
   const baseCost = calculateItineraryCost(
     client, dayPlans, hotels, sightseeings, activities, entryTickets, meals, transportations
   );
-  
-  // Add fixed $35 markup (hidden from agent)
-  const FIXED_MARKUP = 35;
+
+  // Add fixed Rp 560,000 markup (hidden from agent)
+  const FIXED_MARKUP = 560000;
   const costWithMarkup = baseCost + FIXED_MARKUP;
   
   // Final price with agent profit
@@ -37,7 +36,7 @@ const AgentReviewCosting: React.FC<AgentReviewCostingProps> = ({ client, dayPlan
       totalBaseCost: costWithMarkup, // Show marked-up price as "base" to agent
       profitMargin: agentProfit,
       finalPrice,
-      exchangeRate,
+      exchangeRate: 1,
       version: 1,
       lastUpdated: new Date().toISOString(),
       updatedBy: 'agent',
@@ -232,31 +231,10 @@ const AgentReviewCosting: React.FC<AgentReviewCostingProps> = ({ client, dayPlan
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               <div className="space-y-3 md:space-y-4">
                 <div className="bg-white rounded-lg p-4">
-                  <label className="block text-sm md:text-base font-semibold text-slate-900 mb-2 md:mb-3">
-                    Exchange Rate (USD to INR)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="0.1"
-                    value={exchangeRate}
-                    onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 83)}
-                    className="w-full p-2 md:p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm md:text-base"
-                    placeholder="Enter current exchange rate"
-                  />
-                  <p className="text-xs md:text-sm text-slate-600 mt-1">
-                    Current rate: 1 USD = ₹{exchangeRate}
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-lg p-4">
                   <h4 className="text-sm md:text-base font-semibold text-slate-900 mb-2 md:mb-3">Package Base Cost</h4>
                   <div className="space-y-1">
                     <div className="text-lg md:text-xl font-bold text-slate-900">
-                      {formatCurrency(costWithMarkup, 'USD')}
-                    </div>
-                    <div className="text-base md:text-lg font-semibold text-blue-600">
-                      {formatCurrency(convertToINR(costWithMarkup, exchangeRate), 'INR')}
+                      {formatCurrency(costWithMarkup)}
                     </div>
                   </div>
                   <p className="text-xs md:text-sm text-slate-600 mt-1">
@@ -266,16 +244,16 @@ const AgentReviewCosting: React.FC<AgentReviewCostingProps> = ({ client, dayPlan
 
                 <div className="bg-white rounded-lg p-4">
                   <label className="block text-sm md:text-base font-semibold text-slate-900 mb-2 md:mb-3">
-                    Add Your Profit Margin (USD)
+                    Add Your Profit Margin (Rp)
                   </label>
                   <input
                     type="number"
                     min="0"
-                    step="10"
+                    step="100000"
                     value={agentProfit}
                     onChange={(e) => setAgentProfit(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 md:p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm md:text-base"
-                    placeholder="Enter your profit in USD"
+                    placeholder="Enter your profit in IDR"
                   />
                   <p className="text-xs md:text-sm text-slate-600 mt-1">
                     Your commission or profit margin
@@ -288,10 +266,7 @@ const AgentReviewCosting: React.FC<AgentReviewCostingProps> = ({ client, dayPlan
                   <h4 className="text-sm md:text-base font-semibold mb-2">Final Quote Price</h4>
                   <div className="space-y-2 mb-2">
                     <div className="text-2xl md:text-3xl font-bold">
-                      {formatCurrency(finalPrice, 'USD')}
-                    </div>
-                    <div className="text-xl md:text-2xl font-bold text-teal-100">
-                      {formatCurrency(convertToINR(finalPrice, exchangeRate), 'INR')}
+                      {formatCurrency(finalPrice)}
                     </div>
                   </div>
                   <p className="text-teal-100 text-sm md:text-base">
@@ -300,8 +275,8 @@ const AgentReviewCosting: React.FC<AgentReviewCostingProps> = ({ client, dayPlan
                   {agentProfit > 0 && (
                     <div className="mt-4 pt-4 border-t border-teal-400 border-opacity-50">
                       <div className="text-xs md:text-sm space-y-1">
-                        <div>Package Cost: {formatCurrency(costWithMarkup, 'USD')} / {formatCurrency(convertToINR(costWithMarkup, exchangeRate), 'INR')}</div>
-                        <div>Your Profit: {formatCurrency(agentProfit, 'USD')} / {formatCurrency(convertToINR(agentProfit, exchangeRate), 'INR')}</div>
+                        <div>Package Cost: {formatCurrency(costWithMarkup)}</div>
+                        <div>Your Profit: {formatCurrency(agentProfit)}</div>
                       </div>
                     </div>
                   )}

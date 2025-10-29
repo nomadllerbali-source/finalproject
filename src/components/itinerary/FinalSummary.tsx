@@ -1,7 +1,7 @@
 import React from 'react';
 import { Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
-import { getSeasonalPrice, getVehicleCostByPax, convertToINR, formatCurrency } from '../../utils/calculations';
+import { getSeasonalPrice, getVehicleCostByPax, formatCurrency } from '../../utils/calculations';
 import { Copy, MessageCircle, Calendar, Users, MapPin, Building2, Camera, Ticket, Utensils, CheckCircle, Phone, Download } from 'lucide-react';
 
 interface FinalSummaryProps {

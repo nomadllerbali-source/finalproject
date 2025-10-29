@@ -145,7 +145,7 @@ const MealManager: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Cost per Person ($)
+                    Cost per Person (Rp)
                   </label>
                   <input
                     type="number"
@@ -279,7 +279,7 @@ const MealManager: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 font-medium text-slate-900">
-                            ${meal.cost}
+                            Rp {meal.cost.toLocaleString('id-ID')}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex space-x-2">

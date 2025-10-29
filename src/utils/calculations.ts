@@ -83,9 +83,9 @@ export const calculateItineraryCost = (
         if (sightseeing) {
           // Add a standard cost for self-drive sightseeing (fuel, parking, etc.)
           if (sightseeing.transportationMode === 'self-drive-car') {
-            totalCost += 15; // Base cost for car sightseeing
+            totalCost += 240000; // Base cost for car sightseeing (IDR)
           } else if (sightseeing.transportationMode === 'self-drive-scooter') {
-            totalCost += 8; // Base cost for scooter sightseeing
+            totalCost += 130000; // Base cost for scooter sightseeing (IDR)
           }
         }
       });
@@ -130,15 +130,8 @@ export const calculateItineraryCost = (
   return totalCost;
 };
 
-export const convertToINR = (usdAmount: number, exchangeRate: number = 83): number => {
-  return usdAmount * exchangeRate;
-};
-
-export const formatCurrency = (amount: number, currency: 'USD' | 'INR' = 'USD'): string => {
-  if (currency === 'INR') {
-    return `₹${amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
-  }
-  return `$${amount.toFixed(2)}`;
+export const formatCurrency = (amount: number, currency: 'IDR' = 'IDR'): string => {
+  return `Rp ${amount.toLocaleString('id-ID', { maximumFractionDigits: 0 })}`;
 };
 // Helper function to recalculate itinerary costs when data changes
 export const recalculateItineraryCosts = (

@@ -109,7 +109,7 @@ const TransportationManager: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Cost per Day ($)
+                    Cost per Day (Rp)
                   </label>
                   <input
                     type="number"
@@ -123,7 +123,7 @@ const TransportationManager: React.FC = () => {
                   />
                   {newTransportation.type === 'cab' && (
                     <p className="text-xs text-slate-500 mt-1">
-                      Can default to $0 (cost tied to sightseeing)
+                      Can default to Rp 0 (cost tied to sightseeing)
                     </p>
                   )}
                 </div>
@@ -251,7 +251,7 @@ const TransportationManager: React.FC = () => {
                             <div className="truncate max-w-[150px] sm:max-w-none">{transport.vehicleName}</div>
                           </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-slate-900 font-semibold whitespace-nowrap">
-                            ${transport.costPerDay}
+                            Rp {transport.costPerDay.toLocaleString('id-ID')}
                           </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <div className="flex gap-1 sm:gap-2">

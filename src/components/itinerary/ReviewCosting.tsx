@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Client, DayPlan, Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
-import { calculateItineraryCost, getSeasonalPrice, convertToINR, formatCurrency } from '../../utils/calculations';
+import { calculateItineraryCost, getSeasonalPrice, formatCurrency } from '../../utils/calculations';
 import { DollarSign, Calendar, Users, MapPin, Building2, Camera, Ticket, Utensils, TrendingUp } from 'lucide-react';
 
 interface ReviewCostingProps {
@@ -15,7 +15,6 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
   const { state } = useData();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
   const [profitMargin, setProfitMargin] = useState(0);
-  const [exchangeRate, setExchangeRate] = useState(83); // Default USD to INR rate
 
   const totalBaseCost = calculateItineraryCost(
     client, dayPlans, hotels, sightseeings, activities, entryTickets, meals, transportations
@@ -30,7 +29,7 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
       totalBaseCost,
       profitMargin,
       finalPrice,
-      exchangeRate,
+      exchangeRate: 1,
       version: 1,
       lastUpdated: new Date().toISOString(),
       updatedBy: 'admin',
@@ -225,31 +224,10 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               <div className="space-y-3 md:space-y-4">
                 <div className="bg-white rounded-lg p-4">
-                  <label className="block text-sm md:text-base font-semibold text-slate-900 mb-2 md:mb-3">
-                    Exchange Rate (USD to INR)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="0.1"
-                    value={exchangeRate}
-                    onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 83)}
-                    className="w-full p-2 md:p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm md:text-base"
-                    placeholder="Enter current exchange rate"
-                  />
-                  <p className="text-xs md:text-sm text-slate-600 mt-1">
-                    Current rate: 1 USD = ₹{exchangeRate}
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-lg p-4">
                   <h4 className="text-sm md:text-base font-semibold text-slate-900 mb-2 md:mb-3">Total Base Cost</h4>
                   <div className="space-y-1">
                     <div className="text-lg md:text-xl font-bold text-slate-900">
-                      {formatCurrency(totalBaseCost, 'USD')}
-                    </div>
-                    <div className="text-base md:text-lg font-semibold text-blue-600">
-                      {formatCurrency(convertToINR(totalBaseCost, exchangeRate), 'INR')}
+                      {formatCurrency(totalBaseCost)}
                     </div>
                   </div>
                   <p className="text-xs md:text-sm text-slate-600 mt-1">
@@ -259,16 +237,16 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
 
                 <div className="bg-white rounded-lg p-4">
                   <label className="block text-sm md:text-base font-semibold text-slate-900 mb-2 md:mb-3">
-                    Add Profit Margin (USD)
+                    Add Profit Margin (Rp)
                   </label>
                   <input
                     type="number"
                     min="0"
-                    step="50"
+                    step="100000"
                     value={profitMargin}
                     onChange={(e) => setProfitMargin(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 md:p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm md:text-base"
-                    placeholder="Enter profit in USD"
+                    placeholder="Enter profit in IDR"
                   />
                   <p className="text-xs md:text-sm text-slate-600 mt-1">
                     Your profit margin or commission amount
@@ -281,10 +259,7 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
                   <h4 className="text-sm md:text-base font-semibold mb-2">Final Quote Price</h4>
                   <div className="space-y-2 mb-2">
                     <div className="text-2xl md:text-3xl font-bold">
-                      {formatCurrency(finalPrice, 'USD')}
-                    </div>
-                    <div className="text-xl md:text-2xl font-bold text-green-100">
-                      {formatCurrency(convertToINR(finalPrice, exchangeRate), 'INR')}
+                      {formatCurrency(finalPrice)}
                     </div>
                   </div>
                   <p className="text-green-100 text-sm md:text-base">
@@ -293,8 +268,8 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
                   {profitMargin > 0 && (
                     <div className="mt-4 pt-4 border-t border-green-400 border-opacity-50">
                       <div className="text-xs md:text-sm space-y-1">
-                        <div>Base Cost: {formatCurrency(totalBaseCost, 'USD')} / {formatCurrency(convertToINR(totalBaseCost, exchangeRate), 'INR')}</div>
-                        <div>Your Profit: {formatCurrency(profitMargin, 'USD')} / {formatCurrency(convertToINR(profitMargin, exchangeRate), 'INR')}</div>
+                        <div>Base Cost: {formatCurrency(totalBaseCost)}</div>
+                        <div>Your Profit: {formatCurrency(profitMargin)}</div>
                       </div>
                     </div>
                   )}

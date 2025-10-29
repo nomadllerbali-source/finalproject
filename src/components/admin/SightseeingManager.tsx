@@ -108,7 +108,7 @@ const SightseeingManager: React.FC = () => {
         {vehicles.map(vehicle => (
           <div key={vehicle.key}>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              {vehicle.name} Cost ($)
+              {vehicle.name} Cost (Rp)
               <span className="text-xs text-slate-500 block">{vehicle.pax}</span>
             </label>
             <input
@@ -366,23 +366,23 @@ const SightseeingManager: React.FC = () => {
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                           <div className="bg-slate-50 p-3 rounded-lg">
                             <div className="text-sm font-medium text-slate-700">Avanza (2-6 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">${sight.vehicleCosts.avanza}</div>
+                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.avanza.toLocaleString('id-ID')}</div>
                           </div>
                           <div className="bg-slate-50 p-3 rounded-lg">
                             <div className="text-sm font-medium text-slate-700">Hiace (6-12 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">${sight.vehicleCosts.hiace}</div>
+                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.hiace.toLocaleString('id-ID')}</div>
                           </div>
                           <div className="bg-slate-50 p-3 rounded-lg">
                             <div className="text-sm font-medium text-slate-700">Mini Bus (12-27 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">${sight.vehicleCosts.miniBus}</div>
+                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.miniBus.toLocaleString('id-ID')}</div>
                           </div>
                           <div className="bg-slate-50 p-3 rounded-lg">
                             <div className="text-sm font-medium text-slate-700">Bus 32 (27-32 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">${sight.vehicleCosts.bus32}</div>
+                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.bus32.toLocaleString('id-ID')}</div>
                           </div>
                           <div className="bg-slate-50 p-3 rounded-lg">
                             <div className="text-sm font-medium text-slate-700">Bus 39 (32-39 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">${sight.vehicleCosts.bus39}</div>
+                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.bus39.toLocaleString('id-ID')}</div>
                           </div>
                         </div>
                       </div>

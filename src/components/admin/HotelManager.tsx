@@ -212,7 +212,7 @@ const HotelManager: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">
-                          Peak Season ($)
+                          Peak Season (Rp)
                           <span className="text-xs text-slate-500 block">Dec 20 - Jan 5</span>
                         </label>
                         <input
@@ -224,7 +224,7 @@ const HotelManager: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">
-                          Season ($)
+                          Season (Rp)
                           <span className="text-xs text-slate-500 block">Jul 1 - Aug 31</span>
                         </label>
                         <input
@@ -236,7 +236,7 @@ const HotelManager: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">
-                          Off-Season ($)
+                          Off-Season (Rp)
                           <span className="text-xs text-slate-500 block">Other dates</span>
                         </label>
                         <div className="flex space-x-2">
@@ -369,7 +369,7 @@ const HotelManager: React.FC = () => {
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-slate-700 mb-1">
-                                Peak Season ($)
+                                Peak Season (Rp)
                               </label>
                               <input
                                 type="number"
@@ -380,7 +380,7 @@ const HotelManager: React.FC = () => {
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-slate-700 mb-1">
-                                Season ($)
+                                Season (Rp)
                               </label>
                               <input
                                 type="number"
@@ -391,7 +391,7 @@ const HotelManager: React.FC = () => {
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-slate-700 mb-1">
-                                Off-Season ($)
+                                Off-Season (Rp)
                               </label>
                               <div className="flex space-x-2">
                                 <input
@@ -476,15 +476,15 @@ const HotelManager: React.FC = () => {
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
                                 <span className="text-slate-600">Peak Season:</span>
-                                <span className="font-medium">${roomType.peakSeasonPrice}</span>
+                                <span className="font-medium">Rp {roomType.peakSeasonPrice.toLocaleString('id-ID')}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-slate-600">Season:</span>
-                                <span className="font-medium">${roomType.seasonPrice}</span>
+                                <span className="font-medium">Rp {roomType.seasonPrice.toLocaleString('id-ID')}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-slate-600">Off-Season:</span>
-                                <span className="font-medium">${roomType.offSeasonPrice}</span>
+                                <span className="font-medium">Rp {roomType.offSeasonPrice.toLocaleString('id-ID')}</span>
                               </div>
                             </div>
                           </div>

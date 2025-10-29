@@ -374,8 +374,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm">
-                        <div className="font-medium text-green-600">${itinerary.finalPrice.toFixed(0)}</div>
-                        <div className="text-slate-500">₹{(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
+                        <div className="font-medium text-green-600">Rp {itinerary.finalPrice.toLocaleString('id-ID')}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500">

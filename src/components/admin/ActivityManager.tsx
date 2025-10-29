@@ -198,7 +198,7 @@ const ActivityManager: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">
-                          Cost ($)
+                          Cost (Rp)
                         </label>
                         <input
                           type="number"
@@ -424,7 +424,7 @@ const ActivityManager: React.FC = () => {
                         {activity.options.map((option) => (
                           <div key={option.id} className="bg-slate-50 p-4 rounded-lg">
                             <h5 className="font-medium text-slate-900 mb-2">{option.name}</h5>
-                            <div className="text-2xl font-bold text-green-600">${option.cost}</div>
+                            <div className="text-2xl font-bold text-green-600">Rp {option.cost.toLocaleString('id-ID')}</div>
                             <div className="text-sm text-slate-600">for {option.costForHowMany} {option.costForHowMany === 1 ? 'person' : 'people'}</div>
                           </div>
                         ))}
