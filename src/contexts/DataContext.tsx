@@ -1449,14 +1449,35 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateItineraryData = async (itinerary: Itinerary) => {
     if (isSupabaseConfigured()) {
       try {
-        const updatedItinerary = await updateItinerary(itinerary);
-        if (updatedItinerary) dispatch({ type: 'UPDATE_ITINERARY', payload: updatedItinerary });
+        // Check if itinerary exists in state
+        const existingItinerary = state.itineraries.find(i => i.id === itinerary.id);
+
+        if (existingItinerary) {
+          // Update existing itinerary
+          const updatedItinerary = await updateItinerary(itinerary);
+          if (updatedItinerary) dispatch({ type: 'UPDATE_ITINERARY', payload: updatedItinerary });
+        } else {
+          // Insert new itinerary
+          const newItinerary = await insertItinerary(itinerary);
+          if (newItinerary) dispatch({ type: 'ADD_ITINERARY', payload: newItinerary });
+        }
       } catch (error) {
         console.error('Error updating itinerary in Supabase:', error);
-        dispatch({ type: 'UPDATE_ITINERARY', payload: itinerary });
+        // Fallback to local update
+        const existingItinerary = state.itineraries.find(i => i.id === itinerary.id);
+        if (existingItinerary) {
+          dispatch({ type: 'UPDATE_ITINERARY', payload: itinerary });
+        } else {
+          dispatch({ type: 'ADD_ITINERARY', payload: itinerary });
+        }
       }
     } else {
-      dispatch({ type: 'UPDATE_ITINERARY', payload: itinerary });
+      const existingItinerary = state.itineraries.find(i => i.id === itinerary.id);
+      if (existingItinerary) {
+        dispatch({ type: 'UPDATE_ITINERARY', payload: itinerary });
+      } else {
+        dispatch({ type: 'ADD_ITINERARY', payload: itinerary });
+      }
     }
   };
 
