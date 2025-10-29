@@ -4,9 +4,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Eye, Edit2, Trash2, MessageCircle, Calendar, Phone, MapPin, Clock, DollarSign, Users } from 'lucide-react';
 import Layout from '../Layout';
 import { Client } from '../../types';
+import ClientEditModal from '../admin/ClientEditModal';
+import FollowUpModal from '../admin/FollowUpModal';
 
 const SalesDashboard: React.FC = () => {
-  const { state } = useData();
+  const { state, updateClientData, deleteClientData } = useData();
   const { state: authState } = useAuth();
   const { clients: allClients } = state;
 
@@ -43,9 +45,14 @@ const SalesDashboard: React.FC = () => {
     setShowEditModal(true);
   };
 
-  const handleDelete = (client: Client) => {
+  const handleDelete = async (client: Client) => {
     if (window.confirm(`Are you sure you want to delete ${client.name}?`)) {
-      console.log('Delete client:', client.id);
+      try {
+        await deleteClientData(client.id);
+      } catch (error) {
+        console.error('Error deleting client:', error);
+        alert('Failed to delete client. Please try again.');
+      }
     }
   };
 
@@ -211,6 +218,46 @@ const SalesDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showEditModal && selectedClient && (
+        <ClientEditModal
+          client={selectedClient}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedClient(null);
+          }}
+          onSave={async (updatedClient) => {
+            try {
+              await updateClientData(updatedClient);
+              setShowEditModal(false);
+              setSelectedClient(null);
+            } catch (error) {
+              console.error('Error updating client:', error);
+              alert('Failed to update client. Please try again.');
+            }
+          }}
+        />
+      )}
+
+      {showFollowUpModal && selectedClient && (
+        <FollowUpModal
+          client={selectedClient}
+          onClose={() => {
+            setShowFollowUpModal(false);
+            setSelectedClient(null);
+          }}
+          onSave={async (updatedClient) => {
+            try {
+              await updateClientData(updatedClient);
+              setShowFollowUpModal(false);
+              setSelectedClient(null);
+            } catch (error) {
+              console.error('Error updating client:', error);
+              alert('Failed to update follow-up. Please try again.');
+            }
+          }}
+        />
+      )}
 
       {showViewModal && selectedClient && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
