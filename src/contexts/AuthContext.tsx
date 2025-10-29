@@ -199,16 +199,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
     if (!supabase) return null;
-    
+
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching profile:', error);
+        return null;
+      }
+
+      if (!data) {
+        console.error('Profile not found for user:', userId);
         return null;
       }
 
