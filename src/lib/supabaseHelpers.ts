@@ -364,16 +364,31 @@ export const fetchAllData = async () => {
 };
 
 export const insertClient = async (client: Client) => {
-  if (!supabase) return null;
+  if (!supabase) {
+    console.error('insertClient: Supabase not initialized!');
+    throw new Error('Supabase is not configured');
+  }
   const dbData = toDbClient(client);
   const { id, ...insertData } = dbData;
-  console.log('Inserting client:', insertData);
+  console.log('=== INSERT CLIENT TO SUPABASE ===');
+  console.log('Client ID:', id);
+  console.log('Insert data:', JSON.stringify(insertData, null, 2));
+  console.log('created_by field:', insertData.created_by);
+
   const { data, error } = await supabase.from('clients').insert(insertData).select().single();
+
   if (error) {
-    console.error('Insert client error:', error);
-    throw error;
+    console.error('=== INSERT CLIENT ERROR ===');
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    console.error('Error details:', error.details);
+    console.error('Error hint:', error.hint);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
+    throw new Error(`Failed to insert client: ${error.message}`);
   }
-  console.log('Insert client success:', data);
+
+  console.log('=== INSERT CLIENT SUCCESS ===');
+  console.log('Returned data:', data);
   return fromDbClient(data);
 };
 
