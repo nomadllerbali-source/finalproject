@@ -637,8 +637,60 @@ export const fetchAllSalesPersons = async (): Promise<SalesPerson[]> => {
   return data || [];
 };
 
-export const insertSalesPerson = async (salesPerson: Omit<SalesPerson, 'id' | 'created_at' | 'updated_at'>): Promise<SalesPerson | null> => {
+export const insertSalesPerson = async (
+  salesPerson: Omit<SalesPerson, 'id' | 'created_at' | 'updated_at'> & { raw_password?: string }
+): Promise<SalesPerson | null> => {
   if (!supabase) return null;
+
+  // If raw_password is provided, create Supabase Auth user
+  if (salesPerson.raw_password) {
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: salesPerson.email,
+      password: salesPerson.raw_password,
+      options: {
+        data: {
+          full_name: salesPerson.full_name,
+          role: 'sales',
+          company_name: salesPerson.company_name
+        }
+      }
+    });
+
+    if (authError) throw new Error(`Failed to create auth user: ${authError.message}`);
+    if (!authData.user) throw new Error('Failed to create auth user');
+
+    // Create profile for the sales person
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: authData.user.id,
+        email: salesPerson.email,
+        full_name: salesPerson.full_name,
+        role: 'sales',
+        company_name: salesPerson.company_name
+      });
+
+    if (profileError) {
+      console.error('Profile creation error:', profileError);
+      // Don't fail if profile already exists (might be auto-created by trigger)
+    }
+
+    // Now insert into sales_persons table with the auth user's ID
+    const { raw_password, ...salesPersonData } = salesPerson;
+    const { data, error } = await supabase
+      .from('sales_persons')
+      .insert({
+        ...salesPersonData,
+        id: authData.user.id // Use the auth user's ID
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  // Fallback: insert without creating auth user (shouldn't happen in production)
   const { data, error } = await supabase
     .from('sales_persons')
     .insert(salesPerson)

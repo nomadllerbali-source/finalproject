@@ -128,16 +128,17 @@ const SalesManagement: React.FC = () => {
     setMessage(null);
 
     try {
-      const passwordHash = await hashPassword(newSalesForm.password);
-
       if (isSupabaseConfigured()) {
+        const passwordHash = await hashPassword(newSalesForm.password);
+
         const newSalesPerson = await insertSalesPerson({
           email: newSalesForm.email,
           full_name: newSalesForm.fullName,
           password_hash: passwordHash,
           company_name: newSalesForm.companyName || null,
           is_active: true,
-          created_by: authState.user.id
+          created_by: authState.user.id,
+          raw_password: newSalesForm.password // Pass raw password to create auth user
         });
 
         if (newSalesPerson) {
