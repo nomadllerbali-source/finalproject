@@ -310,57 +310,82 @@ export const toDbFollowUpRecord = (fur: FollowUpRecord): FollowUpRecordsInsert =
 
 // --- Supabase Data Operations ---
 
+let lastFetchTime = 0;
+let fetchPromise: Promise<any> | null = null;
+const FETCH_THROTTLE_MS = 1000;
+
 export const fetchAllData = async () => {
   if (!supabase) return null;
 
-  try {
-    const [
-      { data: clientsData, error: clientsError },
-      { data: transportationsData, error: transportationsError },
-      { data: hotelsData, error: hotelsError },
-      { data: sightseeingsData, error: sightseeingsError },
-      { data: activitiesData, error: activitiesError },
-      { data: entryTicketsData, error: entryTicketsError },
-      { data: mealsData, error: mealsError },
-      { data: itinerariesData, error: itinerariesError },
-      { data: fixedItinerariesData, error: fixedItinerariesError }
-    ] = await Promise.all([
-      supabase.from('clients').select('*'),
-      supabase.from('transportations').select('*'),
-      supabase.from('hotels').select('*, room_types(*)'),
-      supabase.from('sightseeings').select('*'),
-      supabase.from('activities').select('*, activity_options(*)'),
-      supabase.from('entry_tickets').select('*'),
-      supabase.from('meals').select('*'),
-      supabase.from('itineraries').select('*, clients(*), day_plans(*)'),
-      supabase.from('fixed_itineraries').select('*')
-    ]);
-
-    if (clientsError) throw clientsError;
-    if (transportationsError) throw transportationsError;
-    if (hotelsError) throw hotelsError;
-    if (sightseeingsError) throw sightseeingsError;
-    if (activitiesError) throw activitiesError;
-    if (entryTicketsError) throw entryTicketsError;
-    if (mealsError) throw mealsError;
-    if (itinerariesError) throw itinerariesError;
-    if (fixedItinerariesError) throw fixedItinerariesError;
-
-    return {
-      clients: clientsData?.map(fromDbClient) || [],
-      transportations: transportationsData?.map(fromDbTransportation) || [],
-      hotels: hotelsData?.map(fromDbHotel) || [],
-      sightseeings: sightseeingsData?.map(fromDbSightseeing) || [],
-      activities: activitiesData?.map(fromDbActivity) || [],
-      entryTickets: entryTicketsData?.map(fromDbEntryTicket) || [],
-      meals: mealsData?.map(fromDbMeal) || [],
-      itineraries: itinerariesData?.map(fromDbItinerary) || [],
-      fixedItineraries: fixedItinerariesData?.map(fromDbFixedItinerary) || []
-    };
-  } catch (error) {
-    console.error('Error fetching all data:', error);
-    throw error;
+  const now = Date.now();
+  if (fetchPromise) {
+    console.log('Fetch already in progress, returning existing promise');
+    return fetchPromise;
   }
+
+  if (now - lastFetchTime < FETCH_THROTTLE_MS) {
+    console.log('Fetch throttled, skipping');
+    return null;
+  }
+
+  lastFetchTime = now;
+  console.log('Fetching all data from Supabase...');
+
+  fetchPromise = (async () => {
+    try {
+      const [
+        { data: clientsData, error: clientsError },
+        { data: transportationsData, error: transportationsError },
+        { data: hotelsData, error: hotelsError },
+        { data: sightseeingsData, error: sightseeingsError },
+        { data: activitiesData, error: activitiesError },
+        { data: entryTicketsData, error: entryTicketsError },
+        { data: mealsData, error: mealsError },
+        { data: itinerariesData, error: itinerariesError },
+        { data: fixedItinerariesData, error: fixedItinerariesError }
+      ] = await Promise.all([
+        supabase.from('clients').select('*'),
+        supabase.from('transportations').select('*'),
+        supabase.from('hotels').select('*, room_types(*)'),
+        supabase.from('sightseeings').select('*'),
+        supabase.from('activities').select('*, activity_options(*)'),
+        supabase.from('entry_tickets').select('*'),
+        supabase.from('meals').select('*'),
+        supabase.from('itineraries').select('*, clients(*), day_plans(*)'),
+        supabase.from('fixed_itineraries').select('*')
+      ]);
+
+      if (clientsError) throw clientsError;
+      if (transportationsError) throw transportationsError;
+      if (hotelsError) throw hotelsError;
+      if (sightseeingsError) throw sightseeingsError;
+      if (activitiesError) throw activitiesError;
+      if (entryTicketsError) throw entryTicketsError;
+      if (mealsError) throw mealsError;
+      if (itinerariesError) throw itinerariesError;
+      if (fixedItinerariesError) throw fixedItinerariesError;
+
+      console.log('Data fetched successfully');
+      return {
+        clients: clientsData?.map(fromDbClient) || [],
+        transportations: transportationsData?.map(fromDbTransportation) || [],
+        hotels: hotelsData?.map(fromDbHotel) || [],
+        sightseeings: sightseeingsData?.map(fromDbSightseeing) || [],
+        activities: activitiesData?.map(fromDbActivity) || [],
+        entryTickets: entryTicketsData?.map(fromDbEntryTicket) || [],
+        meals: mealsData?.map(fromDbMeal) || [],
+        itineraries: itinerariesData?.map(fromDbItinerary) || [],
+        fixedItineraries: fixedItinerariesData?.map(fromDbFixedItinerary) || []
+      };
+    } catch (error) {
+      console.error('Error fetching all data:', error);
+      throw error;
+    } finally {
+      fetchPromise = null;
+    }
+  })();
+
+  return fetchPromise;
 };
 
 export const insertClient = async (client: Client) => {

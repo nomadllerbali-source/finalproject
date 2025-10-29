@@ -1034,12 +1034,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Load data from Supabase on mount
   useEffect(() => {
+    let isLoading = false;
+
     const loadInitialData = async () => {
+      if (isLoading) {
+        console.log('Data load already in progress, skipping...');
+        return;
+      }
+
       if (isSupabaseConfigured()) {
+        isLoading = true;
         try {
+          console.log('Loading initial data from Supabase...');
           const data = await fetchAllData();
           if (data) {
             dispatch({ type: 'SET_DATA', payload: data });
+            console.log('Initial data loaded successfully');
           } else {
             // If no data from Supabase, use demo data
             dispatch({ type: 'SET_DATA', payload: initialState });
@@ -1048,6 +1058,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Error fetching data from Supabase:', error);
           // Use demo data if Supabase fetch fails
           dispatch({ type: 'SET_DATA', payload: initialState });
+        } finally {
+          isLoading = false;
         }
       } else {
         // Only use localStorage if Supabase is NOT configured
@@ -1144,11 +1156,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const updatedClient = await updateClient(client);
         if (updatedClient) {
           dispatch({ type: 'UPDATE_CLIENT', payload: updatedClient });
-          // Refresh all data from Supabase to ensure consistency
-          const data = await fetchAllData();
-          if (data) {
-            dispatch({ type: 'SET_DATA', payload: data });
-          }
         }
       } catch (error) {
         console.error('Error updating client in Supabase:', error);
@@ -1164,11 +1171,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         await deleteClient(clientId);
         dispatch({ type: 'DELETE_CLIENT', payload: clientId });
-        // Refresh all data from Supabase to ensure consistency
-        const data = await fetchAllData();
-        if (data) {
-          dispatch({ type: 'SET_DATA', payload: data });
-        }
       } catch (error) {
         console.error('Error deleting client from Supabase:', error);
         throw error;
