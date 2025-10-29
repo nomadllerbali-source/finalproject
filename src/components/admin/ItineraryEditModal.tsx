@@ -3,6 +3,7 @@ import { Client, DayPlan, Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateItineraryCost } from '../../utils/calculations';
+import { generateUUID } from '../../utils/uuid';
 import { X, Save, Calendar, Plus, Trash2, MapPin, Building2, Camera, Ticket, Utensils, DollarSign, Search, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 
 interface ItineraryEditModalProps {
@@ -106,7 +107,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
       
       try {
         const updatedItinerary: Itinerary = {
-          id: latestItinerary?.id || `itinerary-${client.id}-${Date.now()}`,
+          id: latestItinerary?.id || generateUUID(),
           client,
           dayPlans,
           totalBaseCost: currentBaseCost,
@@ -800,7 +801,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
   const handleSave = () => {
     // Create updated itinerary
     const updatedItinerary: Itinerary = {
-      id: latestItinerary?.id || `itinerary-${client.id}-${Date.now()}`,
+      id: latestItinerary?.id || generateUUID(),
       client: { ...client, numberOfDays },
       dayPlans,
       totalBaseCost: currentBaseCost,
@@ -813,10 +814,10 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
       changeLog: [
         ...(latestItinerary?.changeLog || []),
         {
-          id: Date.now().toString(),
+          id: generateUUID(),
           version: (latestItinerary?.version || 0) + 1,
           changeType: numberOfDays !== client.numberOfDays ? 'days_modified' : 'general_edit',
-          description: numberOfDays !== client.numberOfDays 
+          description: numberOfDays !== client.numberOfDays
             ? `Days changed from ${client.numberOfDays} to ${numberOfDays}`
             : 'Itinerary details updated',
           timestamp: new Date().toISOString(),

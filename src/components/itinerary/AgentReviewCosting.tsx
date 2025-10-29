@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Client, DayPlan, Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { calculateItineraryCost, formatCurrency } from '../../utils/calculations';
+import { generateUUID } from '../../utils/uuid';
 import { DollarSign, Calendar, Users, MapPin, Building2, Camera, Ticket, Utensils, TrendingUp } from 'lucide-react';
 
 interface AgentReviewCostingProps {
@@ -30,7 +31,7 @@ const AgentReviewCosting: React.FC<AgentReviewCostingProps> = ({ client, dayPlan
 
   const handleSubmit = () => {
     const itinerary: Itinerary = {
-      id: `itinerary-${client.id}-${Date.now()}`,
+      id: generateUUID(),
       client,
       dayPlans,
       totalBaseCost: costWithMarkup, // Show marked-up price as "base" to agent

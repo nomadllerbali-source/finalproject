@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Client, DayPlan, Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { calculateItineraryCost, getSeasonalPrice, formatCurrency } from '../../utils/calculations';
+import { generateUUID } from '../../utils/uuid';
 import { DollarSign, Calendar, Users, MapPin, Building2, Camera, Ticket, Utensils, TrendingUp } from 'lucide-react';
 
 interface ReviewCostingProps {
@@ -23,7 +24,7 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
 
   const handleSubmit = () => {
     const itinerary: Itinerary = {
-      id: `itinerary-${client.id}-${Date.now()}`,
+      id: generateUUID(),
       client,
       dayPlans,
       totalBaseCost,

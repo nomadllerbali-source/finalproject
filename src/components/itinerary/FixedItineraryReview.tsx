@@ -62,7 +62,7 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
 
   const handleSubmit = () => {
     const itinerary: Itinerary = {
-      id: `itinerary-${client.id}-${Date.now()}`,
+      id: generateUUID(),
       client,
       dayPlans: fixedItinerary.dayPlans,
       totalBaseCost: baseCost,

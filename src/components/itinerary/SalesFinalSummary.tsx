@@ -71,7 +71,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
 
         const itineraryWithMetadata: Itinerary = {
           ...itinerary,
-          id: `itinerary-${itinerary.client.id}-${Date.now()}`,
+          id: generateUUID(),
           version: 1,
           lastUpdated: new Date().toISOString(),
           updatedBy: userId,
