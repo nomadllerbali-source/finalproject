@@ -12,6 +12,7 @@ import MealManager from './MealManager';
 import AgentManagement from './AgentManagement';
 import GuestManagement from './GuestManagement';
 import SalesManagement from './SalesManagement';
+import OperationsManagement from './OperationsManagement';
 import FixedItineraryManager from './FixedItineraryManager';
 
 // Itinerary Builder (Admin version)
@@ -24,7 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-type AdminSection = 'dashboard' | 'itinerary' | 'transportation' | 'hotels' | 'sightseeing' | 'activities' | 'meals' | 'tickets' | 'agents' | 'guests' | 'sales' | 'fixedItineraries';
+type AdminSection = 'dashboard' | 'itinerary' | 'transportation' | 'hotels' | 'sightseeing' | 'activities' | 'meals' | 'tickets' | 'agents' | 'guests' | 'sales' | 'operations' | 'fixedItineraries';
 
 const AdminApp: React.FC = () => {
   const { logout, state: authState } = useAuth();
@@ -59,6 +60,7 @@ const AdminApp: React.FC = () => {
     { id: 'itinerary', name: 'Itinerary Builder', icon: Plus, description: 'Create new packages' },
     { id: 'agents', name: 'Agent Management', icon: UserCheck, description: 'Manage travel agents' },
     { id: 'sales', name: 'Sales Management', icon: TrendingUp, description: 'Manage sales team & performance' },
+    { id: 'operations', name: 'Operations Management', icon: Settings, description: 'Manage operations team & bookings' },
     { id: 'fixedItineraries', name: 'Fixed Itineraries', icon: FileText, description: 'Manage itinerary templates' }
   ];
 
@@ -84,6 +86,8 @@ const AdminApp: React.FC = () => {
         return <AgentManagement />;
       case 'sales':
         return <SalesManagement />;
+      case 'operations':
+        return <OperationsManagement />;
       case 'fixedItineraries':
         return <FixedItineraryManager />;
       default:
