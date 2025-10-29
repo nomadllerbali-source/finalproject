@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Client, FixedItinerary, Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
-import { 
-  DollarSign, Calendar, Users, MapPin, Building2, Camera, 
-  Ticket, Utensils, FileText, TrendingUp, CheckCircle 
+import {
+  DollarSign, Calendar, Users, MapPin, Building2, Camera,
+  Ticket, Utensils, FileText, TrendingUp, CheckCircle
 } from 'lucide-react';
+import { generateUUID } from '../../utils/uuid';
 
 interface FixedItineraryReviewProps {
   client: Client;
@@ -72,7 +73,7 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
       lastUpdated: new Date().toISOString(),
       updatedBy: userType,
       changeLog: [{
-        id: Date.now().toString(),
+        id: generateUUID(),
         version: 1,
         changeType: 'created',
         description: `Itinerary created from fixed template: ${fixedItinerary.name}`,

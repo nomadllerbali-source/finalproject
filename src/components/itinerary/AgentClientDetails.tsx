@@ -3,6 +3,7 @@ import { Client, Transportation } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Calendar, Users, MapPin, Clock } from 'lucide-react';
+import { generateUUID } from '../../utils/uuid';
 
 interface AgentClientDetailsProps {
   onNext: (client: Client) => void;
@@ -52,7 +53,7 @@ const AgentClientDetails: React.FC<AgentClientDetailsProps> = ({ onNext }) => {
     e.preventDefault();
     
     const client: Client = {
-      id: Date.now().toString(),
+      id: generateUUID(),
       name: formData.name,
       whatsapp: '', // Agent doesn't collect contact details
       countryCode: '', // Agent doesn't collect contact details

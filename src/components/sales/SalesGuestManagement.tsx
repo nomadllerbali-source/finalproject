@@ -3,11 +3,12 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateItineraryCost } from '../../utils/calculations';
 import { Client, FollowUpStatus, FollowUpRecord } from '../../types';
-import { 
-  Users, Eye, Edit2, Trash2, MessageCircle, Calendar, Phone, 
+import {
+  Users, Eye, Edit2, Trash2, MessageCircle, Calendar, Phone,
   MapPin, Car, DollarSign, X, Save, Clock, AlertCircle, CheckCircle,
   UserCheck, UserX, Filter, FileText, Copy, Send, TrendingUp
 } from 'lucide-react';
+import { generateUUID } from '../../utils/uuid';
 import Layout from '../Layout';
 import ClientEditModal from '../admin/ClientEditModal';
 import FollowUpModal from '../admin/FollowUpModal';
@@ -101,7 +102,7 @@ const SalesGuestManagement: React.FC = () => {
     const updatedClients = clients.map(client => {
       if (client.id === clientId) {
         const newFollowUpRecord: FollowUpRecord = {
-          id: Date.now().toString(),
+          id: generateUUID(),
           status,
           remarks,
           updatedAt: new Date().toISOString(),

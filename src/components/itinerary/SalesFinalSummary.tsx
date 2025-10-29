@@ -2,12 +2,13 @@ import React from 'react';
 import { Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { 
-  CheckCircle, Download, ArrowLeft, RotateCcw, Calendar, Users, 
+import {
+  CheckCircle, Download, ArrowLeft, RotateCcw, Calendar, Users,
   MapPin, Building2, Camera, Ticket, Utensils, DollarSign,
   Phone, Mail, Globe, Copy, TrendingUp
 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { generateUUID } from '../../utils/uuid';
 
 interface SalesFinalSummaryProps {
   itinerary: Itinerary;
@@ -69,7 +70,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
           lastUpdated: new Date().toISOString(),
           updatedBy: userId,
           changeLog: [{
-            id: Date.now().toString(),
+            id: generateUUID(),
             version: 1,
             changeType: 'created',
             description: 'Initial itinerary created by sales team',

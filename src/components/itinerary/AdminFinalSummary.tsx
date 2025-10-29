@@ -2,12 +2,13 @@ import React from 'react';
 import { Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { 
-  CheckCircle, Download, ArrowLeft, RotateCcw, Calendar, Users, 
+import {
+  CheckCircle, Download, ArrowLeft, RotateCcw, Calendar, Users,
   MapPin, Building2, Camera, Ticket, Utensils, DollarSign, Car,
   Phone, Mail, Globe, TrendingUp, Copy
 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { generateUUID } from '../../utils/uuid';
 
 interface AdminFinalSummaryProps {
   itinerary: Itinerary;
@@ -37,7 +38,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
           nextFollowUpTime: '11:00'
         },
         followUpHistory: [{
-          id: Date.now().toString(),
+          id: generateUUID(),
           status: 'itinerary-created' as const,
           remarks: 'Initial itinerary created by admin',
           updatedAt: new Date().toISOString(),

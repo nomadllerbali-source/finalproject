@@ -3,6 +3,7 @@ import { Client, Transportation } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Calendar, Users, Phone, MapPin, Clock } from 'lucide-react';
+import { generateUUID } from '../../utils/uuid';
 
 interface ClientDetailsProps {
   onNext: (client: Client) => void;
@@ -80,7 +81,7 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ onNext }) => {
     }
     
     const client: Client = {
-      id: Date.now().toString(),
+      id: generateUUID(),
       name: formData.name,
       whatsapp: formData.whatsapp,
       countryCode: formData.countryCode,

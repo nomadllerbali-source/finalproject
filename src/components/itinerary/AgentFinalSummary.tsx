@@ -2,12 +2,13 @@ import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
-import { 
-  CheckCircle, Download, ArrowLeft, RotateCcw, Calendar, Users, 
+import {
+  CheckCircle, Download, ArrowLeft, RotateCcw, Calendar, Users,
   MapPin, Building2, Camera, Ticket, Utensils, DollarSign,
   Phone, Mail, Globe, Copy
 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { generateUUID } from '../../utils/uuid';
 
 interface AgentFinalSummaryProps {
   itinerary: Itinerary;
@@ -37,7 +38,7 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
           nextFollowUpTime: '14:00'
         },
         followUpHistory: [{
-          id: Date.now().toString(),
+          id: generateUUID(),
           status: 'itinerary-created' as const,
           remarks: 'Initial itinerary created by agent',
           updatedAt: new Date().toISOString(),
