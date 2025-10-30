@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Client, DayPlan, Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { calculateItineraryCost, getSeasonalPrice, formatCurrency } from '../../utils/calculations';
 import { generateUUID } from '../../utils/uuid';
 import { DollarSign, Calendar, Users, MapPin, Building2, Camera, Ticket, Utensils, TrendingUp, Save } from 'lucide-react';
@@ -8,36 +9,48 @@ import { DollarSign, Calendar, Users, MapPin, Building2, Camera, Ticket, Utensil
 interface ReviewCostingProps {
   client: Client;
   dayPlans: DayPlan[];
-  onNext: (itinerary: Itinerary) => void;
+  onNext: (itinerary: Itinerary) => void | Promise<void>;
   onBack: () => void;
   isEditMode?: boolean;
 }
 
 const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext, onBack, isEditMode = false }) => {
   const { state } = useData();
+  const { state: authState } = useAuth();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
   const [profitMargin, setProfitMargin] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totalBaseCost = calculateItineraryCost(
     client, dayPlans, hotels, sightseeings, activities, entryTickets, meals, transportations
   );
   const finalPrice = totalBaseCost + profitMargin;
 
-  const handleSubmit = () => {
-    const itinerary: Itinerary = {
-      id: generateUUID(),
-      client,
-      dayPlans,
-      totalBaseCost,
-      profitMargin,
-      finalPrice,
-      exchangeRate: 1,
-      version: 1,
-      lastUpdated: new Date().toISOString(),
-      updatedBy: 'admin',
-      changeLog: []
-    };
-    onNext(itinerary);
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const itinerary: Itinerary = {
+        id: generateUUID(),
+        client,
+        dayPlans,
+        totalBaseCost,
+        profitMargin,
+        finalPrice,
+        exchangeRate: 1,
+        version: 1,
+        lastUpdated: new Date().toISOString(),
+        updatedBy: authState.user?.email || 'admin',
+        changeLog: []
+      };
+      await onNext(itinerary);
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      alert('Failed to save itinerary. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderDayPlanSummary = (dayPlan: DayPlan) => {
@@ -289,9 +302,15 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
             </button>
             <button
               onClick={handleSubmit}
-              className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white text-sm md:text-base font-semibold rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-200 transform hover:scale-105"
+              disabled={isSubmitting}
+              className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white text-sm md:text-base font-semibold rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isEditMode ? (
+              {isSubmitting ? (
+                <>
+                  <Save className="mr-2 h-5 w-5 animate-spin" />
+                  {isEditMode ? 'Updating...' : 'Saving...'}
+                </>
+              ) : isEditMode ? (
                 <>
                   <Save className="mr-2 h-5 w-5" />
                   Update Itinerary
