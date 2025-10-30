@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { DataProvider } from '../../contexts/DataContext';
 import { Users, CheckCircle, Clock, Plus, Eye, Edit2, Trash2, MessageCircle, Phone, FileText, X, Calendar, MapPin, Car, DollarSign, Send, Filter, LogOut } from 'lucide-react';
 import Layout from '../Layout';
 import SalesItineraryBuilder from '../itinerary/SalesItineraryBuilder';
@@ -129,7 +130,11 @@ const SalesApp: React.FC = () => {
   };
 
   if (showItineraryBuilder) {
-    return <SalesItineraryBuilder />;
+    return (
+      <DataProvider>
+        <SalesItineraryBuilder />
+      </DataProvider>
+    );
   }
 
   if (loading) {
