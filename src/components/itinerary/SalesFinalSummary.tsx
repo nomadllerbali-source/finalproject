@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { generateUUID } from '../../utils/uuid';
-import { createSalesClient, createBookingChecklist } from '../../lib/salesHelpers';
+import { createSalesClient, createBookingChecklist, createItineraryVersion } from '../../lib/salesHelpers';
 
 interface SalesFinalSummaryProps {
   itinerary: Itinerary;
@@ -73,6 +73,17 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
 
         if (createdClient) {
           console.log('Sales client created successfully!', createdClient);
+
+          console.log('Creating initial itinerary version...');
+          await createItineraryVersion(
+            createdClient.id,
+            { days: itinerary.dayPlans },
+            totalCost,
+            'Initial itinerary',
+            'itinerary-created',
+            userId
+          );
+          console.log('Initial version created!');
 
           // Create booking checklist items
           console.log('Creating booking checklist...');

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Calendar, Clock, MessageSquare, CheckCircle } from 'lucide-react';
-import { SalesClient, updateSalesClient } from '../../lib/salesHelpers';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Calendar, Clock, MessageSquare, CheckCircle, FileText } from 'lucide-react';
+import { SalesClient, updateSalesClient, createFollowUpHistory, getLatestItineraryVersion } from '../../lib/salesHelpers';
+import { useAuth } from '../../contexts/AuthContext';
 import Layout from '../Layout';
 
 interface FollowUpManagerProps {
@@ -9,6 +10,7 @@ interface FollowUpManagerProps {
 }
 
 const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => {
+  const { state: authState } = useAuth();
   const [formData, setFormData] = useState({
     status: getNextStatus(client.current_follow_up_status),
     remarks: '',
@@ -16,6 +18,22 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
     nextFollowUpTime: '10:00'
   });
   const [saving, setSaving] = useState(false);
+  const [latestVersionNumber, setLatestVersionNumber] = useState<number | null>(null);
+
+  useEffect(() => {
+    loadLatestVersion();
+  }, [client.id]);
+
+  const loadLatestVersion = async () => {
+    try {
+      const version = await getLatestItineraryVersion(client.id);
+      if (version) {
+        setLatestVersionNumber(version.version_number);
+      }
+    } catch (error) {
+      console.error('Error loading latest version:', error);
+    }
+  };
 
   function getNextStatus(currentStatus: string): string {
     const statusFlow = [
@@ -79,6 +97,11 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
 
     setSaving(true);
     try {
+      const userId = authState.user?.id;
+      if (!userId) {
+        throw new Error('User must be authenticated');
+      }
+
       const updateData: any = {
         current_follow_up_status: formData.status
       };
@@ -92,6 +115,17 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
       }
 
       await updateSalesClient(client.id, updateData);
+
+      await createFollowUpHistory({
+        client_id: client.id,
+        sales_person_id: client.sales_person_id,
+        status: formData.status,
+        remarks: formData.remarks,
+        next_follow_up_date: requiresFollowUp ? formData.nextFollowUpDate : undefined,
+        next_follow_up_time: requiresFollowUp ? formData.nextFollowUpTime : undefined,
+        itinerary_version_number: latestVersionNumber || undefined,
+        created_by: userId
+      });
 
       alert(`Follow-up updated to: ${formData.status.replace(/-/g, ' ').toUpperCase()}\n\nRemarks: ${formData.remarks}`);
       onBack();
@@ -119,15 +153,28 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
         {/* Current Status */}
         <div className="mb-6 pb-6 border-b border-slate-200">
           <h3 className="text-lg font-semibold text-slate-900 mb-3">Current Status</h3>
-          <div className="inline-block px-4 py-2 bg-slate-100 rounded-lg">
-            <span className="text-slate-700 font-medium">
-              {client.current_follow_up_status.replace(/-/g, ' ').toUpperCase()}
-            </span>
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="inline-block px-4 py-2 bg-slate-100 rounded-lg">
+              <span className="text-slate-700 font-medium">
+                {client.current_follow_up_status.replace(/-/g, ' ').toUpperCase()}
+              </span>
+            </div>
+            {latestVersionNumber && (
+              <div className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg">
+                <FileText className="h-4 w-4 mr-1.5" />
+                <span className="text-sm font-medium">Current: v{latestVersionNumber}</span>
+              </div>
+            )}
           </div>
           {client.next_follow_up_date && (
             <div className="mt-3 text-sm text-slate-600">
               Next follow-up: {new Date(client.next_follow_up_date).toLocaleDateString()}
               {client.next_follow_up_time && ` at ${client.next_follow_up_time}`}
+            </div>
+          )}
+          {latestVersionNumber && (
+            <div className="mt-2 text-xs text-slate-500">
+              This follow-up will be linked to itinerary version {latestVersionNumber}
             </div>
           )}
         </div>

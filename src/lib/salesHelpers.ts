@@ -41,6 +41,19 @@ export interface FollowUpHistory {
   remarks: string;
   next_follow_up_date?: string;
   next_follow_up_time?: string;
+  itinerary_version_number?: number;
+  created_at: string;
+  created_by: string;
+}
+
+export interface ItineraryVersion {
+  id: string;
+  client_id: string;
+  version_number: number;
+  itinerary_data: any;
+  total_cost: number;
+  change_description: string;
+  associated_follow_up_status: string;
   created_at: string;
   created_by: string;
 }
@@ -364,4 +377,87 @@ export const createBookingChecklist = async (clientId: string, itineraryData: an
       .insert(checklistItems);
     if (error) throw error;
   }
+};
+
+// Itinerary Version Operations
+export const getItineraryVersionsByClient = async (clientId: string): Promise<ItineraryVersion[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('sales_itinerary_versions')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('version_number', { ascending: false });
+  if (error) throw error;
+  return data || [];
+};
+
+export const getLatestItineraryVersion = async (clientId: string): Promise<ItineraryVersion | null> => {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('sales_itinerary_versions')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('version_number', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+};
+
+export const getItineraryVersion = async (clientId: string, versionNumber: number): Promise<ItineraryVersion | null> => {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('sales_itinerary_versions')
+    .select('*')
+    .eq('client_id', clientId)
+    .eq('version_number', versionNumber)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+};
+
+export const createItineraryVersion = async (
+  clientId: string,
+  itineraryData: any,
+  totalCost: number,
+  changeDescription: string,
+  followUpStatus: string,
+  createdBy: string
+): Promise<ItineraryVersion | null> => {
+  if (!supabase) return null;
+
+  const { data: nextVersionData, error: versionError } = await supabase
+    .rpc('get_next_version_number', { p_client_id: clientId });
+
+  if (versionError) throw versionError;
+
+  const nextVersion = nextVersionData || 1;
+
+  const { data, error } = await supabase
+    .from('sales_itinerary_versions')
+    .insert({
+      client_id: clientId,
+      version_number: nextVersion,
+      itinerary_data: itineraryData,
+      total_cost: totalCost,
+      change_description: changeDescription,
+      associated_follow_up_status: followUpStatus,
+      created_by: createdBy
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const getFollowUpHistoryWithVersions = async (clientId: string): Promise<FollowUpHistory[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('follow_up_history')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
 };
