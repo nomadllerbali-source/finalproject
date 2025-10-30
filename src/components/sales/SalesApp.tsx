@@ -373,9 +373,14 @@ const SalesApp: React.FC = () => {
                     Next Follow-up
                   </th>
                   {activeTab === 'confirmed' && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Booking Progress
-                    </th>
+                    <>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Operations Person
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Booking Progress
+                      </th>
+                    </>
                   )}
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Actions
@@ -434,19 +439,44 @@ const SalesApp: React.FC = () => {
                       )}
                     </td>
                     {activeTab === 'confirmed' && (
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex-1 bg-slate-200 rounded-full h-2">
-                            <div
-                              className="bg-green-600 h-2 rounded-full"
-                              style={{ width: `${client.booking_completion_percentage}%` }}
-                            ></div>
+                      <>
+                        <td className="px-6 py-4">
+                          {(client as any).operations_person ? (
+                            <div className="text-sm">
+                              <div className="font-medium text-slate-900">
+                                {(client as any).operations_person.full_name}
+                              </div>
+                              <div className="text-slate-500 flex items-center">
+                                <Mail className="h-3 w-3 mr-1" />
+                                {(client as any).operations_person.email}
+                              </div>
+                              {(client as any).operations_person.phone_number && (
+                                <div className="text-slate-500 flex items-center">
+                                  <Phone className="h-3 w-3 mr-1" />
+                                  {(client as any).operations_person.phone_number}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 text-sm italic">
+                              Not assigned yet
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-1 bg-slate-200 rounded-full h-2">
+                              <div
+                                className="bg-green-600 h-2 rounded-full"
+                                style={{ width: `${client.booking_completion_percentage}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-sm text-slate-600">
+                              {client.booking_completion_percentage}%
+                            </span>
                           </div>
-                          <span className="text-sm text-slate-600">
-                            {client.booking_completion_percentage}%
-                          </span>
-                        </div>
-                      </td>
+                        </td>
+                      </>
                     )}
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">

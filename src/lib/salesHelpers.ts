@@ -152,7 +152,15 @@ export const getConfirmedClients = async (salesPersonId: string): Promise<SalesC
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('sales_clients')
-    .select('*')
+    .select(`
+      *,
+      operations_person:operations_persons!assigned_operation_person_id(
+        id,
+        full_name,
+        email,
+        phone_number
+      )
+    `)
     .eq('sales_person_id', salesPersonId)
     .eq('current_follow_up_status', 'advance-paid-confirmed')
     .order('created_at', { ascending: false});
