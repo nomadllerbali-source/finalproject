@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { generateUUID } from '../../utils/uuid';
+import { createSalesClient, createBookingChecklist } from '../../lib/salesHelpers';
 
 interface SalesFinalSummaryProps {
   itinerary: Itinerary;
@@ -30,46 +31,47 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
       console.log('Itinerary client:', itinerary.client);
 
       try {
-        // Prepare client with follow-up status
-        const clientWithFollowUp = {
-          ...itinerary.client,
-          createdBy: authState.user?.id || itinerary.client.createdBy,
-          followUpStatus: {
-            status: 'itinerary-created' as const,
-            updatedAt: new Date().toISOString(),
-            remarks: 'Initial itinerary created by sales team'
-          },
-          nextFollowUpDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
-          nextFollowUpTime: '10:00'
-        };
-
-        console.log('Prepared client with follow-up:', clientWithFollowUp);
-
-        // Always try to insert the client - database will handle uniqueness
-        console.log('Adding client to database...');
-        try {
-          await addClient(clientWithFollowUp);
-          console.log('Client added successfully!');
-        } catch (error: any) {
-          // If client already exists (unique constraint violation), that's OK
-          const isDuplicate = error.message?.includes('duplicate key') ||
-                            error.message?.includes('already exists') ||
-                            error.code === '23505';
-          if (isDuplicate) {
-            console.log('Client already exists in database, continuing...');
-          } else {
-            console.error('Failed to add client:', error);
-            throw error;
-          }
-        }
-
-        // Prepare itinerary with metadata
-        // IMPORTANT: updated_by must be a UUID (user ID), not a string like 'sales'
         const userId = authState.user?.id;
         if (!userId) {
           throw new Error('User must be authenticated to create itinerary');
         }
 
+        // Calculate total cost from itinerary
+        const totalCost = itinerary.finalPrice || 0;
+
+        // Prepare sales client data
+        const salesClientData = {
+          sales_person_id: userId,
+          name: itinerary.client.name,
+          country_code: itinerary.client.countryCode || '+1',
+          whatsapp: itinerary.client.whatsapp,
+          email: itinerary.client.email,
+          travel_date: itinerary.client.travelDates.startDate,
+          number_of_days: itinerary.client.numberOfDays,
+          number_of_adults: itinerary.client.numberOfPax.adults,
+          number_of_children: itinerary.client.numberOfPax.children,
+          transportation_mode: itinerary.client.transportationMode,
+          itinerary_data: itinerary,
+          total_cost: totalCost,
+          current_follow_up_status: 'itinerary-created',
+          next_follow_up_date: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
+          next_follow_up_time: '10:00',
+          booking_completion_percentage: 0
+        };
+
+        console.log('Creating sales client...');
+        const createdClient = await createSalesClient(salesClientData);
+
+        if (createdClient) {
+          console.log('Sales client created successfully!', createdClient);
+
+          // Create booking checklist items
+          console.log('Creating booking checklist...');
+          await createBookingChecklist(createdClient.id, itinerary);
+          console.log('Booking checklist created!');
+        }
+
+        // Also save to itineraries table for backward compatibility
         const itineraryWithMetadata: Itinerary = {
           ...itinerary,
           id: generateUUID(),
@@ -100,7 +102,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
     };
 
     saveData();
-  }, [itinerary, authState.user?.id, state.clients, addClient, addItinerary]);
+  }, [itinerary, authState.user?.id, addItinerary]);
 
   const copyItineraryToClipboard = () => {
     const totalPax = itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children;
