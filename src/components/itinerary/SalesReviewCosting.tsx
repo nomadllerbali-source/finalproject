@@ -30,21 +30,29 @@ const SalesReviewCosting: React.FC<SalesReviewCostingProps> = ({ client, dayPlan
   const finalPrice = costWithMarkup + salesCommission;
 
   const handleSubmit = () => {
-    const itinerary: Itinerary = {
-      id: generateUUID(),
-      client,
-      dayPlans,
-      totalBaseCost: costWithMarkup,
-      profitMargin: salesCommission,
-      finalPrice,
-      exchangeRate: 1,
-      version: 1,
-      lastUpdated: new Date().toISOString(),
-      updatedBy: 'sales',
-      changeLog: []
-    };
+    try {
+      const itinerary: Itinerary = {
+        id: generateUUID(),
+        client,
+        dayPlans,
+        totalBaseCost: costWithMarkup,
+        profitMargin: salesCommission,
+        finalPrice,
+        exchangeRate: 1,
+        version: 1,
+        lastUpdated: new Date().toISOString(),
+        updatedBy: 'sales',
+        changeLog: []
+      };
 
-    onNext(itinerary);
+      if (typeof onNext === 'function') {
+        onNext(itinerary);
+      } else {
+        alert('Error: Navigation callback is not properly configured.');
+      }
+    } catch (error) {
+      alert('Error generating summary: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
   };
 
   const renderDayPlanSummary = (dayPlan: DayPlan) => {
