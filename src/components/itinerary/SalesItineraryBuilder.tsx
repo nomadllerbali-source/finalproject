@@ -37,12 +37,8 @@ const SalesItineraryBuilder: React.FC<SalesItineraryBuilderProps> = ({ onBackToD
   };
 
   const handleReviewNext = (itineraryData: Itinerary) => {
-    console.log('=== SALES ITINERARY BUILDER: handleReviewNext called ===');
-    console.log('Received itinerary:', itineraryData);
-    console.log('Current step before:', currentStep);
     setItinerary(itineraryData);
     setCurrentStep(5);
-    console.log('Set to step 5');
   };
 
   const handleFixedItineraryNext = (itineraryData: Itinerary) => {
@@ -69,9 +65,6 @@ const SalesItineraryBuilder: React.FC<SalesItineraryBuilderProps> = ({ onBackToD
   }, [currentStep]);
 
   const renderStep = () => {
-    console.log('=== RENDERING STEP ===', currentStep);
-    console.log('Itinerary state:', itinerary);
-
     switch (currentStep) {
       case 1:
         return <ClientDetails onNext={handleClientNext} />;
@@ -116,9 +109,7 @@ const SalesItineraryBuilder: React.FC<SalesItineraryBuilderProps> = ({ onBackToD
           />
         ) : null;
       case 5:
-        console.log('Step 5 - Checking itinerary:', itinerary ? 'EXISTS' : 'NULL');
         if (!itinerary) {
-          console.error('ERROR: Itinerary is null at step 5!');
           return <div className="text-red-500 p-4">Error: Itinerary data is missing</div>;
         }
         return (

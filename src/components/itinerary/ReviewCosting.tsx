@@ -23,13 +23,6 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
   const finalPrice = totalBaseCost + profitMargin;
 
   const handleSubmit = () => {
-    console.log('=== REVIEW COSTING: Generate Summary clicked ===');
-    console.log('Client:', client);
-    console.log('Day Plans:', dayPlans);
-    console.log('Total Base Cost:', totalBaseCost);
-    console.log('Profit Margin:', profitMargin);
-    console.log('Final Price:', finalPrice);
-
     const itinerary: Itinerary = {
       id: generateUUID(),
       client,
@@ -44,10 +37,7 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
       changeLog: []
     };
 
-    console.log('Created itinerary:', itinerary);
-    console.log('Calling onNext...');
     onNext(itinerary);
-    console.log('onNext called successfully');
   };
 
   const renderDayPlanSummary = (dayPlan: DayPlan) => {

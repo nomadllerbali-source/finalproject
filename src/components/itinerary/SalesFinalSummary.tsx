@@ -29,23 +29,17 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
   React.useEffect(() => {
     // Skip saving if in view mode
     if (isViewMode) {
-      console.log('View mode - skipping save');
       return;
     }
 
     // Prevent multiple saves using ref (synchronous check)
     if (hasSavedRef.current) {
-      console.log('Already saved, skipping...');
       return;
     }
 
     hasSavedRef.current = true;
 
     const saveData = async () => {
-      console.log('=== SALES FINAL SUMMARY: Starting save ===');
-      console.log('Auth user:', authState.user);
-      console.log('Itinerary client:', itinerary.client);
-
       try {
         const userId = authState.user?.id;
         if (!userId) {
@@ -75,13 +69,9 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
           booking_completion_percentage: 0
         };
 
-        console.log('Creating sales client...');
         const createdClient = await createSalesClient(salesClientData);
 
         if (createdClient) {
-          console.log('Sales client created successfully!', createdClient);
-
-          console.log('Creating initial itinerary version...');
           await createItineraryVersion(
             createdClient.id,
             { days: itinerary.dayPlans },
@@ -90,21 +80,12 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
             'itinerary-created',
             userId
           );
-          console.log('Initial version created!');
 
           // Create booking checklist items
-          console.log('Creating booking checklist...');
           await createBookingChecklist(createdClient.id, itinerary);
-          console.log('Booking checklist created!');
         }
-
-        console.log('=== SALES FINAL SUMMARY: Save complete ===');
       } catch (error: any) {
-        console.error('=== ERROR SAVING ITINERARY ===');
-        console.error('Error details:', error);
-        console.error('Error message:', error?.message);
-        console.error('Error stack:', error?.stack);
-        alert(`Failed to save itinerary: ${error?.message || 'Unknown error'}. Check console for details.`);
+        alert(`Failed to save itinerary: ${error?.message || 'Unknown error'}. Please try again.`);
       }
     };
 

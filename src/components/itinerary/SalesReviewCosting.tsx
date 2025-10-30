@@ -29,23 +29,7 @@ const SalesReviewCosting: React.FC<SalesReviewCostingProps> = ({ client, dayPlan
   // Final price with sales commission
   const finalPrice = costWithMarkup + salesCommission;
 
-  const handleSubmit = (e?: React.MouseEvent) => {
-    console.log('🔴🔴🔴 BUTTON CLICKED - handleSubmit CALLED! 🔴🔴🔴');
-    alert('Button was clicked! Check console.');
-
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    console.log('=== SALES REVIEW COSTING: Generate Summary clicked ===');
-    console.log('Client:', client);
-    console.log('Day Plans:', dayPlans);
-    console.log('Cost with Markup:', costWithMarkup);
-    console.log('Sales Commission:', salesCommission);
-    console.log('Final Price:', finalPrice);
-    console.log('onNext type:', typeof onNext);
-
+  const handleSubmit = () => {
     const itinerary: Itinerary = {
       id: generateUUID(),
       client,
@@ -60,16 +44,7 @@ const SalesReviewCosting: React.FC<SalesReviewCostingProps> = ({ client, dayPlan
       changeLog: []
     };
 
-    console.log('Created itinerary:', itinerary);
-    console.log('Calling onNext...');
-
-    try {
-      onNext(itinerary);
-      console.log('✅ onNext called successfully');
-    } catch (error) {
-      console.error('❌ Error calling onNext:', error);
-      alert('Error: ' + error);
-    }
+    onNext(itinerary);
   };
 
   const renderDayPlanSummary = (dayPlan: DayPlan) => {
@@ -320,14 +295,7 @@ const SalesReviewCosting: React.FC<SalesReviewCostingProps> = ({ client, dayPlan
               Previous Step
             </button>
             <button
-              type="button"
-              onClick={(e) => {
-                console.log('🟢 Button onClick fired!');
-                handleSubmit(e);
-              }}
-              onMouseDown={() => console.log('🟡 Mouse down on button')}
-              onMouseUp={() => console.log('🟢 Mouse up on button')}
-              style={{ position: 'relative', zIndex: 9999, pointerEvents: 'all' }}
+              onClick={handleSubmit}
               className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm md:text-base font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105"
             >
               Generate Summary
