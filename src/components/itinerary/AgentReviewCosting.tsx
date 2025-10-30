@@ -29,19 +29,28 @@ const AgentReviewCosting: React.FC<AgentReviewCostingProps> = ({ client, dayPlan
   // Final price with agent profit
   const finalPrice = costWithMarkup + agentProfit;
 
-  const handleSubmit = () => {
+  const handleSubmit = (e?: React.MouseEvent) => {
+    console.log('🔵🔵🔵 AGENT BUTTON CLICKED! 🔵🔵🔵');
+    alert('Agent button clicked! Check console.');
+
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     console.log('=== AGENT REVIEW COSTING: Generate Summary clicked ===');
     console.log('Client:', client);
     console.log('Day Plans:', dayPlans);
     console.log('Cost with Markup:', costWithMarkup);
     console.log('Agent Profit:', agentProfit);
     console.log('Final Price:', finalPrice);
+    console.log('onNext type:', typeof onNext);
 
     const itinerary: Itinerary = {
       id: generateUUID(),
       client,
       dayPlans,
-      totalBaseCost: costWithMarkup, // Show marked-up price as "base" to agent
+      totalBaseCost: costWithMarkup,
       profitMargin: agentProfit,
       finalPrice,
       exchangeRate: 1,
@@ -53,8 +62,14 @@ const AgentReviewCosting: React.FC<AgentReviewCostingProps> = ({ client, dayPlan
 
     console.log('Created itinerary:', itinerary);
     console.log('Calling onNext...');
-    onNext(itinerary);
-    console.log('onNext called successfully');
+
+    try {
+      onNext(itinerary);
+      console.log('✅ onNext called successfully');
+    } catch (error) {
+      console.error('❌ Error calling onNext:', error);
+      alert('Error: ' + error);
+    }
   };
 
   const renderDayPlanSummary = (dayPlan: DayPlan) => {
@@ -305,7 +320,14 @@ const AgentReviewCosting: React.FC<AgentReviewCostingProps> = ({ client, dayPlan
               Previous Step
             </button>
             <button
-              onClick={handleSubmit}
+              type="button"
+              onClick={(e) => {
+                console.log('🟢 Agent button onClick fired!');
+                handleSubmit(e);
+              }}
+              onMouseDown={() => console.log('🟡 Mouse down on agent button')}
+              onMouseUp={() => console.log('🟢 Mouse up on agent button')}
+              style={{ position: 'relative', zIndex: 9999, pointerEvents: 'all' }}
               className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-gradient-to-r from-teal-600 to-green-600 text-white text-sm md:text-base font-semibold rounded-lg hover:from-teal-700 hover:to-green-700 transition-all duration-200 transform hover:scale-105"
             >
               Generate Summary
