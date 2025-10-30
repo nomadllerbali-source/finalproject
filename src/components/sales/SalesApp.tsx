@@ -6,6 +6,7 @@ import {
   getSalesClientsBySalesPerson,
   getConfirmedClients,
   getTodayFollowUps,
+  createSalesClient,
   SalesClient
 } from '../../lib/salesHelpers';
 
@@ -18,6 +19,18 @@ const SalesApp: React.FC = () => {
   const [confirmedClients, setConfirmedClients] = useState<SalesClient[]>([]);
   const [followUpClients, setFollowUpClients] = useState<SalesClient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [newClient, setNewClient] = useState({
+    name: '',
+    country_code: '+91',
+    whatsapp: '',
+    email: '',
+    travel_date: '',
+    number_of_days: 3,
+    number_of_adults: 2,
+    number_of_children: 0,
+    transportation_mode: 'sedan'
+  });
 
   useEffect(() => {
     loadData();
@@ -122,6 +135,47 @@ const SalesApp: React.FC = () => {
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
       await signOut();
+    }
+  };
+
+  const handleAddClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authState.user?.id) return;
+
+    try {
+      await createSalesClient({
+        sales_person_id: authState.user.id,
+        name: newClient.name,
+        country_code: newClient.country_code,
+        whatsapp: newClient.whatsapp,
+        email: newClient.email,
+        travel_date: newClient.travel_date,
+        number_of_days: newClient.number_of_days,
+        number_of_adults: newClient.number_of_adults,
+        number_of_children: newClient.number_of_children,
+        transportation_mode: newClient.transportation_mode,
+        total_cost: 0,
+        current_follow_up_status: 'itinerary-created',
+        booking_completion_percentage: 0
+      });
+
+      setShowAddClientModal(false);
+      setNewClient({
+        name: '',
+        country_code: '+91',
+        whatsapp: '',
+        email: '',
+        travel_date: '',
+        number_of_days: 3,
+        number_of_adults: 2,
+        number_of_children: 0,
+        transportation_mode: 'sedan'
+      });
+      await loadData();
+      alert('Client added successfully!');
+    } catch (error) {
+      console.error('Error adding client:', error);
+      alert('Failed to add client. Please try again.');
     }
   };
 
@@ -279,7 +333,7 @@ const SalesApp: React.FC = () => {
               {activeTab === 'followups' && "Today's Follow Ups"}
             </h2>
             <button
-              onClick={() => {/* TODO: Open add client modal */}}
+              onClick={() => setShowAddClientModal(true)}
               className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -437,6 +491,174 @@ const SalesApp: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Add Client Modal */}
+      {showAddClientModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-slate-900">Add New Client</h3>
+              <button
+                onClick={() => setShowAddClientModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddClient} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Client Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newClient.name}
+                    onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter client name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Country Code *
+                  </label>
+                  <select
+                    required
+                    value={newClient.country_code}
+                    onChange={(e) => setNewClient({ ...newClient, country_code: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="+91">+91 (India)</option>
+                    <option value="+1">+1 (USA/Canada)</option>
+                    <option value="+44">+44 (UK)</option>
+                    <option value="+61">+61 (Australia)</option>
+                    <option value="+971">+971 (UAE)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    WhatsApp Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={newClient.whatsapp}
+                    onChange={(e) => setNewClient({ ...newClient, whatsapp: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="9876543210"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={newClient.email}
+                    onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="client@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Travel Date *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={newClient.travel_date}
+                    onChange={(e) => setNewClient({ ...newClient, travel_date: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Number of Days *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={newClient.number_of_days}
+                    onChange={(e) => setNewClient({ ...newClient, number_of_days: parseInt(e.target.value) })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Number of Adults *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={newClient.number_of_adults}
+                    onChange={(e) => setNewClient({ ...newClient, number_of_adults: parseInt(e.target.value) })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Number of Children
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newClient.number_of_children}
+                    onChange={(e) => setNewClient({ ...newClient, number_of_children: parseInt(e.target.value) })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Transportation Mode *
+                  </label>
+                  <select
+                    required
+                    value={newClient.transportation_mode}
+                    onChange={(e) => setNewClient({ ...newClient, transportation_mode: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="sedan">Sedan</option>
+                    <option value="suv">SUV</option>
+                    <option value="tempo-traveller">Tempo Traveller</option>
+                    <option value="mini-bus">Mini Bus</option>
+                    <option value="luxury-coach">Luxury Coach</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end space-x-4 pt-4 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setShowAddClientModal(false)}
+                  className="px-6 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all"
+                >
+                  Add Client
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
