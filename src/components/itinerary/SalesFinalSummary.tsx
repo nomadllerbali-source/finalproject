@@ -22,12 +22,17 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
   const { state } = useData();
   const { state: authState } = useAuth();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
-  const [isSaved, setIsSaved] = React.useState(false);
+  const hasSavedRef = React.useRef(false);
 
   // Save itinerary to database
   React.useEffect(() => {
-    // Prevent multiple saves
-    if (isSaved) return;
+    // Prevent multiple saves using ref (synchronous check)
+    if (hasSavedRef.current) {
+      console.log('Already saved, skipping...');
+      return;
+    }
+
+    hasSavedRef.current = true;
 
     const saveData = async () => {
       console.log('=== SALES FINAL SUMMARY: Starting save ===');
@@ -73,9 +78,6 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
           console.log('Creating booking checklist...');
           await createBookingChecklist(createdClient.id, itinerary);
           console.log('Booking checklist created!');
-
-          // Mark as saved to prevent duplicates
-          setIsSaved(true);
         }
 
         console.log('=== SALES FINAL SUMMARY: Save complete ===');
@@ -89,7 +91,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
     };
 
     saveData();
-  }, [itinerary, authState.user?.id, isSaved]);
+  }, [itinerary, authState.user?.id]);
 
   const copyItineraryToClipboard = () => {
     const totalPax = itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children;
