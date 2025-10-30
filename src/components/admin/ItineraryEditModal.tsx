@@ -4,7 +4,8 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateItineraryCost } from '../../utils/calculations';
 import { generateUUID } from '../../utils/uuid';
-import { X, Save, Calendar, Plus, Trash2, MapPin, Building2, Camera, Ticket, Utensils, DollarSign, Search, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, Save, MapPin, Building2, Camera, Ticket, Utensils, DollarSign, Search, Check, ChevronRight, ChevronLeft, Edit, Users, Calendar, Phone, Clock } from 'lucide-react';
+import ViewOnlyClientDetails from './ViewOnlyClientDetails';
 
 interface ItineraryEditModalProps {
   client: Client;
@@ -12,19 +13,20 @@ interface ItineraryEditModalProps {
   onSave: (client: Client) => void;
 }
 
+type ViewMode = 'client-details' | 'day-planning' | 'edit-client';
 type PlanningStep = 'sightseeing' | 'hotel' | 'activities' | 'tickets' | 'meals';
 
 const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose, onSave }) => {
   const { state, updateItinerary, getLatestItinerary } = useData();
   const { state: authState } = useAuth();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
-  
+
+  const [viewMode, setViewMode] = useState<ViewMode>('client-details');
+  const [editableClient, setEditableClient] = useState<Client>(client);
   const [numberOfDays, setNumberOfDays] = useState(client.numberOfDays);
   const [dayPlans, setDayPlans] = useState<DayPlan[]>([]);
   const [profitMargin, setProfitMargin] = useState(0);
   const [exchangeRate, setExchangeRate] = useState(83);
-  const [lastSaved, setLastSaved] = useState<string>('');
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [currentDay, setCurrentDay] = useState(1);
   const [currentStep, setCurrentStep] = useState<PlanningStep>('sightseeing');
   const [completedDays, setCompletedDays] = useState<number[]>([]);
@@ -36,14 +38,12 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
     meals: ''
   });
 
-  // Get the latest itinerary for this client
   const latestItinerary = getLatestItinerary(client.id);
 
-  // Calculate current costs based on day plans
   const currentBaseCost = React.useMemo(() => {
     if (dayPlans.length === 0) return latestItinerary?.totalBaseCost || 0;
     return calculateItineraryCost(
-      { ...client, numberOfDays },
+      { ...editableClient, numberOfDays },
       dayPlans,
       hotels,
       sightseeings,
@@ -52,20 +52,18 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
       meals,
       transportations
     );
-  }, [client, numberOfDays, dayPlans, hotels, sightseeings, activities, entryTickets, meals, transportations]);
+  }, [editableClient, numberOfDays, dayPlans, hotels, sightseeings, activities, entryTickets, meals, transportations, latestItinerary]);
 
   const finalPrice = currentBaseCost + profitMargin;
 
   useEffect(() => {
-    // Initialize day plans from latest itinerary or create new ones
     let initialDayPlans: DayPlan[];
-    
+
     if (latestItinerary && latestItinerary.dayPlans.length > 0) {
-      // Load existing day plans and extend if needed
       initialDayPlans = Array.from({ length: numberOfDays }, (_, index) => {
         const dayNumber = index + 1;
         const existingDay = latestItinerary.dayPlans.find(dp => dp.day === dayNumber);
-        
+
         return existingDay || {
           day: dayNumber,
           sightseeing: [],
@@ -76,7 +74,6 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
         };
       });
     } else {
-      // Create new day plans
       initialDayPlans = Array.from({ length: numberOfDays }, (_, index) => ({
         day: index + 1,
         sightseeing: [],
@@ -86,11 +83,10 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
         meals: []
       }));
     }
-    
+
     setDayPlans(initialDayPlans);
   }, [numberOfDays, latestItinerary]);
 
-  // Update profit margin and exchange rate when latest itinerary changes
   useEffect(() => {
     if (latestItinerary) {
       setProfitMargin(latestItinerary.profitMargin);
@@ -98,52 +94,8 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
     }
   }, [latestItinerary]);
 
-  // Auto-save functionality
-  useEffect(() => {
-    const autoSave = async () => {
-      if (dayPlans.length === 0) return;
-      
-      setAutoSaveStatus('saving');
-      
-      try {
-        const updatedItinerary: Itinerary = {
-          id: latestItinerary?.id || generateUUID(),
-          client,
-          dayPlans,
-          totalBaseCost: currentBaseCost,
-          profitMargin: profitMargin,
-          finalPrice: finalPrice,
-          exchangeRate: exchangeRate,
-          version: (latestItinerary?.version || 0) + 1,
-          lastUpdated: new Date().toISOString(),
-          updatedBy: authState.user?.id || 'admin',
-          changeLog: latestItinerary?.changeLog || []
-        };
-
-        await updateItinerary(
-          updatedItinerary,
-          'general_edit',
-          `Itinerary updated: ${numberOfDays} days planned`
-        );
-        
-        setLastSaved(new Date().toLocaleTimeString());
-        setAutoSaveStatus('saved');
-        
-        setTimeout(() => setAutoSaveStatus('idle'), 2000);
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-        setAutoSaveStatus('idle');
-      }
-    };
-
-    // Debounce auto-save
-    const timeoutId = setTimeout(autoSave, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [dayPlans, numberOfDays, client, latestItinerary, updateItinerary, authState.user?.id, currentBaseCost, profitMargin, finalPrice, exchangeRate]);
-
-  // Filter sightseeing based on transportation mode
   const filteredSightseeing = sightseeings.filter(sight => {
-    const transportMode = client.transportationMode.toLowerCase();
+    const transportMode = editableClient.transportationMode.toLowerCase();
     if (transportMode.includes('cab')) return sight.transportationMode === 'cab';
     if (transportMode.includes('car')) return sight.transportationMode === 'self-drive-car';
     if (transportMode.includes('scooter')) return sight.transportationMode === 'self-drive-scooter';
@@ -151,6 +103,23 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
   });
 
   const uniquePlaces = [...new Set(hotels.map(hotel => hotel.place))];
+  const countryCodes = [
+    { code: '+1', country: 'US/CA' },
+    { code: '+44', country: 'UK' },
+    { code: '+91', country: 'IN' },
+    { code: '+61', country: 'AU' },
+    { code: '+49', country: 'DE' },
+    { code: '+33', country: 'FR' },
+    { code: '+81', country: 'JP' },
+    { code: '+86', country: 'CN' },
+    { code: '+65', country: 'SG' },
+    { code: '+60', country: 'MY' },
+    { code: '+62', country: 'ID' },
+  ];
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
   const updateSearchTerm = (step: PlanningStep, term: string) => {
     setSearchTerms(prev => ({ ...prev, [step]: term }));
@@ -160,28 +129,24 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
     setSearchTerms(prev => ({ ...prev, [step]: '' }));
   };
 
-  // Get available items for current day (excluding already selected items from previous days)
   const getAvailableItemsForDay = (currentDayIndex: number) => {
     const previousDays = dayPlans.slice(0, currentDayIndex);
-    
-    // Get already selected sightseeing IDs from previous days
+
     const selectedSightseeingIds = new Set<string>();
     previousDays.forEach(day => {
       day.sightseeing.forEach(id => selectedSightseeingIds.add(id));
     });
-    
-    // Get already selected activity IDs from previous days
+
     const selectedActivityIds = new Set<string>();
     previousDays.forEach(day => {
       day.activities.forEach(activity => selectedActivityIds.add(activity.activityId));
     });
-    
-    // Get already selected entry ticket IDs from previous days
+
     const selectedTicketIds = new Set<string>();
     previousDays.forEach(day => {
       day.entryTickets.forEach(id => selectedTicketIds.add(id));
     });
-    
+
     return {
       availableSightseeing: filteredSightseeing.filter(sight => !selectedSightseeingIds.has(sight.id)),
       selectedActivityIds,
@@ -189,11 +154,10 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
     };
   };
 
-  // Filter functions for search
   const getFilteredSightseeing = (dayIndex: number) => {
     const { availableSightseeing } = getAvailableItemsForDay(dayIndex);
     const searchTerm = searchTerms.sightseeing.toLowerCase();
-    return availableSightseeing.filter(sight => 
+    return availableSightseeing.filter(sight =>
       sight.name.toLowerCase().includes(searchTerm) ||
       sight.description.toLowerCase().includes(searchTerm)
     );
@@ -202,7 +166,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
   const getFilteredActivities = (dayIndex: number) => {
     const { selectedActivityIds } = getAvailableItemsForDay(dayIndex);
     const searchTerm = searchTerms.activities.toLowerCase();
-    return activities.filter(activity => 
+    return activities.filter(activity =>
       !selectedActivityIds.has(activity.id) &&
       (activity.name.toLowerCase().includes(searchTerm) ||
        activity.location.toLowerCase().includes(searchTerm))
@@ -212,8 +176,8 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
   const getFilteredTickets = (dayIndex: number, sightseeingIds: string[]) => {
     const { selectedTicketIds } = getAvailableItemsForDay(dayIndex);
     const searchTerm = searchTerms.tickets.toLowerCase();
-    return entryTickets.filter(ticket => 
-      sightseeingIds.includes(ticket.sightseeingId) && 
+    return entryTickets.filter(ticket =>
+      sightseeingIds.includes(ticket.sightseeingId) &&
       !selectedTicketIds.has(ticket.id) &&
       ticket.name.toLowerCase().includes(searchTerm)
     );
@@ -221,7 +185,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
 
   const getFilteredMeals = (mealType: string) => {
     const searchTerm = searchTerms.meals.toLowerCase();
-    return meals.filter(meal => 
+    return meals.filter(meal =>
       meal.type === mealType &&
       meal.place.toLowerCase().includes(searchTerm)
     );
@@ -252,13 +216,11 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
   const handleActivitySelection = (dayIndex: number, activityId: string) => {
     const currentActivities = dayPlans[dayIndex].activities;
     const exists = currentActivities.find(a => a.activityId === activityId);
-    
+
     if (exists) {
-      // Remove activity
       const updated = currentActivities.filter(a => a.activityId !== activityId);
       updateDayPlan(dayIndex, 'activities', updated);
     } else {
-      // Add activity with first option
       const activity = activities.find(a => a.id === activityId);
       if (activity && activity.options.length > 0) {
         const updated = [...currentActivities, {
@@ -312,23 +274,23 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
   const isStepComplete = (dayIndex: number, step: PlanningStep) => {
     const dayPlan = dayPlans[dayIndex];
     if (!dayPlan) return false;
-    
+
     switch (step) {
       case 'sightseeing': return dayPlan.sightseeing.length > 0;
       case 'hotel': return dayPlan.hotel !== null;
-      case 'activities': return true; // Activities are optional
-      case 'tickets': return true; // Tickets are optional
-      case 'meals': return true; // Meals are optional
+      case 'activities': return true;
+      case 'tickets': return true;
+      case 'meals': return true;
     }
   };
 
   const canProceedToNextStep = (dayIndex: number, step: PlanningStep) => {
     switch (step) {
       case 'sightseeing': return dayPlans[dayIndex]?.sightseeing.length > 0;
-      case 'hotel': return true; // Hotel is optional, can proceed
-      case 'activities': return true; // Activities are optional
-      case 'tickets': return true; // Tickets are optional
-      case 'meals': return true; // Meals are optional
+      case 'hotel': return true;
+      case 'activities': return true;
+      case 'tickets': return true;
+      case 'meals': return true;
     }
   };
 
@@ -348,13 +310,6 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
     const nextStep = getNextStep(currentStep);
     if (nextStep) {
       setCurrentStep(nextStep);
-    } else {
-      // Completed all steps for this day
-      setCompletedDays(prev => [...prev, currentDay]);
-      if (currentDay < numberOfDays) {
-        setCurrentDay(currentDay + 1);
-        setCurrentStep('sightseeing');
-      }
     }
   };
 
@@ -362,31 +317,88 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
     const prevStep = getPreviousStep(currentStep);
     if (prevStep) {
       setCurrentStep(prevStep);
-    } else if (currentDay > 1) {
-      setCurrentDay(currentDay - 1);
-      setCurrentStep('meals'); // Go to last step of previous day
     }
   };
 
-  const handleNextDay = () => {
-    if (currentDay < numberOfDays) {
-      setCompletedDays(prev => [...prev, currentDay]);
-      setCurrentDay(currentDay + 1);
-      setCurrentStep('sightseeing');
+  const calculateDays = (start: string, end: string) => {
+    if (start && end) {
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      return diffDays;
+    }
+    return 7;
+  };
+
+  const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
+    const updatedDates = { ...editableClient.travelDates, [field]: value };
+    if (updatedDates.startDate && updatedDates.endDate) {
+      const newDays = calculateDays(updatedDates.startDate, updatedDates.endDate);
+      setNumberOfDays(newDays);
+      setEditableClient({
+        ...editableClient,
+        travelDates: updatedDates,
+        numberOfDays: newDays
+      });
+    } else {
+      setEditableClient({
+        ...editableClient,
+        travelDates: updatedDates
+      });
     }
   };
 
-  const handlePreviousDay = () => {
-    if (currentDay > 1) {
-      setCurrentDay(currentDay - 1);
-      setCurrentStep('sightseeing');
-    }
+  const handleSaveClientDetails = () => {
+    setViewMode('client-details');
+  };
+
+  const handleSaveAllChanges = async () => {
+    const updatedItinerary: Itinerary = {
+      id: latestItinerary?.id || generateUUID(),
+      client: { ...editableClient, numberOfDays },
+      dayPlans,
+      totalBaseCost: currentBaseCost,
+      profitMargin: profitMargin,
+      finalPrice: finalPrice,
+      exchangeRate: exchangeRate,
+      version: (latestItinerary?.version || 0) + 1,
+      lastUpdated: new Date().toISOString(),
+      updatedBy: authState.user?.id || 'admin',
+      changeLog: [
+        ...(latestItinerary?.changeLog || []),
+        {
+          id: generateUUID(),
+          version: (latestItinerary?.version || 0) + 1,
+          changeType: numberOfDays !== client.numberOfDays ? 'days_modified' : 'general_edit',
+          description: numberOfDays !== client.numberOfDays
+            ? `Days changed from ${client.numberOfDays} to ${numberOfDays}`
+            : 'Itinerary details updated',
+          timestamp: new Date().toISOString(),
+          updatedBy: authState.user?.id || 'admin'
+        }
+      ]
+    };
+
+    await updateItinerary(
+      updatedItinerary,
+      numberOfDays !== client.numberOfDays ? 'days_modified' : 'general_edit',
+      numberOfDays !== client.numberOfDays
+        ? `Days changed from ${client.numberOfDays} to ${numberOfDays}`
+        : 'Itinerary details updated'
+    );
+
+    const updatedClient: Client = {
+      ...editableClient,
+      numberOfDays
+    };
+    onSave(updatedClient);
   };
 
   const renderStepContent = () => {
     const dayPlan = dayPlans[currentDay - 1];
     const dayIndex = currentDay - 1;
-    
+
     if (!dayPlan) return null;
 
     switch (currentStep) {
@@ -397,8 +409,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
               <h4 className="font-semibold text-blue-900 mb-2">Select Sightseeing Spots</h4>
               <p className="text-blue-700 text-sm">Choose the places you want to visit on Day {currentDay}. You can select multiple locations.</p>
             </div>
-            
-            {/* Search Bar */}
+
             <div className="relative">
               <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               <input
@@ -417,7 +428,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                 </button>
               )}
             </div>
-            
+
             <div className="space-y-3">
               {getFilteredSightseeing(dayIndex).map(sight => (
                 <label key={sight.id} className="flex items-start space-x-3 p-4 border-2 border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
@@ -443,13 +454,13 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                 </label>
               ))}
             </div>
-            
+
             {getFilteredSightseeing(dayIndex).length === 0 && (
               <div className="text-center py-8 text-slate-500">
                 <MapPin className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                 <p>
-                  {searchTerms.sightseeing 
-                    ? 'No sightseeing spots match your search.' 
+                  {searchTerms.sightseeing
+                    ? 'No sightseeing spots match your search.'
                     : 'All available sightseeing spots for this transportation mode have been selected in previous days.'
                   }
                 </p>
@@ -465,7 +476,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
               <h4 className="font-semibold text-purple-900 mb-2">Choose Hotel Accommodation</h4>
               <p className="text-purple-700 text-sm">Select where you want to stay on Day {currentDay}. You can skip this if no accommodation is needed.</p>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -567,8 +578,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
               <h4 className="font-semibold text-green-900 mb-2">Add Activities & Experiences</h4>
               <p className="text-green-700 text-sm">Select activities for Day {currentDay}. These are optional but add value to the experience.</p>
             </div>
-            
-            {/* Search Bar */}
+
             <div className="relative">
               <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               <input
@@ -587,12 +597,12 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                 </button>
               )}
             </div>
-            
+
             <div className="space-y-3">
               {getFilteredActivities(dayIndex).map(activity => {
                 const isSelected = dayPlan.activities.some(a => a.activityId === activity.id);
                 const selectedOption = dayPlan.activities.find(a => a.activityId === activity.id);
-                
+
                 return (
                   <div key={activity.id} className="border-2 border-slate-200 rounded-lg p-4 hover:border-green-300 transition-all">
                     <label className="flex items-center space-x-3 cursor-pointer">
@@ -607,7 +617,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                         <div className="text-sm text-slate-600">{activity.location}</div>
                       </div>
                     </label>
-                    
+
                     {isSelected && (
                       <div className="mt-3 ml-8">
                         <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -630,13 +640,13 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                 );
               })}
             </div>
-            
+
             {getFilteredActivities(dayIndex).length === 0 && (
               <div className="text-center py-8 text-slate-500">
                 <Camera className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                 <p>
-                  {searchTerms.activities 
-                    ? 'No activities match your search.' 
+                  {searchTerms.activities
+                    ? 'No activities match your search.'
                     : 'All available activities have been used in previous days.'
                   }
                 </p>
@@ -652,8 +662,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
               <h4 className="font-semibold text-orange-900 mb-2">Select Entry Tickets</h4>
               <p className="text-orange-700 text-sm">Choose entry tickets for the sightseeing spots selected for Day {currentDay}.</p>
             </div>
-            
-            {/* Search Bar */}
+
             <div className="relative">
               <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               <input
@@ -672,7 +681,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                 </button>
               )}
             </div>
-            
+
             <div className="space-y-3">
               {getFilteredTickets(dayIndex, dayPlan.sightseeing).map(ticket => (
                 <label key={ticket.id} className="flex items-center space-x-3 p-4 border-2 border-slate-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 cursor-pointer transition-all">
@@ -695,19 +704,19 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                 </label>
               ))}
             </div>
-            
+
             {getFilteredTickets(dayIndex, dayPlan.sightseeing).length === 0 && dayPlan.sightseeing.length > 0 && (
               <div className="text-center py-8 text-slate-500">
                 <Ticket className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                 <p>
-                  {searchTerms.tickets 
-                    ? 'No entry tickets match your search.' 
+                  {searchTerms.tickets
+                    ? 'No entry tickets match your search.'
                     : 'All available entry tickets for selected sightseeing spots have been used in previous days.'
                   }
                 </p>
               </div>
             )}
-            
+
             {dayPlan.sightseeing.length === 0 && (
               <div className="text-center py-8 text-slate-500">
                 <Ticket className="h-8 w-8 mx-auto mb-2 text-slate-400" />
@@ -724,8 +733,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
               <h4 className="font-semibold text-red-900 mb-2">Choose Meals</h4>
               <p className="text-red-700 text-sm">Select meal options for Day {currentDay}. You can choose multiple meals for different times of the day.</p>
             </div>
-            
-            {/* Search Bar */}
+
             <div className="relative">
               <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               <input
@@ -744,11 +752,11 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                 </button>
               )}
             </div>
-            
+
             <div className="space-y-6">
               {['breakfast', 'lunch', 'dinner'].map(mealType => {
                 const availableMeals = getFilteredMeals(mealType);
-                
+
                 return (
                   <div key={mealType}>
                     <h5 className="text-base font-semibold text-slate-900 mb-3 capitalize flex items-center">
@@ -780,9 +788,8 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                   </div>
                 );
               })}
-              
-              {/* No results message for meals */}
-              {searchTerms.meals && 
+
+              {searchTerms.meals &&
                ['breakfast', 'lunch', 'dinner'].every(mealType => getFilteredMeals(mealType).length === 0) && (
                 <div className="text-center py-8 text-slate-500">
                   <Utensils className="h-8 w-8 mx-auto mb-2 text-slate-400" />
@@ -798,58 +805,305 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
     }
   };
 
-  const handleSave = () => {
-    // Create updated itinerary
-    const updatedItinerary: Itinerary = {
-      id: latestItinerary?.id || generateUUID(),
-      client: { ...client, numberOfDays },
-      dayPlans,
-      totalBaseCost: currentBaseCost,
-      profitMargin: profitMargin,
-      finalPrice: finalPrice,
-      exchangeRate: exchangeRate,
-      version: (latestItinerary?.version || 0) + 1,
-      lastUpdated: new Date().toISOString(),
-      updatedBy: authState.user?.id || 'admin',
-      changeLog: [
-        ...(latestItinerary?.changeLog || []),
-        {
-          id: generateUUID(),
-          version: (latestItinerary?.version || 0) + 1,
-          changeType: numberOfDays !== client.numberOfDays ? 'days_modified' : 'general_edit',
-          description: numberOfDays !== client.numberOfDays
-            ? `Days changed from ${client.numberOfDays} to ${numberOfDays}`
-            : 'Itinerary details updated',
-          timestamp: new Date().toISOString(),
-          updatedBy: authState.user?.id || 'admin'
-        }
-      ]
-    };
+  if (viewMode === 'client-details') {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-slate-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Edit Itinerary - {client.name}</h3>
+                <p className="text-slate-500 text-sm">Review client details before editing day plans</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
 
-    // Update itinerary in context
-    updateItinerary(
-      updatedItinerary,
-      numberOfDays !== client.numberOfDays ? 'days_modified' : 'general_edit',
-      numberOfDays !== client.numberOfDays 
-        ? `Days changed from ${client.numberOfDays} to ${numberOfDays}`
-        : 'Itinerary details updated'
+          <div className="p-6">
+            <ViewOnlyClientDetails
+              client={editableClient}
+              onEdit={() => setViewMode('edit-client')}
+              onContinue={() => setViewMode('day-planning')}
+            />
+          </div>
+        </div>
+      </div>
     );
+  }
 
-    const updatedClient: Client = {
-      ...client,
-      numberOfDays
-    };
-    onSave(updatedClient);
-  };
+  if (viewMode === 'edit-client') {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-slate-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Edit Client Details</h3>
+                <p className="text-slate-500 text-sm">Modify client information</p>
+              </div>
+              <button
+                onClick={() => setViewMode('client-details')}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="p-8 space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900 flex items-center">
+                <Users className="h-5 w-5 mr-2 text-blue-600" />
+                Personal Information
+              </h3>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Client Name *
+                </label>
+                <input
+                  type="text"
+                  value={editableClient.name}
+                  onChange={(e) => setEditableClient({ ...editableClient, name: e.target.value })}
+                  className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter client's full name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Email (Optional)
+                </label>
+                <input
+                  type="email"
+                  value={editableClient.email || ''}
+                  onChange={(e) => setEditableClient({ ...editableClient, email: e.target.value })}
+                  className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter client's email address"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  WhatsApp Number *
+                </label>
+                <div className="flex space-x-3">
+                  <select
+                    value={editableClient.countryCode}
+                    onChange={(e) => setEditableClient({ ...editableClient, countryCode: e.target.value })}
+                    className="w-32 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {countryCodes.map(({ code, country }) => (
+                      <option key={code} value={code}>
+                        {code} ({country})
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="tel"
+                    value={editableClient.whatsapp}
+                    onChange={(e) => setEditableClient({ ...editableClient, whatsapp: e.target.value })}
+                    className="flex-1 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter WhatsApp number"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900 flex items-center">
+                <Calendar className="h-5 w-5 mr-2 text-blue-600" />
+                Travel Dates
+              </h3>
+
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="flexible-edit"
+                  checked={editableClient.travelDates.isFlexible}
+                  onChange={(e) => setEditableClient({
+                    ...editableClient,
+                    travelDates: { ...editableClient.travelDates, isFlexible: e.target.checked }
+                  })}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                />
+                <label htmlFor="flexible-edit" className="text-sm font-medium text-slate-700">
+                  Flexible dates (month only)
+                </label>
+              </div>
+
+              {editableClient.travelDates.isFlexible ? (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Preferred Month
+                  </label>
+                  <select
+                    value={editableClient.travelDates.flexibleMonth}
+                    onChange={(e) => setEditableClient({
+                      ...editableClient,
+                      travelDates: { ...editableClient.travelDates, flexibleMonth: e.target.value }
+                    })}
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a month</option>
+                    {months.map(month => (
+                      <option key={month} value={month}>{month}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Start Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={editableClient.travelDates.startDate}
+                      onChange={(e) => handleDateChange('startDate', e.target.value)}
+                      className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      End Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={editableClient.travelDates.endDate}
+                      onChange={(e) => handleDateChange('endDate', e.target.value)}
+                      className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900 flex items-center">
+                <Users className="h-5 w-5 mr-2 text-blue-600" />
+                Number of Passengers
+              </h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Adults
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={editableClient.numberOfPax.adults}
+                    onChange={(e) => setEditableClient({
+                      ...editableClient,
+                      numberOfPax: { ...editableClient.numberOfPax, adults: parseInt(e.target.value) || 1 }
+                    })}
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Children
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editableClient.numberOfPax.children}
+                    onChange={(e) => setEditableClient({
+                      ...editableClient,
+                      numberOfPax: { ...editableClient.numberOfPax, children: parseInt(e.target.value) || 0 }
+                    })}
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900 flex items-center">
+                <MapPin className="h-5 w-5 mr-2 text-blue-600" />
+                Trip Details
+              </h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Number of Days
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="1"
+                      value={numberOfDays}
+                      onChange={(e) => setNumberOfDays(parseInt(e.target.value) || 1)}
+                      className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      disabled={!editableClient.travelDates.isFlexible && editableClient.travelDates.startDate && editableClient.travelDates.endDate}
+                    />
+                    <Clock className="h-5 w-5 text-slate-400 absolute right-3 top-1/2 transform -translate-y-1/2" />
+                  </div>
+                  {!editableClient.travelDates.isFlexible && editableClient.travelDates.startDate && editableClient.travelDates.endDate && (
+                    <p className="text-xs text-slate-500 mt-1">Auto-calculated from dates</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Transportation Mode *
+                  </label>
+                  <select
+                    value={editableClient.transportationMode}
+                    onChange={(e) => setEditableClient({ ...editableClient, transportationMode: e.target.value })}
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select transportation</option>
+                    {transportations.map(transport => (
+                      <option key={transport.id} value={transport.vehicleName}>
+                        {transport.vehicleName} ({transport.type.replace('-', ' ')})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-6 border-t border-slate-200">
+              <button
+                onClick={() => setViewMode('client-details')}
+                className="px-6 py-3 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveClientDetails}
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all duration-200 transform hover:scale-105"
+              >
+                Save & Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-slate-200">
+        <div className="p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-slate-900">Edit Itinerary - {client.name}</h3>
-              <p className="text-slate-500 text-sm">Modify the travel itinerary and day plans</p>
+              <p className="text-slate-500 text-sm">
+                {latestItinerary
+                  ? `Version ${latestItinerary.version} • Last updated: ${new Date(latestItinerary.lastUpdated).toLocaleString()}`
+                  : 'Creating new itinerary'
+                }
+              </p>
             </div>
             <button
               onClick={onClose}
@@ -859,55 +1113,8 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
             </button>
           </div>
         </div>
-        
+
         <div className="p-6 space-y-6">
-          {/* Auto-save Status */}
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-semibold text-slate-900">Itinerary Editor</h4>
-                <p className="text-slate-600 text-sm">
-                  {latestItinerary 
-                    ? `Version ${latestItinerary.version} • Last updated: ${new Date(latestItinerary.lastUpdated).toLocaleString()}`
-                    : 'Creating new itinerary'
-                  }
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${
-                  autoSaveStatus === 'saving' ? 'bg-yellow-500 animate-pulse' :
-                  autoSaveStatus === 'saved' ? 'bg-green-500' : 'bg-slate-300'
-                }`}></div>
-                <span className="text-xs text-slate-600">
-                  {autoSaveStatus === 'saving' ? 'Saving...' :
-                   autoSaveStatus === 'saved' ? `Saved ${lastSaved}` : 'Auto-save enabled'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Number of Days Control */}
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-semibold text-slate-900">Trip Duration</h4>
-                <p className="text-slate-600 text-sm">Adjust the number of days for this trip</p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <label className="text-sm font-medium text-slate-700">Number of Days:</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="30"
-                  value={numberOfDays}
-                  onChange={(e) => setNumberOfDays(parseInt(e.target.value) || 1)}
-                  className="w-20 p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Live Cost Summary */}
           <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200">
             <h4 className="font-semibold text-slate-900 mb-3 flex items-center">
               <DollarSign className="h-5 w-5 mr-2 text-green-600" />
@@ -953,7 +1160,6 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
             </div>
           </div>
 
-          {/* Progress Overview */}
           <div className="mb-6">
             <div className="flex items-center justify-between">
               <div>
@@ -964,16 +1170,9 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                   Current Step: {getStepTitle(currentStep)}
                 </p>
               </div>
-              <div className="text-right">
-                <div className="text-sm text-slate-600">Progress</div>
-                <div className="text-lg font-semibold text-blue-600">
-                  {completedDays.length} / {numberOfDays} days completed
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Day Navigation */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-semibold text-slate-900">Select Day to Edit</h4>
@@ -986,19 +1185,18 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                 const day = index + 1;
                 const isCompleted = completedDays.includes(day);
                 const isCurrent = day === currentDay;
-                const isAccessible = true; // Allow jumping to any day in edit mode
-                
+
                 return (
                   <button
                     key={day}
                     onClick={() => {
                       setCurrentDay(day);
-                      setCurrentStep('sightseeing'); // Reset to first step when changing days
+                      setCurrentStep('sightseeing');
                     }}
                     className={`
                       flex items-center justify-center w-12 h-12 rounded-full font-semibold text-sm transition-all hover:scale-110 cursor-pointer
-                      ${isCurrent 
-                        ? 'bg-blue-600 text-white ring-2 ring-blue-200' 
+                      ${isCurrent
+                        ? 'bg-blue-600 text-white ring-2 ring-blue-200'
                         : isCompleted
                         ? 'bg-green-500 text-white'
                         : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
@@ -1011,8 +1209,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                 );
               })}
             </div>
-            
-            {/* Quick Day Selector Dropdown */}
+
             <div className="mt-4 flex items-center space-x-3">
               <label className="text-sm font-medium text-slate-700">Quick Jump:</label>
               <select
@@ -1032,13 +1229,9 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                   );
                 })}
               </select>
-              <div className="text-xs text-slate-500">
-                Currently editing: Day {currentDay}
-              </div>
             </div>
           </div>
 
-          {/* Step Progress for Current Day */}
           <div className="mb-6">
             <div className="bg-slate-50 rounded-lg p-4">
               <h4 className="font-semibold text-slate-900 mb-3">Day {currentDay} Planning Steps</h4>
@@ -1047,13 +1240,13 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                   const isCurrentStep = step === currentStep;
                   const isCompleted = isStepComplete(currentDay - 1, step);
                   const stepColor = getStepColor(step);
-                  
+
                   return (
                     <div key={step} className="flex items-center">
                       <div className={`
                         flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm transition-all
-                        ${isCurrentStep 
-                          ? `bg-${stepColor}-600 text-white ring-2 ring-${stepColor}-200` 
+                        ${isCurrentStep
+                          ? `bg-${stepColor}-600 text-white ring-2 ring-${stepColor}-200`
                           : isCompleted
                           ? 'bg-green-500 text-white'
                           : 'bg-slate-200 text-slate-500'
@@ -1078,7 +1271,6 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
             </div>
           </div>
 
-          {/* Current Step Content */}
           <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
             <div className={`bg-gradient-to-r from-${getStepColor(currentStep)}-50 to-${getStepColor(currentStep)}-100 px-6 py-4`}>
               <h4 className="text-lg font-semibold text-slate-900 flex items-center">
@@ -1092,14 +1284,13 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
             </div>
           </div>
 
-          {/* Navigation Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6 border-t border-slate-200">
+          <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6 border-t border-slate-200 sticky bottom-0 bg-white">
             <div className="flex gap-3">
               <button
-                onClick={onClose}
+                onClick={() => setViewMode('client-details')}
                 className="px-6 py-3 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               >
-                Close Editor
+                Back to Details
               </button>
               {(currentStep !== 'sightseeing' || currentDay > 1) && (
                 <button
@@ -1111,7 +1302,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                 </button>
               )}
             </div>
-            
+
             <div className="flex gap-3">
               {currentStep !== 'meals' ? (
                 <button
@@ -1127,25 +1318,13 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </button>
               ) : (
-                <>
-                  {currentDay < numberOfDays ? (
-                    <button
-                      onClick={handleNextDay}
-                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all duration-200 transform hover:scale-105"
-                    >
-                      Day {currentDay + 1}
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleSave}
-                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-200 transform hover:scale-105"
-                    >
-                      Save Itinerary
-                      <Save className="ml-2 h-5 w-5" />
-                    </button>
-                  )}
-                </>
+                <button
+                  onClick={handleSaveAllChanges}
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-200 transform hover:scale-105"
+                >
+                  <Save className="mr-2 h-5 w-5" />
+                  Save All Changes
+                </button>
               )}
             </div>
           </div>
