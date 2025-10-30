@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Edit3, Save } from 'lucide-react';
+import { ArrowLeft, Edit3 } from 'lucide-react';
 import { SalesClient, updateSalesClient, getLatestItineraryVersion, createItineraryVersion, ItineraryVersion } from '../../lib/salesHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { Client, DayPlan, Itinerary } from '../../types';
 import DayPlanning from '../itinerary/DayPlanning';
 import SalesReviewCosting from '../itinerary/SalesReviewCosting';
+import ClientDetails from '../itinerary/ClientDetails';
 import Layout from '../Layout';
 
 interface EditClientProps {
@@ -14,21 +15,30 @@ interface EditClientProps {
 
 const EditClient: React.FC<EditClientProps> = ({ client: salesClient, onBack }) => {
   const { state: authState } = useAuth();
-  const [editingBasicDetails, setEditingBasicDetails] = useState(false);
   const [editingItinerary, setEditingItinerary] = useState(false);
   const [currentStep, setCurrentStep] = useState<'details' | 'dayPlanning' | 'review'>('details');
 
   // Client data
-  const [clientData, setClientData] = useState({
+  const [clientData, setClientData] = useState<Client>({
+    id: salesClient.id,
     name: salesClient.name,
-    email: salesClient.email || '',
-    country_code: salesClient.country_code,
+    email: salesClient.email || undefined,
     whatsapp: salesClient.whatsapp,
-    travel_date: salesClient.travel_date,
-    number_of_days: salesClient.number_of_days,
-    number_of_adults: salesClient.number_of_adults,
-    number_of_children: salesClient.number_of_children,
-    transportation_mode: salesClient.transportation_mode
+    countryCode: salesClient.country_code,
+    travelDates: {
+      startDate: salesClient.travel_date,
+      endDate: salesClient.travel_date,
+      isFlexible: false,
+      flexibleMonth: ''
+    },
+    numberOfPax: {
+      adults: salesClient.number_of_adults,
+      children: salesClient.number_of_children
+    },
+    numberOfDays: salesClient.number_of_days,
+    transportationMode: salesClient.transportation_mode,
+    createdAt: salesClient.created_at,
+    createdBy: salesClient.sales_person_id
   });
 
   // Itinerary data
@@ -56,28 +66,28 @@ const EditClient: React.FC<EditClientProps> = ({ client: salesClient, onBack }) 
     }
   };
 
-  const handleSaveBasicDetails = async () => {
+  const handleSaveBasicDetails = async (updatedClient: Client) => {
     try {
       await updateSalesClient(salesClient.id, {
-        name: clientData.name,
-        email: clientData.email || undefined,
-        country_code: clientData.country_code,
-        whatsapp: clientData.whatsapp,
-        travel_date: clientData.travel_date,
-        number_of_days: clientData.number_of_days,
-        number_of_adults: clientData.number_of_adults,
-        number_of_children: clientData.number_of_children,
-        transportation_mode: clientData.transportation_mode
+        name: updatedClient.name,
+        email: updatedClient.email || undefined,
+        country_code: updatedClient.countryCode,
+        whatsapp: updatedClient.whatsapp,
+        travel_date: updatedClient.travelDates.startDate,
+        number_of_days: updatedClient.numberOfDays,
+        number_of_adults: updatedClient.numberOfPax.adults,
+        number_of_children: updatedClient.numberOfPax.children,
+        transportation_mode: updatedClient.transportationMode
       });
 
       // If number of days changed, adjust day plans
-      if (clientData.number_of_days !== originalDays) {
-        adjustDayPlans(clientData.number_of_days);
+      if (updatedClient.numberOfDays !== originalDays) {
+        adjustDayPlans(updatedClient.numberOfDays);
       }
 
+      setClientData(updatedClient);
+      setOriginalDays(updatedClient.numberOfDays);
       alert('Client details updated successfully!');
-      setEditingBasicDetails(false);
-      setOriginalDays(clientData.number_of_days);
       onBack();
     } catch (error) {
       console.error('Error updating client:', error);
@@ -85,7 +95,7 @@ const EditClient: React.FC<EditClientProps> = ({ client: salesClient, onBack }) 
     }
   };
 
-  const adjustDayPlans = (newNumberOfDays: number) => {
+  const adjustDayPlans = async (newNumberOfDays: number) => {
     const currentDays = dayPlans.length;
 
     if (newNumberOfDays > currentDays) {
@@ -101,10 +111,26 @@ const EditClient: React.FC<EditClientProps> = ({ client: salesClient, onBack }) 
           meals: []
         });
       }
-      setDayPlans([...dayPlans, ...newDays]);
+      const updatedPlans = [...dayPlans, ...newDays];
+      setDayPlans(updatedPlans);
+
+      // Update the itinerary version with new day plans
+      if (latestVersion) {
+        await updateSalesClient(salesClient.id, {
+          itinerary_data: { days: updatedPlans }
+        });
+      }
     } else if (newNumberOfDays < currentDays) {
       // Remove extra days
-      setDayPlans(dayPlans.slice(0, newNumberOfDays));
+      const updatedPlans = dayPlans.slice(0, newNumberOfDays);
+      setDayPlans(updatedPlans);
+
+      // Update the itinerary version with truncated day plans
+      if (latestVersion) {
+        await updateSalesClient(salesClient.id, {
+          itinerary_data: { days: updatedPlans }
+        });
+      }
     }
   };
 
@@ -115,7 +141,7 @@ const EditClient: React.FC<EditClientProps> = ({ client: salesClient, onBack }) 
     }
 
     // Ensure day plans match current number of days
-    adjustDayPlans(clientData.number_of_days);
+    adjustDayPlans(clientData.numberOfDays);
     setEditingItinerary(true);
     setCurrentStep('dayPlanning');
   };
@@ -184,47 +210,12 @@ const EditClient: React.FC<EditClientProps> = ({ client: salesClient, onBack }) 
     }
   };
 
-  const countryCodes = [
-    { code: '+1', country: 'US/CA' },
-    { code: '+44', country: 'UK' },
-    { code: '+91', country: 'IN' },
-    { code: '+61', country: 'AU' },
-    { code: '+49', country: 'DE' },
-    { code: '+33', country: 'FR' },
-    { code: '+81', country: 'JP' },
-    { code: '+86', country: 'CN' },
-    { code: '+65', country: 'SG' },
-    { code: '+60', country: 'MY' },
-    { code: '+62', country: 'ID' },
-  ];
 
   // Render day planning step
   if (editingItinerary && currentStep === 'dayPlanning') {
-    const client: Client = {
-      id: salesClient.id,
-      name: clientData.name,
-      email: clientData.email || undefined,
-      whatsapp: clientData.whatsapp,
-      countryCode: clientData.country_code,
-      travelDates: {
-        startDate: clientData.travel_date,
-        endDate: clientData.travel_date,
-        isFlexible: false,
-        flexibleMonth: ''
-      },
-      numberOfPax: {
-        adults: clientData.number_of_adults,
-        children: clientData.number_of_children
-      },
-      numberOfDays: clientData.number_of_days,
-      transportationMode: clientData.transportation_mode,
-      createdAt: salesClient.created_at,
-      createdBy: salesClient.sales_person_id
-    };
-
     return (
       <DayPlanning
-        client={client}
+        client={clientData}
         initialDayPlans={dayPlans}
         onNext={handleDayPlanningNext}
         onBack={handleDayPlanningBack}
@@ -235,31 +226,9 @@ const EditClient: React.FC<EditClientProps> = ({ client: salesClient, onBack }) 
 
   // Render review step
   if (editingItinerary && currentStep === 'review') {
-    const client: Client = {
-      id: salesClient.id,
-      name: clientData.name,
-      email: clientData.email || undefined,
-      whatsapp: clientData.whatsapp,
-      countryCode: clientData.country_code,
-      travelDates: {
-        startDate: clientData.travel_date,
-        endDate: clientData.travel_date,
-        isFlexible: false,
-        flexibleMonth: ''
-      },
-      numberOfPax: {
-        adults: clientData.number_of_adults,
-        children: clientData.number_of_children
-      },
-      numberOfDays: clientData.number_of_days,
-      transportationMode: clientData.transportation_mode,
-      createdAt: salesClient.created_at,
-      createdBy: salesClient.sales_person_id
-    };
-
     return (
       <SalesReviewCosting
-        client={client}
+        client={clientData}
         dayPlans={dayPlans}
         onNext={handleReviewNext}
         onBack={handleReviewBack}
@@ -280,159 +249,12 @@ const EditClient: React.FC<EditClientProps> = ({ client: salesClient, onBack }) 
         </button>
       </div>
 
-      {/* Basic Client Details */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-900">Client Basic Details</h2>
-          {!editingBasicDetails ? (
-            <button
-              onClick={() => setEditingBasicDetails(true)}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Edit3 className="h-4 w-4 mr-2" />
-              Edit Details
-            </button>
-          ) : (
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => {
-                  setEditingBasicDetails(false);
-                  setClientData({
-                    name: salesClient.name,
-                    email: salesClient.email || '',
-                    country_code: salesClient.country_code,
-                    whatsapp: salesClient.whatsapp,
-                    travel_date: salesClient.travel_date,
-                    number_of_days: salesClient.number_of_days,
-                    number_of_adults: salesClient.number_of_adults,
-                    number_of_children: salesClient.number_of_children,
-                    transportation_mode: salesClient.transportation_mode
-                  });
-                }}
-                className="px-4 py-2 text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveBasicDetails}
-                className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Client Name</label>
-            <input
-              type="text"
-              value={clientData.name}
-              onChange={(e) => setClientData({ ...clientData, name: e.target.value })}
-              disabled={!editingBasicDetails}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-600"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
-            <input
-              type="email"
-              value={clientData.email}
-              onChange={(e) => setClientData({ ...clientData, email: e.target.value })}
-              disabled={!editingBasicDetails}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-600"
-              placeholder="Optional"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Country Code</label>
-            <select
-              value={clientData.country_code}
-              onChange={(e) => setClientData({ ...clientData, country_code: e.target.value })}
-              disabled={!editingBasicDetails}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-600"
-            >
-              {countryCodes.map(({ code, country }) => (
-                <option key={code} value={code}>
-                  {code} ({country})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">WhatsApp Number</label>
-            <input
-              type="tel"
-              value={clientData.whatsapp}
-              onChange={(e) => setClientData({ ...clientData, whatsapp: e.target.value })}
-              disabled={!editingBasicDetails}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-600"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Travel Date</label>
-            <input
-              type="date"
-              value={clientData.travel_date}
-              onChange={(e) => setClientData({ ...clientData, travel_date: e.target.value })}
-              disabled={!editingBasicDetails}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-600"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Number of Days</label>
-            <input
-              type="number"
-              min="1"
-              value={clientData.number_of_days}
-              onChange={(e) => setClientData({ ...clientData, number_of_days: parseInt(e.target.value) || 1 })}
-              disabled={!editingBasicDetails}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-600"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Number of Adults</label>
-            <input
-              type="number"
-              min="1"
-              value={clientData.number_of_adults}
-              onChange={(e) => setClientData({ ...clientData, number_of_adults: parseInt(e.target.value) || 1 })}
-              disabled={!editingBasicDetails}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-600"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Number of Children</label>
-            <input
-              type="number"
-              min="0"
-              value={clientData.number_of_children}
-              onChange={(e) => setClientData({ ...clientData, number_of_children: parseInt(e.target.value) || 0 })}
-              disabled={!editingBasicDetails}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-600"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Transportation Mode</label>
-            <input
-              type="text"
-              value={clientData.transportation_mode}
-              onChange={(e) => setClientData({ ...clientData, transportation_mode: e.target.value })}
-              disabled={!editingBasicDetails}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-600"
-            />
-          </div>
-        </div>
+      {/* Client Details Component */}
+      <div className="mb-6">
+        <ClientDetails
+          onNext={handleSaveBasicDetails}
+          initialData={clientData}
+        />
       </div>
 
       {/* Itinerary Section */}
