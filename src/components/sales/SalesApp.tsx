@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Users, CheckCircle, Clock, Plus, Eye, CreditCard as Edit2, Trash2, MessageCircle, Phone, FileText, X, Calendar, MapPin, Car, DollarSign, Send, Filter } from 'lucide-react';
+import { Users, CheckCircle, Clock, Plus, Eye, Edit2, Trash2, MessageCircle, Phone, FileText, X, Calendar, MapPin, Car, DollarSign, Send, Filter, LogOut } from 'lucide-react';
 import Layout from '../Layout';
 import {
   getSalesClientsBySalesPerson,
@@ -12,7 +12,7 @@ import {
 type TabType = 'all' | 'confirmed' | 'followups';
 
 const SalesApp: React.FC = () => {
-  const { state: authState } = useAuth();
+  const { state: authState, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [allClients, setAllClients] = useState<SalesClient[]>([]);
   const [confirmedClients, setConfirmedClients] = useState<SalesClient[]>([]);
@@ -119,6 +119,12 @@ const SalesApp: React.FC = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  const handleLogout = async () => {
+    if (confirm('Are you sure you want to logout?')) {
+      await signOut();
+    }
+  };
+
   if (loading) {
     return (
       <Layout title="Sales Portal" subtitle="Manage your clients and itineraries">
@@ -134,6 +140,26 @@ const SalesApp: React.FC = () => {
 
   return (
     <Layout title="Sales Portal" subtitle="Manage your clients and itineraries">
+      {/* User Info and Logout */}
+      <div className="mb-6 flex items-center justify-between bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div className="flex items-center space-x-3">
+          <div className="bg-blue-100 p-3 rounded-full">
+            <Users className="h-6 w-6 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-sm text-slate-500">Logged in as</p>
+            <p className="font-medium text-slate-900">{authState.user?.email}</p>
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
+        </button>
+      </div>
+
       {/* Tabs */}
       <div className="mb-6">
         <div className="border-b border-slate-200">
