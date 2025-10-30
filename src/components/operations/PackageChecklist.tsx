@@ -1,27 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
 import { ArrowLeft, Building2, Car, Camera, Ticket, Utensils, MapPin, Check, Save, MessageCircle, Send } from 'lucide-react';
-
-interface ChecklistItem {
-  id: string;
-  item_type: 'hotel' | 'transportation' | 'activity' | 'entry_ticket' | 'meal' | 'sightseeing';
-  item_id: string;
-  item_name: string;
-  day_number: number | null;
-  is_completed: boolean;
-  booking_reference: string | null;
-  notes: string | null;
-  completed_at: string | null;
-}
-
-interface ChatMessage {
-  id: string;
-  sender_name: string;
-  sender_type: 'sales' | 'operations' | 'admin';
-  message: string;
-  created_at: string;
-  is_read: boolean;
-}
+import {
+  getChecklistItems,
+  updateChecklistItem,
+  getChatMessages,
+  sendChatMessage,
+  subscribeToAssignmentChat,
+  getAssignmentDetails,
+  ChecklistItem,
+  ChatMessage
+} from '../../lib/operationsHelpers';
 
 interface PackageChecklistProps {
   assignmentId: string;
@@ -43,25 +31,27 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
   const [newMessage, setNewMessage] = useState('');
   const [showChat, setShowChat] = useState(false);
   const [assignmentData, setAssignmentData] = useState<any>(null);
+  const [operationsPersonName, setOperationsPersonName] = useState('Operations');
 
   useEffect(() => {
     fetchChecklistItems();
     fetchAssignmentData();
     fetchChatMessages();
+
+    const subscription = subscribeToAssignmentChat(assignmentId, (newMsg) => {
+      setChatMessages(prev => [...prev, newMsg]);
+    });
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, [assignmentId]);
 
   const fetchAssignmentData = async () => {
     try {
-      const { data, error } = await supabase
-        .from('package_assignments')
-        .select(`
-          *,
-          sales_person:sales_persons(full_name, email)
-        `)
-        .eq('id', assignmentId)
-        .maybeSingle();
-
-      if (error) throw error;
+      const data = await getAssignmentDetails(assignmentId);
       setAssignmentData(data);
     } catch (error) {
       console.error('Error fetching assignment data:', error);
@@ -71,14 +61,8 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
   const fetchChecklistItems = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('booking_checklist')
-        .select('*')
-        .eq('assignment_id', assignmentId)
-        .order('day_number', { ascending: true });
-
-      if (error) throw error;
-      setChecklistItems(data || []);
+      const items = await getChecklistItems(assignmentId);
+      setChecklistItems(items);
     } catch (error) {
       console.error('Error fetching checklist:', error);
     } finally {
@@ -88,14 +72,8 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
 
   const fetchChatMessages = async () => {
     try {
-      const { data, error } = await supabase
-        .from('operations_chat')
-        .select('*')
-        .eq('assignment_id', assignmentId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      setChatMessages(data || []);
+      const messages = await getChatMessages(assignmentId);
+      setChatMessages(messages);
     } catch (error) {
       console.error('Error fetching chat messages:', error);
     }
@@ -104,25 +82,20 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
   const handleToggleComplete = async (itemId: string, currentStatus: boolean) => {
     try {
       setSaving(true);
-      const { error } = await supabase
-        .from('booking_checklist')
-        .update({
-          is_completed: !currentStatus,
-          completed_at: !currentStatus ? new Date().toISOString() : null,
-          completed_by: !currentStatus ? operationsPersonId : null
-        })
-        .eq('id', itemId);
-
-      if (error) throw error;
+      await updateChecklistItem(itemId, {
+        is_completed: !currentStatus,
+        completed_at: !currentStatus ? new Date().toISOString() : null,
+        completed_by: !currentStatus ? operationsPersonId : null
+      } as any);
 
       setMessage({ type: 'success', text: 'Item updated successfully' });
       fetchChecklistItems();
-      updateAssignmentStatus();
     } catch (error: any) {
       console.error('Error updating item:', error);
       setMessage({ type: 'error', text: 'Failed to update item' });
     } finally {
       setSaving(false);
+      setTimeout(() => setMessage(null), 3000);
     }
   };
 
@@ -137,15 +110,10 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
   const handleSaveEdit = async (itemId: string) => {
     try {
       setSaving(true);
-      const { error } = await supabase
-        .from('booking_checklist')
-        .update({
-          booking_reference: editForm.booking_reference || null,
-          notes: editForm.notes || null
-        })
-        .eq('id', itemId);
-
-      if (error) throw error;
+      await updateChecklistItem(itemId, {
+        booking_reference: editForm.booking_reference || null,
+        notes: editForm.notes || null
+      } as any);
 
       setMessage({ type: 'success', text: 'Details saved successfully' });
       setEditingItem(null);
@@ -155,64 +123,23 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
       setMessage({ type: 'error', text: 'Failed to save details' });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const updateAssignmentStatus = async () => {
-    try {
-      const { data: items, error } = await supabase
-        .from('booking_checklist')
-        .select('is_completed')
-        .eq('assignment_id', assignmentId);
-
-      if (error) throw error;
-
-      const allCompleted = items?.every(item => item.is_completed);
-      const someCompleted = items?.some(item => item.is_completed);
-
-      let newStatus: 'pending' | 'in_progress' | 'completed' = 'pending';
-      if (allCompleted) {
-        newStatus = 'completed';
-      } else if (someCompleted) {
-        newStatus = 'in_progress';
-      }
-
-      await supabase
-        .from('package_assignments')
-        .update({
-          status: newStatus,
-          completed_at: allCompleted ? new Date().toISOString() : null
-        })
-        .eq('id', assignmentId);
-    } catch (error) {
-      console.error('Error updating assignment status:', error);
+      setTimeout(() => setMessage(null), 3000);
     }
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !assignmentData) return;
 
     try {
-      const { data: operationsPerson } = await supabase
-        .from('operations_persons')
-        .select('full_name')
-        .eq('id', operationsPersonId)
-        .maybeSingle();
-
-      const { error } = await supabase
-        .from('operations_chat')
-        .insert([{
-          assignment_id: assignmentId,
-          sender_id: operationsPersonId,
-          sender_type: 'operations',
-          sender_name: operationsPerson?.full_name || 'Operations',
-          message: newMessage.trim()
-        }]);
-
-      if (error) throw error;
+      await sendChatMessage(
+        assignmentId,
+        operationsPersonId,
+        'operations',
+        operationsPersonName,
+        newMessage.trim()
+      );
 
       setNewMessage('');
-      fetchChatMessages();
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -282,7 +209,6 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <button
@@ -309,6 +235,11 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
                 Sales Person: {assignmentData.sales_person.full_name}
               </p>
             )}
+            {assignmentData?.sales_client && (
+              <p className="text-slate-600">
+                Client: {assignmentData.sales_client.name}
+              </p>
+            )}
           </div>
           <div className="text-right">
             <p className="text-3xl font-bold text-orange-600">{progress}%</p>
@@ -316,7 +247,6 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
           </div>
         </div>
 
-        {/* Progress Bar */}
         <div className="mt-4">
           <div className="w-full bg-slate-200 rounded-full h-3">
             <div
@@ -339,7 +269,6 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
         </div>
       )}
 
-      {/* Chat Panel */}
       {showChat && (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h3 className="text-lg font-semibold text-slate-900 mb-4">Chat with Sales Team</h3>
@@ -391,7 +320,6 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
         </div>
       )}
 
-      {/* Checklist Items */}
       <div className="space-y-6">
         {Object.keys(groupedItems).length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">

@@ -1,22 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import { Package, CheckCircle2, Clock, AlertCircle, Calendar, Users, ChevronRight, DollarSign } from 'lucide-react';
+import { getAssignmentsByOperationsPerson, PackageAssignment } from '../../lib/operationsHelpers';
 import { supabase } from '../../lib/supabase';
-import { Package, CheckCircle2, Clock, AlertCircle, Calendar, Users, MessageCircle, ChevronRight } from 'lucide-react';
 
-interface PackageAssignment {
-  id: string;
-  itinerary_id: string;
-  status: 'pending' | 'in_progress' | 'completed';
-  assigned_at: string;
-  completed_at: string | null;
+interface AssignmentWithDetails extends PackageAssignment {
   sales_person: {
     full_name: string;
     email: string;
+  } | null;
+  sales_client: {
+    id: string;
+    name: string;
+    travel_date: string;
+    number_of_days: number;
+    number_of_adults: number;
+    number_of_children: number;
+    transportation_mode: string;
+    total_cost: number;
   } | null;
   checklist_stats: {
     total: number;
     completed: number;
   };
-  itinerary_data: any;
 }
 
 interface OperationsDashboardProps {
@@ -25,7 +30,7 @@ interface OperationsDashboardProps {
 }
 
 const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPersonId, onViewChecklist }) => {
-  const [assignments, setAssignments] = useState<PackageAssignment[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
 
@@ -39,19 +44,18 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
     try {
       setLoading(true);
 
-      // Fetch assignments
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('package_assignments')
         .select(`
           *,
-          sales_person:sales_persons(full_name, email)
+          sales_person:sales_persons(full_name, email),
+          sales_client:sales_clients(*)
         `)
         .eq('operations_person_id', operationsPersonId)
         .order('assigned_at', { ascending: false });
 
       if (assignmentsError) throw assignmentsError;
 
-      // Fetch checklist stats for each assignment
       const assignmentsWithStats = await Promise.all(
         (assignmentsData || []).map(async (assignment) => {
           const { data: checklistData, error: checklistError } = await supabase
@@ -63,17 +67,8 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
             console.error('Error fetching checklist:', checklistError);
             return {
               ...assignment,
-              checklist_stats: { total: 0, completed: 0 },
-              itinerary_data: null
+              checklist_stats: { total: 0, completed: 0 }
             };
-          }
-
-          // Fetch itinerary data from localStorage
-          const itinerariesJson = localStorage.getItem('itineraries');
-          let itineraryData = null;
-          if (itinerariesJson) {
-            const itineraries = JSON.parse(itinerariesJson);
-            itineraryData = itineraries.find((it: any) => it.id === assignment.itinerary_id);
           }
 
           return {
@@ -81,8 +76,7 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
             checklist_stats: {
               total: checklistData?.length || 0,
               completed: checklistData?.filter(item => item.is_completed).length || 0
-            },
-            itinerary_data: itineraryData
+            }
           };
         })
       );
@@ -151,7 +145,6 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between">
@@ -202,7 +195,6 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
         </div>
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
         <div className="flex flex-wrap gap-2">
           {(['all', 'pending', 'in_progress', 'completed'] as const).map((status) => (
@@ -221,7 +213,6 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
         </div>
       </div>
 
-      {/* Assignments List */}
       <div className="space-y-4">
         {filteredAssignments.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
@@ -236,7 +227,7 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
         ) : (
           filteredAssignments.map((assignment) => {
             const progress = getProgressPercentage(assignment.checklist_stats);
-            const itinerary = assignment.itinerary_data;
+            const client = assignment.sales_client;
 
             return (
               <div
@@ -258,32 +249,31 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
                             </span>
                           )}
                         </div>
-                        {itinerary && (
+                        {client && (
                           <h3 className="text-lg font-semibold text-slate-900">
-                            {itinerary.client.name} - {itinerary.client.numberOfDays} Days Trip
+                            {client.name} - {client.number_of_days} Days Trip
                           </h3>
                         )}
                       </div>
                     </div>
 
-                    {itinerary && (
+                    {client && (
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                         <div className="flex items-center gap-2 text-slate-600">
                           <Users className="h-4 w-4" />
-                          <span>{itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} passengers</span>
+                          <span>{client.number_of_adults + client.number_of_children} passengers</span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-600">
                           <Calendar className="h-4 w-4" />
-                          <span>{new Date(itinerary.client.travelDates.startDate).toLocaleDateString()}</span>
+                          <span>{new Date(client.travel_date).toLocaleDateString()}</span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-600">
-                          <Package className="h-4 w-4" />
-                          <span>Rp {itinerary.finalPrice.toLocaleString('id-ID')}</span>
+                          <DollarSign className="h-4 w-4" />
+                          <span>₹{client.total_cost?.toLocaleString() || 0}</span>
                         </div>
                       </div>
                     )}
 
-                    {/* Progress Bar */}
                     <div className="mt-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-slate-700">

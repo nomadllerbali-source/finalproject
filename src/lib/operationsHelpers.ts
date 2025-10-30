@@ -1,196 +1,231 @@
 import { supabase } from './supabase';
 
-/**
- * Assigns a package to an operations person and creates checklist items
- */
-export async function assignPackageToOperations(
-  itineraryId: string,
-  salesPersonId: string,
-  itineraryData: any
-): Promise<{ success: boolean; assignmentId?: string; error?: string }> {
-  try {
-    // Get all active operations persons
-    const { data: operationsPersons, error: opsError } = await supabase
-      .from('operations_persons')
-      .select('id')
-      .eq('is_active', true);
-
-    if (opsError) throw opsError;
-
-    if (!operationsPersons || operationsPersons.length === 0) {
-      return { success: false, error: 'No active operations persons available' };
-    }
-
-    // Check if already assigned
-    const { data: existingAssignment } = await supabase
-      .from('package_assignments')
-      .select('id')
-      .eq('itinerary_id', itineraryId)
-      .maybeSingle();
-
-    if (existingAssignment) {
-      return { success: true, assignmentId: existingAssignment.id };
-    }
-
-    // Randomly assign to an operations person
-    const randomIndex = Math.floor(Math.random() * operationsPersons.length);
-    const selectedOperationsPerson = operationsPersons[randomIndex];
-
-    // Create package assignment
-    const { data: assignment, error: assignmentError } = await supabase
-      .from('package_assignments')
-      .insert([{
-        itinerary_id: itineraryId,
-        sales_person_id: salesPersonId,
-        operations_person_id: selectedOperationsPerson.id,
-        status: 'pending'
-      }])
-      .select()
-      .single();
-
-    if (assignmentError) throw assignmentError;
-
-    // Create checklist items from itinerary
-    const checklistItems = createChecklistItems(assignment.id, itineraryData);
-
-    const { error: checklistError } = await supabase
-      .from('booking_checklist')
-      .insert(checklistItems);
-
-    if (checklistError) throw checklistError;
-
-    return { success: true, assignmentId: assignment.id };
-  } catch (error: any) {
-    console.error('Error assigning package:', error);
-    return { success: false, error: error.message };
-  }
+export interface PackageAssignment {
+  id: string;
+  sales_client_id: string;
+  sales_person_id: string;
+  operations_person_id: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  completion_percentage: number;
+  assigned_at: string;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-/**
- * Creates checklist items from itinerary data
- */
-function createChecklistItems(assignmentId: string, itinerary: any): any[] {
-  const items: any[] = [];
-
-  // Add transportation if not cab
-  if (itinerary.client.transportationMode && !itinerary.client.transportationMode.toLowerCase().includes('cab')) {
-    items.push({
-      assignment_id: assignmentId,
-      item_type: 'transportation',
-      item_id: 'main-transport',
-      item_name: `${itinerary.client.transportationMode} for ${itinerary.client.numberOfDays} days`,
-      day_number: null,
-      is_completed: false
-    });
-  }
-
-  // Process each day plan
-  itinerary.dayPlans.forEach((dayPlan: any, index: number) => {
-    const dayNumber = index + 1;
-
-    // Hotel booking
-    if (dayPlan.hotel) {
-      items.push({
-        assignment_id: assignmentId,
-        item_type: 'hotel',
-        item_id: dayPlan.hotel.hotelId,
-        item_name: `Hotel booking for Day ${dayNumber} at ${dayPlan.hotel.place}`,
-        day_number: dayNumber,
-        is_completed: false
-      });
-    }
-
-    // Sightseeing bookings
-    if (dayPlan.sightseeing && dayPlan.sightseeing.length > 0) {
-      dayPlan.sightseeing.forEach((sightseeingId: string) => {
-        items.push({
-          assignment_id: assignmentId,
-          item_type: 'sightseeing',
-          item_id: sightseeingId,
-          item_name: `Sightseeing arrangement for Day ${dayNumber}`,
-          day_number: dayNumber,
-          is_completed: false
-        });
-      });
-    }
-
-    // Activity bookings
-    if (dayPlan.activities && dayPlan.activities.length > 0) {
-      dayPlan.activities.forEach((activity: any) => {
-        items.push({
-          assignment_id: assignmentId,
-          item_type: 'activity',
-          item_id: activity.activityId,
-          item_name: `Activity booking for Day ${dayNumber}`,
-          day_number: dayNumber,
-          is_completed: false
-        });
-      });
-    }
-
-    // Entry tickets
-    if (dayPlan.entryTickets && dayPlan.entryTickets.length > 0) {
-      dayPlan.entryTickets.forEach((ticketId: string) => {
-        items.push({
-          assignment_id: assignmentId,
-          item_type: 'entry_ticket',
-          item_id: ticketId,
-          item_name: `Entry ticket for Day ${dayNumber}`,
-          day_number: dayNumber,
-          is_completed: false
-        });
-      });
-    }
-
-    // Meal arrangements
-    if (dayPlan.meals && dayPlan.meals.length > 0) {
-      dayPlan.meals.forEach((mealId: string) => {
-        items.push({
-          assignment_id: assignmentId,
-          item_type: 'meal',
-          item_id: mealId,
-          item_name: `Meal arrangement for Day ${dayNumber}`,
-          day_number: dayNumber,
-          is_completed: false
-        });
-      });
-    }
-  });
-
-  return items;
+export interface ChecklistItem {
+  id: string;
+  assignment_id: string;
+  item_type: 'hotel' | 'transportation' | 'activity' | 'entry_ticket' | 'meal' | 'sightseeing';
+  item_id: string;
+  item_name: string;
+  day_number: number | null;
+  is_completed: boolean;
+  completed_at: string | null;
+  completed_by: string | null;
+  booking_reference: string | null;
+  notes: string | null;
+  created_at: string;
 }
 
-/**
- * Get assignment progress for a specific itinerary
- */
-export async function getAssignmentProgress(itineraryId: string): Promise<{
-  total: number;
-  completed: number;
-  percentage: number;
-} | null> {
-  try {
-    const { data: assignment } = await supabase
-      .from('package_assignments')
-      .select('id')
-      .eq('itinerary_id', itineraryId)
-      .maybeSingle();
+export interface ChatMessage {
+  id: string;
+  assignment_id: string;
+  sender_id: string;
+  sender_type: 'sales' | 'operations' | 'admin';
+  sender_name: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
 
-    if (!assignment) return null;
+export const getAssignmentsByOperationsPerson = async (operationsPersonId: string): Promise<PackageAssignment[]> => {
+  if (!supabase) return [];
 
-    const { data: checklistItems } = await supabase
-      .from('booking_checklist')
-      .select('is_completed')
-      .eq('assignment_id', assignment.id);
+  const { data, error } = await supabase
+    .from('package_assignments')
+    .select('*')
+    .eq('operations_person_id', operationsPersonId)
+    .order('assigned_at', { ascending: false });
 
-    if (!checklistItems) return { total: 0, completed: 0, percentage: 0 };
+  if (error) {
+    console.error('Error fetching assignments:', error);
+    return [];
+  }
 
-    const total = checklistItems.length;
-    const completed = checklistItems.filter(item => item.is_completed).length;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+  return data || [];
+};
 
-    return { total, completed, percentage };
-  } catch (error) {
-    console.error('Error getting assignment progress:', error);
+export const getAssignmentDetails = async (assignmentId: string) => {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('package_assignments')
+    .select(`
+      *,
+      sales_person:sales_persons(id, full_name, email),
+      sales_client:sales_clients(*)
+    `)
+    .eq('id', assignmentId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching assignment details:', error);
     return null;
   }
-}
+
+  return data;
+};
+
+export const getChecklistItems = async (assignmentId: string): Promise<ChecklistItem[]> => {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('booking_checklist')
+    .select('*')
+    .eq('assignment_id', assignmentId)
+    .order('day_number', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching checklist items:', error);
+    return [];
+  }
+
+  return data || [];
+};
+
+export const updateChecklistItem = async (
+  itemId: string,
+  updates: Partial<ChecklistItem>
+): Promise<ChecklistItem | null> => {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('booking_checklist')
+    .update(updates)
+    .eq('id', itemId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating checklist item:', error);
+    return null;
+  }
+
+  return data;
+};
+
+export const getChatMessages = async (assignmentId: string): Promise<ChatMessage[]> => {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('operations_chat')
+    .select('*')
+    .eq('assignment_id', assignmentId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching chat messages:', error);
+    return [];
+  }
+
+  return data || [];
+};
+
+export const sendChatMessage = async (
+  assignmentId: string,
+  senderId: string,
+  senderType: 'sales' | 'operations' | 'admin',
+  senderName: string,
+  message: string
+): Promise<ChatMessage | null> => {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('operations_chat')
+    .insert([{
+      assignment_id: assignmentId,
+      sender_id: senderId,
+      sender_type: senderType,
+      sender_name: senderName,
+      message: message
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error sending chat message:', error);
+    return null;
+  }
+
+  return data;
+};
+
+export const subscribeToAssignmentChat = (
+  assignmentId: string,
+  callback: (message: ChatMessage) => void
+) => {
+  if (!supabase) return null;
+
+  return supabase
+    .channel(`assignment-chat:${assignmentId}`)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'operations_chat',
+      filter: `assignment_id=eq.${assignmentId}`
+    }, (payload) => {
+      callback(payload.new as ChatMessage);
+    })
+    .subscribe();
+};
+
+export const calculateProgress = async (assignmentId: string): Promise<number> => {
+  if (!supabase) return 0;
+
+  const { data, error } = await supabase
+    .from('booking_checklist')
+    .select('is_completed')
+    .eq('assignment_id', assignmentId);
+
+  if (error || !data || data.length === 0) {
+    return 0;
+  }
+
+  const completed = data.filter(item => item.is_completed).length;
+  return Math.round((completed / data.length) * 100);
+};
+
+export const getAssignmentForClient = async (clientId: string): Promise<PackageAssignment | null> => {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('package_assignments')
+    .select('*')
+    .eq('sales_client_id', clientId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching assignment for client:', error);
+    return null;
+  }
+
+  return data;
+};
+
+export const getOperationsPersonDetails = async (operationsPersonId: string) => {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('operations_persons')
+    .select('id, full_name, email, phone_number')
+    .eq('id', operationsPersonId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching operations person details:', error);
+    return null;
+  }
+
+  return data;
+};
