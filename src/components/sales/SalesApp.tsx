@@ -22,7 +22,7 @@ type TabType = 'all' | 'confirmed' | 'followups';
 type ViewType = 'viewItinerary' | 'viewDetails' | 'edit' | 'followUp';
 
 const SalesApp: React.FC = () => {
-  const { state: authState, signOut } = useAuth();
+  const { state: authState, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [allClients, setAllClients] = useState<SalesClient[]>([]);
   const [confirmedClients, setConfirmedClients] = useState<SalesClient[]>([]);
@@ -143,7 +143,7 @@ const SalesApp: React.FC = () => {
 
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
-      await signOut();
+      await logout();
     }
   };
 
