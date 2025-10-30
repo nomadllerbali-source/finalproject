@@ -14,9 +14,10 @@ interface SalesFinalSummaryProps {
   itinerary: Itinerary;
   onBack: () => void;
   onStartNew: () => void;
+  onBackToDashboard?: () => void;
 }
 
-const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack, onStartNew }) => {
+const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack, onStartNew, onBackToDashboard }) => {
   const { state, addClient, addItinerary } = useData();
   const { state: authState } = useAuth();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
@@ -576,6 +577,15 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
               <RotateCcw className="mr-2 h-5 w-5" />
               Create New Package
             </button>
+            {onBackToDashboard && (
+              <button
+                onClick={onBackToDashboard}
+                className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white text-sm md:text-base font-semibold rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all duration-200 transform hover:scale-105"
+              >
+                <ArrowLeft className="mr-2 h-5 w-5" />
+                Back to Dashboard
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -8,7 +8,11 @@ import SalesReviewCosting from './SalesReviewCosting';
 import SalesFinalSummary from './SalesFinalSummary';
 import Layout from '../Layout';
 
-const SalesItineraryBuilder: React.FC = () => {
+interface SalesItineraryBuilderProps {
+  onBackToDashboard?: () => void;
+}
+
+const SalesItineraryBuilder: React.FC<SalesItineraryBuilderProps> = ({ onBackToDashboard }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [client, setClient] = useState<Client | null>(null);
   const [itineraryType, setItineraryType] = useState<'new' | 'fixed' | null>(null);
@@ -101,10 +105,11 @@ const SalesItineraryBuilder: React.FC = () => {
         ) : null;
       case 5:
         return itinerary ? (
-          <SalesFinalSummary 
-            itinerary={itinerary} 
-            onBack={handleBack} 
-            onStartNew={handleStartNew} 
+          <SalesFinalSummary
+            itinerary={itinerary}
+            onBack={handleBack}
+            onStartNew={handleStartNew}
+            onBackToDashboard={onBackToDashboard}
           />
         ) : null;
       default:

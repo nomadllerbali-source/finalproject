@@ -132,7 +132,10 @@ const SalesApp: React.FC = () => {
   if (showItineraryBuilder) {
     return (
       <DataProvider>
-        <SalesItineraryBuilder />
+        <SalesItineraryBuilder onBackToDashboard={() => {
+          setShowItineraryBuilder(false);
+          loadData();
+        }} />
       </DataProvider>
     );
   }
