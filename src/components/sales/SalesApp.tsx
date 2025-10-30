@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { DataProvider } from '../../contexts/DataContext';
-import { Users, CheckCircle, Clock, Plus, Eye, Edit2, Trash2, MessageCircle, Phone, FileText, X, Calendar, MapPin, Car, DollarSign, Send, Filter, LogOut } from 'lucide-react';
+import { Users, CheckCircle, Clock, Plus, Eye, Edit2, Trash2, MessageCircle, Phone, FileText, X, Calendar, MapPin, Car, DollarSign, Send, Filter, LogOut, Mail } from 'lucide-react';
 import Layout from '../Layout';
 import SalesItineraryBuilder from '../itinerary/SalesItineraryBuilder';
 import {
@@ -9,6 +9,8 @@ import {
   getConfirmedClients,
   getTodayFollowUps,
   createSalesClient,
+  updateSalesClient,
+  deleteSalesClient,
   SalesClient
 } from '../../lib/salesHelpers';
 
@@ -22,6 +24,10 @@ const SalesApp: React.FC = () => {
   const [followUpClients, setFollowUpClients] = useState<SalesClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showItineraryBuilder, setShowItineraryBuilder] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<SalesClient | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -93,26 +99,35 @@ const SalesApp: React.FC = () => {
   };
 
   const handleViewClient = (client: SalesClient) => {
-    // TODO: Open view modal
-    console.log('View client:', client);
+    setSelectedClient(client);
+    setShowViewModal(true);
   };
 
   const handleEditClient = (client: SalesClient) => {
-    // TODO: Open edit modal
-    console.log('Edit client:', client);
+    setSelectedClient(client);
+    setShowEditModal(true);
   };
 
   const handleDeleteClient = async (clientId: string, clientName: string) => {
-    if (confirm(`Are you sure you want to delete client "${clientName}"?`)) {
-      // TODO: Delete client
-      console.log('Delete client:', clientId);
-      await loadData();
+    if (confirm(`Are you sure you want to delete client "${clientName}"? This will also delete all associated booking checklists.`)) {
+      try {
+        await deleteSalesClient(clientId);
+        await loadData();
+      } catch (error) {
+        console.error('Error deleting client:', error);
+        alert('Failed to delete client. Please try again.');
+      }
     }
   };
 
   const handleFollowUp = (client: SalesClient) => {
-    // TODO: Open follow-up modal
-    console.log('Follow up:', client);
+    setSelectedClient(client);
+    setShowFollowUpModal(true);
+  };
+
+  const handleViewItinerary = (client: SalesClient) => {
+    setSelectedClient(client);
+    setShowViewModal(true);
   };
 
   const handleWhatsAppChat = (client: SalesClient) => {
@@ -409,6 +424,13 @@ const SalesApp: React.FC = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <button
+                          onClick={() => handleViewItinerary(client)}
+                          className="p-2 text-teal-600 hover:bg-teal-100 rounded-lg transition-colors"
+                          title="View Itinerary"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </button>
+                        <button
                           onClick={() => handleViewClient(client)}
                           className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
                           title="View Details"
@@ -424,7 +446,7 @@ const SalesApp: React.FC = () => {
                         </button>
                         <button
                           onClick={() => handleFollowUp(client)}
-                          className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors"
+                          className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors"
                           title="Follow Up"
                         >
                           <MessageCircle className="h-4 w-4" />
@@ -452,7 +474,515 @@ const SalesApp: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      {showViewModal && selectedClient && (
+        <ViewClientModal
+          client={selectedClient}
+          onClose={() => {
+            setShowViewModal(false);
+            setSelectedClient(null);
+          }}
+        />
+      )}
+
+      {showEditModal && selectedClient && (
+        <EditClientModal
+          client={selectedClient}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedClient(null);
+          }}
+          onSave={async () => {
+            setShowEditModal(false);
+            setSelectedClient(null);
+            await loadData();
+          }}
+        />
+      )}
+
+      {showFollowUpModal && selectedClient && (
+        <FollowUpModal
+          client={selectedClient}
+          onClose={() => {
+            setShowFollowUpModal(false);
+            setSelectedClient(null);
+          }}
+          onSave={async () => {
+            setShowFollowUpModal(false);
+            setSelectedClient(null);
+            await loadData();
+          }}
+        />
+      )}
     </Layout>
+  );
+};
+
+const ViewClientModal: React.FC<{
+  client: SalesClient;
+  onClose: () => void;
+}> = ({ client, onClose }) => {
+  const itinerary = client.itinerary_data;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-slate-900">View Client & Itinerary</h3>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <X className="h-5 w-5 text-slate-500" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3">Client Information</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start">
+                  <Users className="h-4 w-4 text-slate-400 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500">Name</p>
+                    <p className="font-medium text-slate-900">{client.name}</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <Phone className="h-4 w-4 text-slate-400 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500">WhatsApp</p>
+                    <p className="font-medium text-slate-900">{client.country_code} {client.whatsapp}</p>
+                  </div>
+                </div>
+                {client.email && (
+                  <div className="flex items-start">
+                    <Mail className="h-4 w-4 text-slate-400 mr-2 mt-0.5" />
+                    <div>
+                      <p className="text-slate-500">Email</p>
+                      <p className="font-medium text-slate-900">{client.email}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3">Travel Details</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start">
+                  <Calendar className="h-4 w-4 text-slate-400 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500">Travel Date</p>
+                    <p className="font-medium text-slate-900">{new Date(client.travel_date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <Clock className="h-4 w-4 text-slate-400 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500">Duration</p>
+                    <p className="font-medium text-slate-900">{client.number_of_days} days</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <Users className="h-4 w-4 text-slate-400 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500">Passengers</p>
+                    <p className="font-medium text-slate-900">{client.number_of_adults} Adults, {client.number_of_children} Children</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <Car className="h-4 w-4 text-slate-400 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500">Transportation</p>
+                    <p className="font-medium text-slate-900">{client.transportation_mode}</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <DollarSign className="h-4 w-4 text-slate-400 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-slate-500">Total Cost</p>
+                    <p className="font-medium text-slate-900">₹{client.total_cost.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {itinerary && (
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3">Itinerary Details</h4>
+              <div className="space-y-3">
+                {itinerary.days.map((day, index) => (
+                  <div key={index} className="bg-slate-50 rounded-lg p-4">
+                    <h5 className="font-medium text-slate-900 mb-2">Day {day.day}</h5>
+                    <div className="space-y-1 text-sm text-slate-600">
+                      {day.hotel && <p>🏨 Hotel: {day.hotel.name}</p>}
+                      {day.sightseeing && <p>📸 Sightseeing: {day.sightseeing.name}</p>}
+                      {day.activity && <p>🎯 Activity: {day.activity.name}</p>}
+                      {day.entryTicket && <p>🎫 Entry Ticket: {day.entryTicket.name}</p>}
+                      {day.meal && <p>🍽️ Meal: {day.meal.name}</p>}
+                      {day.transportation && <p>🚗 Transport: {day.transportation.name}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+            <div>
+              <p className="text-sm text-slate-500">Status</p>
+              <p className="font-medium text-slate-900">{client.current_follow_up_status.replace(/-/g, ' ').toUpperCase()}</p>
+            </div>
+            {client.next_follow_up_date && (
+              <div>
+                <p className="text-sm text-slate-500">Next Follow-up</p>
+                <p className="font-medium text-slate-900">
+                  {new Date(client.next_follow_up_date).toLocaleDateString()} {client.next_follow_up_time}
+                </p>
+              </div>
+            )}
+            <div>
+              <p className="text-sm text-slate-500">Booking Progress</p>
+              <p className="font-medium text-slate-900">{client.booking_completion_percentage}%</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EditClientModal: React.FC<{
+  client: SalesClient;
+  onClose: () => void;
+  onSave: () => void;
+}> = ({ client, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    name: client.name,
+    email: client.email || '',
+    country_code: client.country_code,
+    whatsapp: client.whatsapp,
+    travel_date: client.travel_date,
+    number_of_days: client.number_of_days,
+    number_of_adults: client.number_of_adults,
+    number_of_children: client.number_of_children,
+    transportation_mode: client.transportation_mode
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await updateSalesClient(client.id, formData);
+      onSave();
+    } catch (error) {
+      console.error('Error updating client:', error);
+      alert('Failed to update client. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-slate-900">Edit Client</h3>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <X className="h-5 w-5 text-slate-500" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Client Name
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Country Code
+              </label>
+              <input
+                type="text"
+                value={formData.country_code}
+                onChange={(e) => setFormData({ ...formData, country_code: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                WhatsApp Number
+              </label>
+              <input
+                type="text"
+                value={formData.whatsapp}
+                onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Travel Date
+              </label>
+              <input
+                type="date"
+                value={formData.travel_date}
+                onChange={(e) => setFormData({ ...formData, travel_date: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Number of Days
+              </label>
+              <input
+                type="number"
+                value={formData.number_of_days}
+                onChange={(e) => setFormData({ ...formData, number_of_days: parseInt(e.target.value) })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+                min="1"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Adults
+              </label>
+              <input
+                type="number"
+                value={formData.number_of_adults}
+                onChange={(e) => setFormData({ ...formData, number_of_adults: parseInt(e.target.value) })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+                min="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Children
+              </label>
+              <input
+                type="number"
+                value={formData.number_of_children}
+                onChange={(e) => setFormData({ ...formData, number_of_children: parseInt(e.target.value) })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+                min="0"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Transportation Mode
+            </label>
+            <select
+              value={formData.transportation_mode}
+              onChange={(e) => setFormData({ ...formData, transportation_mode: e.target.value as 'Flight' | 'Train' | 'Bus' })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            >
+              <option value="Flight">Flight</option>
+              <option value="Train">Train</option>
+              <option value="Bus">Bus</option>
+            </select>
+          </div>
+
+          <div className="sticky bottom-0 bg-white border-t border-slate-200 pt-4 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+              disabled={saving}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all disabled:opacity-50"
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const FollowUpModal: React.FC<{
+  client: SalesClient;
+  onClose: () => void;
+  onSave: () => void;
+}> = ({ client, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    current_follow_up_status: client.current_follow_up_status,
+    next_follow_up_date: client.next_follow_up_date || '',
+    next_follow_up_time: client.next_follow_up_time || '10:00'
+  });
+  const [saving, setSaving] = useState(false);
+
+  const followUpStatuses = [
+    'itinerary-created',
+    'itinerary-sent',
+    '1st-follow-up',
+    '2nd-follow-up',
+    '3rd-follow-up',
+    '4th-follow-up',
+    'itinerary-edited',
+    'updated-itinerary-sent',
+    'advance-paid-confirmed',
+    'dead'
+  ];
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await updateSalesClient(client.id, formData);
+      onSave();
+    } catch (error) {
+      console.error('Error updating follow-up:', error);
+      alert('Failed to update follow-up. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+        <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-slate-900">Update Follow-up</h3>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <X className="h-5 w-5 text-slate-500" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Client Name
+            </label>
+            <p className="text-slate-900 font-medium">{client.name}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Follow-up Status
+            </label>
+            <select
+              value={formData.current_follow_up_status}
+              onChange={(e) => setFormData({ ...formData, current_follow_up_status: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            >
+              {followUpStatuses.map(status => (
+                <option key={status} value={status}>
+                  {status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Next Follow-up Date
+            </label>
+            <input
+              type="date"
+              value={formData.next_follow_up_date}
+              onChange={(e) => setFormData({ ...formData, next_follow_up_date: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Next Follow-up Time
+            </label>
+            <input
+              type="time"
+              value={formData.next_follow_up_time}
+              onChange={(e) => setFormData({ ...formData, next_follow_up_time: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div className="pt-4 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+              disabled={saving}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all disabled:opacity-50"
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Update Follow-up'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 
