@@ -19,12 +19,16 @@ interface SalesFinalSummaryProps {
 }
 
 const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack, onStartNew, onBackToDashboard }) => {
-  const { state, addClient, addItinerary } = useData();
+  const { state } = useData();
   const { state: authState } = useAuth();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
+  const [isSaved, setIsSaved] = React.useState(false);
 
   // Save itinerary to database
   React.useEffect(() => {
+    // Prevent multiple saves
+    if (isSaved) return;
+
     const saveData = async () => {
       console.log('=== SALES FINAL SUMMARY: Starting save ===');
       console.log('Auth user:', authState.user);
@@ -69,28 +73,11 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
           console.log('Creating booking checklist...');
           await createBookingChecklist(createdClient.id, itinerary);
           console.log('Booking checklist created!');
+
+          // Mark as saved to prevent duplicates
+          setIsSaved(true);
         }
 
-        // Also save to itineraries table for backward compatibility
-        const itineraryWithMetadata: Itinerary = {
-          ...itinerary,
-          id: generateUUID(),
-          version: 1,
-          lastUpdated: new Date().toISOString(),
-          updatedBy: userId,
-          changeLog: [{
-            id: generateUUID(),
-            version: 1,
-            changeType: 'created',
-            description: 'Initial itinerary created by sales team',
-            timestamp: new Date().toISOString(),
-            updatedBy: userId
-          }]
-        };
-
-        console.log('Adding itinerary to database...');
-        await addItinerary(itineraryWithMetadata);
-        console.log('Itinerary added successfully!');
         console.log('=== SALES FINAL SUMMARY: Save complete ===');
       } catch (error: any) {
         console.error('=== ERROR SAVING ITINERARY ===');
@@ -102,7 +89,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
     };
 
     saveData();
-  }, [itinerary, authState.user?.id, addItinerary]);
+  }, [itinerary, authState.user?.id, isSaved]);
 
   const copyItineraryToClipboard = () => {
     const totalPax = itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children;
