@@ -37,8 +37,12 @@ const SalesItineraryBuilder: React.FC<SalesItineraryBuilderProps> = ({ onBackToD
   };
 
   const handleReviewNext = (itineraryData: Itinerary) => {
+    console.log('=== SALES ITINERARY BUILDER: handleReviewNext called ===');
+    console.log('Received itinerary:', itineraryData);
+    console.log('Current step before:', currentStep);
     setItinerary(itineraryData);
     setCurrentStep(5);
+    console.log('Set to step 5');
   };
 
   const handleFixedItineraryNext = (itineraryData: Itinerary) => {

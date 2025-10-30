@@ -30,6 +30,13 @@ const SalesReviewCosting: React.FC<SalesReviewCostingProps> = ({ client, dayPlan
   const finalPrice = costWithMarkup + salesCommission;
 
   const handleSubmit = () => {
+    console.log('=== SALES REVIEW COSTING: Generate Summary clicked ===');
+    console.log('Client:', client);
+    console.log('Day Plans:', dayPlans);
+    console.log('Cost with Markup:', costWithMarkup);
+    console.log('Sales Commission:', salesCommission);
+    console.log('Final Price:', finalPrice);
+
     const itinerary: Itinerary = {
       id: generateUUID(),
       client,
@@ -43,7 +50,11 @@ const SalesReviewCosting: React.FC<SalesReviewCostingProps> = ({ client, dayPlan
       updatedBy: 'sales',
       changeLog: []
     };
+
+    console.log('Created itinerary:', itinerary);
+    console.log('Calling onNext...');
     onNext(itinerary);
+    console.log('onNext called successfully');
   };
 
   const renderDayPlanSummary = (dayPlan: DayPlan) => {
