@@ -4,7 +4,10 @@ import { DataProvider } from '../../contexts/DataContext';
 import { Users, CheckCircle, Clock, Plus, Eye, Edit2, Trash2, MessageCircle, Phone, FileText, X, Calendar, MapPin, Car, DollarSign, Send, Filter, LogOut, Mail } from 'lucide-react';
 import Layout from '../Layout';
 import SalesItineraryBuilder from '../itinerary/SalesItineraryBuilder';
-import SalesItineraryViewer from './SalesItineraryViewer';
+import ViewItinerary from './ViewItinerary';
+import ViewClientDetails from './ViewClientDetails';
+import EditClient from './EditClient';
+import FollowUpManager from './FollowUpManager';
 import {
   getSalesClientsBySalesPerson,
   getConfirmedClients,
@@ -16,6 +19,7 @@ import {
 } from '../../lib/salesHelpers';
 
 type TabType = 'all' | 'confirmed' | 'followups';
+type ViewType = 'viewItinerary' | 'viewDetails' | 'edit' | 'followUp';
 
 const SalesApp: React.FC = () => {
   const { state: authState, signOut } = useAuth();
@@ -26,7 +30,7 @@ const SalesApp: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showItineraryBuilder, setShowItineraryBuilder] = useState(false);
   const [selectedClient, setSelectedClient] = useState<SalesClient | null>(null);
-  const [viewMode, setViewMode] = useState<'view' | 'edit' | null>(null);
+  const [currentView, setCurrentView] = useState<ViewType | null>(null);
 
   useEffect(() => {
     loadData();
@@ -99,12 +103,12 @@ const SalesApp: React.FC = () => {
 
   const handleViewClient = (client: SalesClient) => {
     setSelectedClient(client);
-    setViewMode('view');
+    setCurrentView('viewDetails');
   };
 
   const handleEditClient = (client: SalesClient) => {
     setSelectedClient(client);
-    setViewMode('edit');
+    setCurrentView('edit');
   };
 
   const handleDeleteClient = async (clientId: string, clientName: string) => {
@@ -121,12 +125,12 @@ const SalesApp: React.FC = () => {
 
   const handleFollowUp = (client: SalesClient) => {
     setSelectedClient(client);
-    setViewMode('view');
+    setCurrentView('followUp');
   };
 
   const handleViewItinerary = (client: SalesClient) => {
     setSelectedClient(client);
-    setViewMode('view');
+    setCurrentView('viewItinerary');
   };
 
   const handleWhatsAppChat = (client: SalesClient) => {
@@ -154,18 +158,19 @@ const SalesApp: React.FC = () => {
     );
   }
 
-  if (viewMode && selectedClient) {
+  if (currentView && selectedClient) {
+    const handleBack = () => {
+      setCurrentView(null);
+      setSelectedClient(null);
+      loadData();
+    };
+
     return (
       <DataProvider>
-        <SalesItineraryViewer
-          client={selectedClient}
-          mode={viewMode}
-          onBack={() => {
-            setViewMode(null);
-            setSelectedClient(null);
-            loadData();
-          }}
-        />
+        {currentView === 'viewItinerary' && <ViewItinerary client={selectedClient} onBack={handleBack} />}
+        {currentView === 'viewDetails' && <ViewClientDetails client={selectedClient} onBack={handleBack} />}
+        {currentView === 'edit' && <EditClient client={selectedClient} onBack={handleBack} />}
+        {currentView === 'followUp' && <FollowUpManager client={selectedClient} onBack={handleBack} />}
       </DataProvider>
     );
   }
