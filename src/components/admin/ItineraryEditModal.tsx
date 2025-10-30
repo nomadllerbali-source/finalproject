@@ -36,8 +36,12 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
   };
 
   const handleReviewNext = (itineraryData: Itinerary) => {
+    console.log('=== ITINERARY EDIT MODAL: handleReviewNext called ===');
+    console.log('Received itinerary:', itineraryData);
+    console.log('Current step before:', currentStep);
     setItinerary(itineraryData);
     setCurrentStep(4);
+    console.log('Set to step 4');
   };
 
   const handleBack = () => {
@@ -51,6 +55,9 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
   };
 
   const renderStep = () => {
+    console.log('=== ITINERARY EDIT MODAL - RENDERING STEP ===', currentStep);
+    console.log('Itinerary state:', itinerary);
+
     switch (currentStep) {
       case 1:
         return (
@@ -79,9 +86,14 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
           />
         );
       case 4:
+        console.log('Step 4 - Checking itinerary:', itinerary ? 'EXISTS' : 'NULL');
+        if (!itinerary) {
+          console.error('ERROR: Itinerary is null at step 4!');
+          return <div className="text-red-500 p-4">Error: Itinerary data is missing</div>;
+        }
         return (
           <AdminFinalSummary
-            itinerary={itinerary!}
+            itinerary={itinerary}
             onStartNew={handleFinalSave}
           />
         );
