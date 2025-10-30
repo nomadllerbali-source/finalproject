@@ -1576,19 +1576,36 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getLatestItinerary = (clientId: string): Itinerary | null => {
     const clientItineraries = state.itineraries.filter(i => i.client.id === clientId);
     if (clientItineraries.length === 0) return null;
-    
+
     // Return the itinerary with the highest version number
-    return clientItineraries.reduce((latest, current) => 
+    return clientItineraries.reduce((latest, current) =>
       current.version > latest.version ? current : latest
     );
   };
 
+  const refreshAllData = async () => {
+    if (isSupabaseConfigured()) {
+      try {
+        console.log('Refreshing all data from Supabase...');
+        const data = await fetchAllData();
+        if (data) {
+          dispatch({ type: 'SET_DATA', payload: data });
+          console.log('Data refreshed successfully');
+        }
+      } catch (error) {
+        console.error('Error refreshing data from Supabase:', error);
+        throw error;
+      }
+    }
+  };
+
   return (
-    <DataContext.Provider value={{ 
-      state, 
-      dispatch, 
+    <DataContext.Provider value={{
+      state,
+      dispatch,
       updateItinerary: updateItineraryWithChangeLog,
       getLatestItinerary,
+      refreshAllData,
       addClient,
       updateClientData,
       deleteClientData,

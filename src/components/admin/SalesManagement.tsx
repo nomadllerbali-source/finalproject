@@ -36,7 +36,7 @@ interface SalesProfile {
 
 const SalesManagement: React.FC = () => {
   const { state: authState, signUp } = useAuth();
-  const { state: dataState, updateClientData } = useData();
+  const { state: dataState, updateClientData, refreshAllData } = useData();
   const { clients } = dataState;
   
   const [salesTeam, setSalesTeam] = useState<SalesProfile[]>([]);
@@ -57,6 +57,20 @@ const SalesManagement: React.FC = () => {
 
   // Get today's date
   const today = new Date().toISOString().split('T')[0];
+
+  // Auto-refresh data every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        await refreshAllData();
+        console.log('Auto-refreshed data');
+      } catch (error) {
+        console.error('Auto-refresh failed:', error);
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [refreshAllData]);
 
   // Load sales team data
   useEffect(() => {
@@ -897,9 +911,30 @@ const SalesManagement: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Sales Team Members */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-            <div className="px-6 py-4 border-b border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900">Sales Team</h3>
-              <p className="text-slate-500 text-sm">Select a sales person to view details</p>
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Sales Team</h3>
+                <p className="text-slate-500 text-sm">Select a sales person to view details</p>
+              </div>
+              <button
+                onClick={async () => {
+                  try {
+                    await refreshAllData();
+                    setMessage({ type: 'success', text: 'Data refreshed successfully' });
+                    setTimeout(() => setMessage(null), 2000);
+                  } catch (error) {
+                    console.error('Error refreshing data:', error);
+                    setMessage({ type: 'error', text: 'Failed to refresh data' });
+                    setTimeout(() => setMessage(null), 3000);
+                  }
+                }}
+                className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                title="Refresh Data"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
             </div>
 
             {salesTeam.length === 0 ? (
