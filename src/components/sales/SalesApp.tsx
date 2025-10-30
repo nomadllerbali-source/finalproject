@@ -1,166 +1,421 @@
-import React, { useState } from 'react';
-import { DataProvider } from '../../contexts/DataContext';
-
-// Sales Components
-import SalesDashboard from './SalesDashboard';
-import SalesGuestManagement from './SalesGuestManagement';
-
-// Itinerary Builder (Sales version)
-import SalesItineraryBuilder from '../itinerary/SalesItineraryBuilder';
-
-// Navigation
-import { 
-  Home, Plus, Menu, X, Users, LogOut, TrendingUp, UserCheck
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+  Users, CheckCircle, Clock, Plus, Eye, Edit2, Trash2,
+  MessageCircle, Phone, FileText, X, Calendar, MapPin,
+  Car, DollarSign, Send, Filter
+} from 'lucide-react';
+import Layout from '../Layout';
+import {
+  getSalesClientsBySalesPerson,
+  getConfirmedClients,
+  getTodayFollowUps,
+  SalesClient
+} from '../../lib/salesHelpers';
 
-type SalesSection = 'dashboard' | 'itinerary' | 'guests';
+type TabType = 'all' | 'confirmed' | 'followups';
 
 const SalesApp: React.FC = () => {
-  const { logout, state: authState } = useAuth();
-  const [activeSection, setActiveSection] = useState<SalesSection>('dashboard');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { state: authState } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [allClients, setAllClients] = useState<SalesClient[]>([]);
+  const [confirmedClients, setConfirmedClients] = useState<SalesClient[]>([]);
+  const [followUpClients, setFollowUpClients] = useState<SalesClient[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sales navigation
-  const navigation = [
-    { id: 'dashboard', name: 'Dashboard', icon: Home, description: 'Sales overview & metrics' },
-    { id: 'itinerary', name: 'Itinerary Builder', icon: Plus, description: 'Create travel packages' },
-    { id: 'guests', name: 'Guest Management', icon: UserCheck, description: 'Manage clients & leads' }
-  ];
+  useEffect(() => {
+    loadData();
+  }, [authState.user?.id]);
 
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'dashboard':
-        return <SalesDashboard />;
-      case 'itinerary':
-        return <SalesItineraryBuilder />;
-      case 'guests':
-        return <SalesGuestManagement />;
-      default:
-        return <SalesDashboard />;
+  const loadData = async () => {
+    if (!authState.user?.id) return;
+
+    setLoading(true);
+    try {
+      const [all, confirmed, followups] = await Promise.all([
+        getSalesClientsBySalesPerson(authState.user.id),
+        getConfirmedClients(authState.user.id),
+        getTodayFollowUps(authState.user.id)
+      ]);
+
+      setAllClients(all);
+      setConfirmedClients(confirmed);
+      setFollowUpClients(followups);
+    } catch (error) {
+      console.error('Error loading sales data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const getCurrentClients = (): SalesClient[] => {
+    switch (activeTab) {
+      case 'confirmed':
+        return confirmedClients;
+      case 'followups':
+        return followUpClients;
+      default:
+        return allClients;
+    }
+  };
+
+  const clients = getCurrentClients();
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'itinerary-created':
+        return 'bg-blue-100 text-blue-800';
+      case 'itinerary-sent':
+        return 'bg-purple-100 text-purple-800';
+      case '1st-follow-up':
+      case '2nd-follow-up':
+      case '3rd-follow-up':
+      case '4th-follow-up':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'itinerary-edited':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'updated-itinerary-sent':
+        return 'bg-cyan-100 text-cyan-800';
+      case 'advance-paid-confirmed':
+        return 'bg-green-100 text-green-800';
+      case 'dead':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-slate-100 text-slate-800';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    return status
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const handleViewClient = (client: SalesClient) => {
+    // TODO: Open view modal
+    console.log('View client:', client);
+  };
+
+  const handleEditClient = (client: SalesClient) => {
+    // TODO: Open edit modal
+    console.log('Edit client:', client);
+  };
+
+  const handleDeleteClient = async (clientId: string, clientName: string) => {
+    if (confirm(`Are you sure you want to delete client "${clientName}"?`)) {
+      // TODO: Delete client
+      console.log('Delete client:', clientId);
+      await loadData();
+    }
+  };
+
+  const handleFollowUp = (client: SalesClient) => {
+    // TODO: Open follow-up modal
+    console.log('Follow up:', client);
+  };
+
+  const handleWhatsAppChat = (client: SalesClient) => {
+    const message = encodeURIComponent(
+      `Hello ${client.name}! This is regarding your ${client.number_of_days}-day travel package. How can I assist you today?`
+    );
+    const whatsappUrl = `https://wa.me/${client.country_code.replace('+', '')}${client.whatsapp}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  if (loading) {
+    return (
+      <Layout title="Sales Portal" subtitle="Manage your clients and itineraries">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-slate-600">Loading...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <DataProvider>
-      <div className="flex h-screen bg-slate-50">
-        {/* Sidebar */}
-        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}>
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-6 border-b border-slate-200">
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-2 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-slate-900">
-                  {authState.user?.company_name || authState.user?.full_name || 'Sales Portal'}
-                </h1>
-                <p className="text-xs text-slate-500">Sales Dashboard</p>
-              </div>
-            </div>
+    <Layout title="Sales Portal" subtitle="Manage your clients and itineraries">
+      {/* Tabs */}
+      <div className="mb-6">
+        <div className="border-b border-slate-200">
+          <nav className="-mb-px flex space-x-8">
             <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="lg:hidden p-2 text-slate-500 hover:text-slate-700"
+              onClick={() => setActiveTab('all')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'all'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
             >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          {/* User Info & Logout */}
-          <div className="px-4 py-3 border-b border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-slate-900">
-                  {authState.user?.full_name || 'Sales User'}
-                </div>
-                <div className="text-xs text-slate-500 capitalize">{authState.user?.role}</div>
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5" />
+                <span>All Clients</span>
+                <span className="bg-slate-100 text-slate-600 py-0.5 px-2 rounded-full text-xs">
+                  {allClients.length}
+                </span>
               </div>
-              <button
-                onClick={logout}
-                className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Logout"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="p-4 space-y-2">
-            {navigation.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveSection(item.id as SalesSection);
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-left transition-colors ${
-                  activeSection === item.id
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium shadow-md'
-                    : 'text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                <item.icon className="h-5 w-5" />
-                <div>
-                  <div className="font-medium">{item.name}</div>
-                  <div className={`text-xs ${
-                    activeSection === item.id ? 'text-purple-100' : 'text-slate-500'
-                  }`}>
-                    {item.description}
-                  </div>
-                </div>
-              </button>
-            ))}
+            </button>
+            <button
+              onClick={() => setActiveTab('confirmed')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'confirmed'
+                  ? 'border-green-600 text-green-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5" />
+                <span>Confirmed Clients</span>
+                <span className="bg-slate-100 text-slate-600 py-0.5 px-2 rounded-full text-xs">
+                  {confirmedClients.length}
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('followups')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'followups'
+                  ? 'border-orange-600 text-orange-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <Clock className="h-5 w-5" />
+                <span>Today's Follow Ups</span>
+                <span className="bg-slate-100 text-slate-600 py-0.5 px-2 rounded-full text-xs">
+                  {followUpClients.length}
+                </span>
+              </div>
+            </button>
           </nav>
         </div>
+      </div>
 
-        {/* Mobile Overlay */}
-        {isMobileMenuOpen && (
-          <div 
-            className="fixed inset-0 bg-slate-900 bg-opacity-50 z-40 lg:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Mobile Header */}
-          <div className="lg:hidden bg-white shadow-sm border-b border-slate-200 px-4 py-3">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => setIsMobileMenuOpen(true)}
-                className="p-2 text-slate-500 hover:text-slate-700"
-              >
-                <Menu className="h-6 w-6" />
-              </button>
-              <div className="flex items-center space-x-3">
-                <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-2 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-slate-900">Sales Portal</h1>
-                </div>
-              </div>
-              <button
-                onClick={logout}
-                className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Logout"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-slate-500 text-sm font-medium">Total Clients</p>
+              <p className="text-2xl font-bold text-slate-900">{allClients.length}</p>
+            </div>
+            <div className="bg-blue-100 p-3 rounded-lg">
+              <Users className="h-6 w-6 text-blue-600" />
             </div>
           </div>
+        </div>
 
-          {/* Content */}
-          <main className="flex-1 overflow-auto">
-            {renderContent()}
-          </main>
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-slate-500 text-sm font-medium">Confirmed</p>
+              <p className="text-2xl font-bold text-slate-900">{confirmedClients.length}</p>
+            </div>
+            <div className="bg-green-100 p-3 rounded-lg">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-slate-500 text-sm font-medium">Today's Follow Ups</p>
+              <p className="text-2xl font-bold text-slate-900">{followUpClients.length}</p>
+            </div>
+            <div className="bg-orange-100 p-3 rounded-lg">
+              <Clock className="h-6 w-6 text-orange-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-slate-500 text-sm font-medium">Total Revenue</p>
+              <p className="text-2xl font-bold text-slate-900">
+                ₹{confirmedClients.reduce((sum, c) => sum + c.total_cost, 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-emerald-100 p-3 rounded-lg">
+              <DollarSign className="h-6 w-6 text-emerald-600" />
+            </div>
+          </div>
         </div>
       </div>
-    </DataProvider>
+
+      {/* Clients Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+        <div className="p-6 border-b border-slate-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">
+              {activeTab === 'all' && 'All Clients'}
+              {activeTab === 'confirmed' && 'Confirmed Clients'}
+              {activeTab === 'followups' && "Today's Follow Ups"}
+            </h2>
+            <button
+              onClick={() => {/* TODO: Open add client modal */}}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Client
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          {clients.length === 0 ? (
+            <div className="p-12 text-center text-slate-500">
+              <Users className="h-12 w-12 mx-auto mb-4 text-slate-300" />
+              <p className="text-lg font-medium mb-2">No clients found</p>
+              <p className="text-sm">
+                {activeTab === 'all' && 'Start by adding your first client'}
+                {activeTab === 'confirmed' && 'No confirmed bookings yet'}
+                {activeTab === 'followups' && 'No follow-ups scheduled for today'}
+              </p>
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Client Details
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Travel Info
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Next Follow-up
+                  </th>
+                  {activeTab === 'confirmed' && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      Booking Progress
+                    </th>
+                  )}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {clients.map((client) => (
+                  <tr key={client.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-medium text-slate-900">{client.name}</p>
+                        <div className="flex items-center text-slate-500 text-sm">
+                          <Phone className="h-4 w-4 mr-1" />
+                          {client.country_code} {client.whatsapp}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        <div className="text-slate-900 flex items-center">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          {new Date(client.travel_date).toLocaleDateString()}
+                        </div>
+                        <div className="text-slate-500">
+                          {client.number_of_days} days • {client.number_of_adults + client.number_of_children} pax
+                        </div>
+                        <div className="text-slate-500 flex items-center">
+                          <Car className="h-4 w-4 mr-1" />
+                          {client.transportation_mode}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(client.current_follow_up_status)}`}>
+                        {getStatusLabel(client.current_follow_up_status)}
+                      </span>
+                      <div className="text-xs text-slate-500 mt-1">
+                        ₹{client.total_cost.toLocaleString()}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {client.next_follow_up_date ? (
+                        <div className="text-sm">
+                          <div className="text-slate-900">
+                            {new Date(client.next_follow_up_date).toLocaleDateString()}
+                          </div>
+                          {client.next_follow_up_time && (
+                            <div className="text-slate-500">
+                              {client.next_follow_up_time}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-sm">Not scheduled</span>
+                      )}
+                    </td>
+                    {activeTab === 'confirmed' && (
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1 bg-slate-200 rounded-full h-2">
+                            <div
+                              className="bg-green-600 h-2 rounded-full"
+                              style={{ width: `${client.booking_completion_percentage}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-sm text-slate-600">
+                            {client.booking_completion_percentage}%
+                          </span>
+                        </div>
+                      </td>
+                    )}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleViewClient(client)}
+                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEditClient(client)}
+                          className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                          title="Edit Client"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleFollowUp(client)}
+                          className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors"
+                          title="Follow Up"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleWhatsAppChat(client)}
+                          className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                          title="WhatsApp Chat"
+                        >
+                          <Phone className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClient(client.id, client.name)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                          title="Delete Client"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </Layout>
   );
 };
 
