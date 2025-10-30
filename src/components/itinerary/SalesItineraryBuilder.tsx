@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Client, DayPlan, Itinerary } from '../../types';
 import ClientDetails from './ClientDetails';
 import ItinerarySelection from './ItinerarySelection';
@@ -63,15 +63,23 @@ const SalesItineraryBuilder: React.FC<SalesItineraryBuilderProps> = ({ onBackToD
     setItinerary(null);
   };
 
+  // Scroll to top when step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentStep]);
+
   const renderStep = () => {
+    console.log('=== RENDERING STEP ===', currentStep);
+    console.log('Itinerary state:', itinerary);
+
     switch (currentStep) {
       case 1:
         return <ClientDetails onNext={handleClientNext} />;
       case 2:
         return client ? (
-          <ItinerarySelection 
-            client={client} 
-            onNext={handleItinerarySelectionNext} 
+          <ItinerarySelection
+            client={client}
+            onNext={handleItinerarySelectionNext}
             onBack={handleBack}
             userType="sales"
           />
@@ -89,10 +97,10 @@ const SalesItineraryBuilder: React.FC<SalesItineraryBuilderProps> = ({ onBackToD
           );
         } else if (itineraryType === 'new') {
           return client ? (
-            <DayPlanning 
-              client={client} 
-              onNext={handleDayPlanningNext} 
-              onBack={handleBack} 
+            <DayPlanning
+              client={client}
+              onNext={handleDayPlanningNext}
+              onBack={handleBack}
               isAgent={false}
             />
           ) : null;
@@ -100,22 +108,27 @@ const SalesItineraryBuilder: React.FC<SalesItineraryBuilderProps> = ({ onBackToD
         return null;
       case 4:
         return client ? (
-          <SalesReviewCosting 
-            client={client} 
-            dayPlans={dayPlans} 
-            onNext={handleReviewNext} 
-            onBack={handleBack} 
+          <SalesReviewCosting
+            client={client}
+            dayPlans={dayPlans}
+            onNext={handleReviewNext}
+            onBack={handleBack}
           />
         ) : null;
       case 5:
-        return itinerary ? (
+        console.log('Step 5 - Checking itinerary:', itinerary ? 'EXISTS' : 'NULL');
+        if (!itinerary) {
+          console.error('ERROR: Itinerary is null at step 5!');
+          return <div className="text-red-500 p-4">Error: Itinerary data is missing</div>;
+        }
+        return (
           <SalesFinalSummary
             itinerary={itinerary}
             onBack={handleBack}
             onStartNew={handleStartNew}
             onBackToDashboard={onBackToDashboard}
           />
-        ) : null;
+        );
       default:
         return <ClientDetails onNext={handleClientNext} />;
     }
