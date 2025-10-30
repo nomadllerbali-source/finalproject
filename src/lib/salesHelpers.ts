@@ -426,26 +426,15 @@ export const createItineraryVersion = async (
 ): Promise<ItineraryVersion | null> => {
   if (!supabase) return null;
 
-  const { data: nextVersionData, error: versionError } = await supabase
-    .rpc('get_next_version_number', { p_client_id: clientId });
-
-  if (versionError) throw versionError;
-
-  const nextVersion = nextVersionData || 1;
-
   const { data, error } = await supabase
-    .from('sales_itinerary_versions')
-    .insert({
-      client_id: clientId,
-      version_number: nextVersion,
-      itinerary_data: itineraryData,
-      total_cost: totalCost,
-      change_description: changeDescription,
-      associated_follow_up_status: followUpStatus,
-      created_by: createdBy
-    })
-    .select()
-    .single();
+    .rpc('create_itinerary_version_atomic', {
+      p_client_id: clientId,
+      p_itinerary_data: itineraryData,
+      p_total_cost: totalCost,
+      p_change_description: changeDescription,
+      p_associated_follow_up_status: followUpStatus,
+      p_created_by: createdBy
+    });
 
   if (error) throw error;
   return data;
