@@ -47,9 +47,6 @@ const SalesManagement: React.FC = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [showRedistributeModal, setShowRedistributeModal] = useState(false);
-  const [salespersonToSuspend, setSalespersonToSuspend] = useState<string | null>(null);
-  const [redistributeToSalesperson, setRedistributeToSalesperson] = useState<string>('');
   
   const [newSalesForm, setNewSalesForm] = useState({
     fullName: '',
@@ -214,14 +211,59 @@ const SalesManagement: React.FC = () => {
     const person = salesTeam.find(p => p.id === salespersonId);
     if (!person) return;
 
-    // If suspending (currently active), check if they have clients
+    // If suspending (currently active), automatically redistribute clients
     if (person.is_active) {
       const personClients = clients.filter(c => c.createdBy === salespersonId);
 
       if (personClients.length > 0) {
-        // Show redistribution modal
-        setSalespersonToSuspend(salespersonId);
-        setShowRedistributeModal(true);
+        const activeSalesPersons = salesTeam.filter(p => p.id !== salespersonId && p.is_active);
+
+        if (activeSalesPersons.length === 0) {
+          alert('Cannot suspend this sales person. No other active sales persons available to receive clients.');
+          return;
+        }
+
+        if (!confirm(`Are you sure you want to suspend ${person.full_name}? Their ${personClients.length} client(s) will be automatically redistributed to other active sales persons.`)) {
+          return;
+        }
+
+        try {
+          // Redistribute clients randomly to active sales persons
+          for (const client of personClients) {
+            const randomSalesPerson = activeSalesPersons[Math.floor(Math.random() * activeSalesPersons.length)];
+            await updateClientData({
+              ...client,
+              createdBy: randomSalesPerson.id
+            });
+          }
+
+          // Now suspend the sales person
+          if (isSupabaseConfigured()) {
+            await updateSalesPerson({
+              id: salespersonId,
+              is_active: false
+            });
+          }
+
+          const updatedTeam = salesTeam.map(p =>
+            p.id === salespersonId ? { ...p, is_active: false } : p
+          );
+          setSalesTeam(updatedTeam);
+
+          if (!isSupabaseConfigured()) {
+            localStorage.setItem('salesTeam', JSON.stringify(updatedTeam));
+          }
+
+          setMessage({
+            type: 'success',
+            text: `${person.full_name} suspended and ${personClients.length} client(s) redistributed successfully`
+          });
+          setTimeout(() => setMessage(null), 3000);
+        } catch (error) {
+          console.error('Error suspending sales person:', error);
+          setMessage({ type: 'error', text: 'Failed to suspend sales person' });
+          setTimeout(() => setMessage(null), 3000);
+        }
         return;
       }
     }
@@ -255,60 +297,6 @@ const SalesManagement: React.FC = () => {
     }
   };
 
-  const handleConfirmRedistribute = async () => {
-    if (!salespersonToSuspend || !redistributeToSalesperson) {
-      alert('Please select a sales person to receive the clients');
-      return;
-    }
-
-    const person = salesTeam.find(p => p.id === salespersonToSuspend);
-    if (!person) return;
-
-    try {
-      // Get all clients for this sales person
-      const personClients = clients.filter(c => c.createdBy === salespersonToSuspend);
-
-      // Update each client to new sales person
-      for (const client of personClients) {
-        await updateClientData({
-          ...client,
-          createdBy: redistributeToSalesperson
-        });
-      }
-
-      // Now suspend the sales person
-      if (isSupabaseConfigured()) {
-        await updateSalesPerson({
-          id: salespersonToSuspend,
-          is_active: false
-        });
-      }
-
-      const updatedTeam = salesTeam.map(p =>
-        p.id === salespersonToSuspend ? { ...p, is_active: false } : p
-      );
-      setSalesTeam(updatedTeam);
-
-      if (!isSupabaseConfigured()) {
-        localStorage.setItem('salesTeam', JSON.stringify(updatedTeam));
-      }
-
-      setMessage({
-        type: 'success',
-        text: `${person.full_name} suspended and ${personClients.length} clients redistributed successfully`
-      });
-      setTimeout(() => setMessage(null), 3000);
-
-      // Close modal and reset
-      setShowRedistributeModal(false);
-      setSalespersonToSuspend(null);
-      setRedistributeToSalesperson('');
-    } catch (error) {
-      console.error('Error redistributing clients:', error);
-      setMessage({ type: 'error', text: 'Failed to redistribute clients' });
-      setTimeout(() => setMessage(null), 3000);
-    }
-  };
 
   const handleDeleteSalesperson = async (salespersonId: string, name: string) => {
     if (confirm(`Are you sure you want to permanently delete sales person "${name}"? This action cannot be undone.`)) {
@@ -1076,85 +1064,6 @@ const SalesManagement: React.FC = () => {
         />
       )}
 
-      {/* Client Redistribution Modal */}
-      {showRedistributeModal && salespersonToSuspend && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full">
-            <div className="px-6 py-4 border-b border-slate-200">
-              <h3 className="text-xl font-semibold text-slate-900">Redistribute Clients</h3>
-              <p className="text-sm text-slate-600 mt-1">
-                This sales person has {clients.filter(c => c.createdBy === salespersonToSuspend).length} active client(s).
-                Select a sales person to receive these clients.
-              </p>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Suspending Sales Person
-                </label>
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="font-medium text-slate-900">
-                    {salesTeam.find(p => p.id === salespersonToSuspend)?.full_name}
-                  </div>
-                  <div className="text-sm text-slate-600">
-                    {salesTeam.find(p => p.id === salespersonToSuspend)?.email}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Assign Clients To *
-                </label>
-                <select
-                  value={redistributeToSalesperson}
-                  onChange={(e) => setRedistributeToSalesperson(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="">Select a sales person...</option>
-                  {salesTeam
-                    .filter(p => p.id !== salespersonToSuspend && p.is_active)
-                    .map(person => (
-                      <option key={person.id} value={person.id}>
-                        {person.full_name} ({person.email}) - {person.totalLeads} leads
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                  <div className="text-sm text-yellow-800">
-                    <strong>Note:</strong> All clients, itineraries, and follow-ups will be transferred to the selected sales person.
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-6 py-4 border-t border-slate-200 flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowRedistributeModal(false);
-                  setSalespersonToSuspend(null);
-                  setRedistributeToSalesperson('');
-                }}
-                className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmRedistribute}
-                disabled={!redistributeToSalesperson}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Suspend & Redistribute
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </Layout>
   );
 };
