@@ -9,11 +9,12 @@ interface DayPlanningProps {
   onBack: () => void;
   isAgent?: boolean;
   isFixedItinerary?: boolean;
+  initialDayPlans?: DayPlan[];
 }
 
 type PlanningStep = 'sightseeing' | 'hotel' | 'activities' | 'tickets' | 'meals';
 
-const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAgent = false, isFixedItinerary = false }) => {
+const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAgent = false, isFixedItinerary = false, initialDayPlans }) => {
   const { state } = useData();
   const { hotels, sightseeings, activities, entryTickets, meals } = state;
   
@@ -30,17 +31,20 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
   });
 
   useEffect(() => {
-    // Initialize day plans
-    const initialDayPlans: DayPlan[] = Array.from({ length: client.numberOfDays }, (_, index) => ({
-      day: index + 1,
-      sightseeing: [],
-      hotel: null,
-      activities: [],
-      entryTickets: [],
-      meals: []
-    }));
-    setDayPlans(initialDayPlans);
-  }, [client.numberOfDays]);
+    if (initialDayPlans && initialDayPlans.length > 0) {
+      setDayPlans(initialDayPlans);
+    } else {
+      const newDayPlans: DayPlan[] = Array.from({ length: client.numberOfDays }, (_, index) => ({
+        day: index + 1,
+        sightseeing: [],
+        hotel: null,
+        activities: [],
+        entryTickets: [],
+        meals: []
+      }));
+      setDayPlans(newDayPlans);
+    }
+  }, [client.numberOfDays, initialDayPlans]);
 
   // Filter sightseeing based on transportation mode
   const filteredSightseeing = sightseeings.filter(sight => {
@@ -773,35 +777,70 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
 
           {/* Day Navigation */}
           <div className="mb-6">
+            <div className="mb-4">
+              <h4 className="font-semibold text-slate-900 mb-2">Select Day to Edit</h4>
+              <p className="text-sm text-slate-600">Click any day number to jump directly to it</p>
+            </div>
             <div className="flex items-center space-x-2 overflow-x-auto pb-2">
               {Array.from({ length: client.numberOfDays }, (_, index) => {
                 const day = index + 1;
                 const isCompleted = completedDays.includes(day);
                 const isCurrent = day === currentDay;
-                const isAccessible = day <= currentDay || isCompleted;
-                
+                const isAccessible = initialDayPlans ? true : (day <= currentDay || isCompleted);
+
                 return (
                   <button
                     key={day}
-                    onClick={() => isAccessible && setCurrentDay(day)}
+                    onClick={() => {
+                      if (isAccessible) {
+                        setCurrentDay(day);
+                        setCurrentStep('sightseeing');
+                      }
+                    }}
                     disabled={!isAccessible}
                     className={`
-                      flex items-center justify-center w-12 h-12 rounded-full font-semibold text-sm transition-all
-                      ${isCurrent 
-                        ? 'bg-blue-600 text-white ring-2 ring-blue-200' 
+                      flex items-center justify-center w-12 h-12 rounded-full font-semibold text-sm transition-all hover:scale-110
+                      ${isCurrent
+                        ? 'bg-blue-600 text-white ring-2 ring-blue-200'
                         : isCompleted
                         ? 'bg-green-500 text-white'
                         : isAccessible
-                        ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                        ? 'bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer'
                         : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                       }
                     `}
+                    title={`${isAccessible ? 'Jump to' : 'Complete previous days to unlock'} Day ${day}`}
                   >
                     {isCompleted ? '✓' : day}
                   </button>
                 );
               })}
             </div>
+            {initialDayPlans && (
+              <div className="mt-4 flex items-center space-x-3">
+                <label className="text-sm font-medium text-slate-700">Quick Jump:</label>
+                <select
+                  value={currentDay}
+                  onChange={(e) => {
+                    setCurrentDay(parseInt(e.target.value));
+                    setCurrentStep('sightseeing');
+                  }}
+                  className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                >
+                  {Array.from({ length: client.numberOfDays }, (_, index) => {
+                    const day = index + 1;
+                    return (
+                      <option key={day} value={day}>
+                        Day {day}
+                      </option>
+                    );
+                  })}
+                </select>
+                <span className="text-xs text-slate-500">
+                  Currently editing: Day {currentDay}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Step Progress for Current Day */}
