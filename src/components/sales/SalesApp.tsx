@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import {
-  Users, CheckCircle, Clock, Plus, Eye, Edit2, Trash2,
-  MessageCircle, Phone, FileText, X, Calendar, MapPin,
-  Car, DollarSign, Send, Filter
-} from 'lucide-react';
+import { Users, CheckCircle, Clock, Plus, Eye, CreditCard as Edit2, Trash2, MessageCircle, Phone, FileText, X, Calendar, MapPin, Car, DollarSign, Send, Filter } from 'lucide-react';
 import Layout from '../Layout';
 import {
   getSalesClientsBySalesPerson,
