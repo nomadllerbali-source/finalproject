@@ -7,6 +7,7 @@ import SalesItineraryBuilder from '../itinerary/SalesItineraryBuilder';
 import ViewItinerary from './ViewItinerary';
 import ViewClientDetails from './ViewClientDetails';
 import EditClient from './EditClient';
+import EditItinerary from './EditItinerary';
 import FollowUpManager from './FollowUpManager';
 import {
   getSalesClientsBySalesPerson,
@@ -19,7 +20,7 @@ import {
 } from '../../lib/salesHelpers';
 
 type TabType = 'all' | 'confirmed' | 'followups';
-type ViewType = 'viewItinerary' | 'viewDetails' | 'edit' | 'followUp';
+type ViewType = 'viewItinerary' | 'viewDetails' | 'edit' | 'editItinerary' | 'followUp';
 
 const SalesApp: React.FC = () => {
   const { state: authState, logout } = useAuth();
@@ -111,6 +112,11 @@ const SalesApp: React.FC = () => {
     setCurrentView('edit');
   };
 
+  const handleEditItinerary = (client: SalesClient) => {
+    setSelectedClient(client);
+    setCurrentView('editItinerary');
+  };
+
   const handleDeleteClient = async (clientId: string, clientName: string) => {
     if (confirm(`Are you sure you want to delete client "${clientName}"? This will also delete all associated booking checklists.`)) {
       try {
@@ -169,7 +175,8 @@ const SalesApp: React.FC = () => {
       <DataProvider>
         {currentView === 'viewItinerary' && <ViewItinerary client={selectedClient} onBack={handleBack} />}
         {currentView === 'viewDetails' && <ViewClientDetails client={selectedClient} onBack={handleBack} />}
-        {currentView === 'edit' && <EditClient client={selectedClient} onBack={handleBack} />}
+        {currentView === 'edit' && <EditClient client={selectedClient} onBack={handleBack} onEditItinerary={handleEditItinerary} />}
+        {currentView === 'editItinerary' && <EditItinerary client={selectedClient} onBack={handleBack} onSuccess={handleBack} />}
         {currentView === 'followUp' && <FollowUpManager client={selectedClient} onBack={handleBack} />}
       </DataProvider>
     );
