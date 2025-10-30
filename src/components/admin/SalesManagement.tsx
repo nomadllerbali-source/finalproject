@@ -10,6 +10,10 @@ import {
   deleteSalesPerson,
   hashPassword
 } from '../../lib/supabaseHelpers';
+import {
+  getAllSalesClients,
+  SalesClient
+} from '../../lib/salesHelpers';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { 
   TrendingUp, Plus, Users, Eye, Ban, Check, Trash2, Calendar, 
@@ -34,12 +38,44 @@ interface SalesProfile {
   totalLeads: number;
 }
 
+// Helper to convert SalesClient to Client format for UI display
+const salesClientToClient = (sc: SalesClient): Client => ({
+  id: sc.id,
+  name: sc.name,
+  whatsapp: sc.whatsapp,
+  countryCode: sc.country_code,
+  travelDates: {
+    startDate: sc.travel_date,
+    endDate: '',
+    isFlexible: false,
+    flexibleMonth: ''
+  },
+  numberOfPax: {
+    adults: sc.number_of_adults,
+    children: sc.number_of_children
+  },
+  numberOfDays: sc.number_of_days,
+  transportationMode: sc.transportation_mode,
+  createdAt: sc.created_at,
+  createdBy: sc.sales_person_id,
+  followUpStatus: sc.current_follow_up_status ? {
+    status: sc.current_follow_up_status as any,
+    updatedAt: sc.updated_at,
+    remarks: '',
+    nextFollowUpDate: sc.next_follow_up_date,
+    nextFollowUpTime: sc.next_follow_up_time
+  } : undefined,
+  nextFollowUpDate: sc.next_follow_up_date,
+  nextFollowUpTime: sc.next_follow_up_time
+});
+
 const SalesManagement: React.FC = () => {
   const { state: authState, signUp } = useAuth();
   const { state: dataState, updateClientData, refreshAllData } = useData();
   const { clients } = dataState;
-  
+
   const [salesTeam, setSalesTeam] = useState<SalesProfile[]>([]);
+  const [salesClients, setSalesClients] = useState<SalesClient[]>([]);
   const [selectedSalesperson, setSelectedSalesperson] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'clients' | 'followups' | 'confirmed'>('overview');
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -72,6 +108,30 @@ const SalesManagement: React.FC = () => {
     return () => clearInterval(interval);
   }, [refreshAllData]);
 
+  // Load sales clients data
+  useEffect(() => {
+    const loadSalesClients = async () => {
+      try {
+        if (isSupabaseConfigured()) {
+          console.log('Fetching sales clients from Supabase...');
+          const clientsData = await getAllSalesClients();
+          console.log('Loaded sales clients from Supabase:', clientsData);
+          setSalesClients(clientsData);
+        }
+      } catch (error: any) {
+        console.error('Error loading sales clients:', error);
+      }
+    };
+
+    loadSalesClients();
+
+    const interval = setInterval(() => {
+      loadSalesClients();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Load sales team data
   useEffect(() => {
     const loadSalesTeam = async () => {
@@ -94,15 +154,15 @@ const SalesManagement: React.FC = () => {
         }
 
         const teamWithMetrics = team.map((person: SalesPerson) => {
-          const personClients = clients.filter(c => c.createdBy === person.id);
+          const personClients = salesClients.filter(c => c.sales_person_id === person.id);
           const todayClients = personClients.filter(c =>
-            new Date(c.createdAt).toISOString().split('T')[0] === today
+            new Date(c.created_at).toISOString().split('T')[0] === today
           );
           const todayFollowups = personClients.filter(c =>
-            c.nextFollowUpDate === today
+            c.next_follow_up_date === today
           );
           const confirmedClients = personClients.filter(c =>
-            c.followUpStatus?.status === 'advance-paid-confirmed'
+            c.current_follow_up_status === 'advance-paid-confirmed'
           );
 
           return {
@@ -132,7 +192,7 @@ const SalesManagement: React.FC = () => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [clients, today]);
+  }, [salesClients, today]);
 
   const handleViewItinerary = (client: Client) => {
     setSelectedClient(client);
@@ -337,28 +397,30 @@ const SalesManagement: React.FC = () => {
     }
   };
 
-  const getClientsForSalesperson = (salespersonId: string) => {
-    return clients.filter(c => c.createdBy === salespersonId);
+  const getClientsForSalesperson = (salespersonId: string): Client[] => {
+    return salesClients
+      .filter(c => c.sales_person_id === salespersonId)
+      .map(salesClientToClient);
   };
 
-  const getTodayFollowupsForSalesperson = (salespersonId: string) => {
-    return clients.filter(c => 
-      c.createdBy === salespersonId && c.nextFollowUpDate === today
-    );
+  const getTodayFollowupsForSalesperson = (salespersonId: string): Client[] => {
+    return salesClients
+      .filter(c => c.sales_person_id === salespersonId && c.next_follow_up_date === today)
+      .map(salesClientToClient);
   };
 
-  const getConfirmedClientsForSalesperson = (salespersonId: string) => {
-    return clients.filter(c => 
-      c.createdBy === salespersonId && c.followUpStatus?.status === 'advance-paid-confirmed'
-    );
+  const getConfirmedClientsForSalesperson = (salespersonId: string): Client[] => {
+    return salesClients
+      .filter(c => c.sales_person_id === salespersonId && c.current_follow_up_status === 'advance-paid-confirmed')
+      .map(salesClientToClient);
   };
 
   const getTodayPerformanceForSalesperson = (salespersonId: string) => {
-    const personClients = clients.filter(c => c.createdBy === salespersonId);
-    
+    const personClients = salesClients.filter(c => c.sales_person_id === salespersonId);
+
     // New leads added today
-    const newLeadsToday = personClients.filter(c => 
-      new Date(c.createdAt).toISOString().split('T')[0] === today
+    const newLeadsToday = personClients.filter(c =>
+      new Date(c.created_at).toISOString().split('T')[0] === today
     );
     
     // Follow-ups updated today

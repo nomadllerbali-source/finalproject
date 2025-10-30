@@ -114,6 +114,16 @@ export const updateSalesPerson = async (id: string, updates: Partial<SalesPerson
 };
 
 // Sales Client Operations
+export const getAllSalesClients = async (): Promise<SalesClient[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('sales_clients')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+};
+
 export const getSalesClientsBySalesPerson = async (salesPersonId: string): Promise<SalesClient[]> => {
   if (!supabase) return [];
   const { data, error } = await supabase
