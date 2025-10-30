@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Client, DayPlan, Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
-import { X, Save, CheckCircle } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { insertClient, updateClient, insertItinerary, updateItinerary } from '../../lib/supabaseHelpers';
+import { X, Save, CheckCircle, Loader2 } from 'lucide-react';
 import ClientDetails from '../itinerary/ClientDetails';
 import DayPlanning from '../itinerary/DayPlanning';
 import ReviewCosting from '../itinerary/ReviewCosting';
@@ -13,7 +15,8 @@ interface ItineraryEditModalProps {
 }
 
 const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose, onSave }) => {
-  const { getLatestItinerary } = useData();
+  const { getLatestItinerary, dispatch } = useData();
+  const { state: authState } = useAuth();
   const latestItinerary = getLatestItinerary(client.id);
 
   // Start at DayPlanning step (2) if editing existing itinerary, otherwise start at ClientDetails (1)
@@ -23,6 +26,8 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
   const [editedClient, setEditedClient] = useState<Client>(client);
   const [dayPlans, setDayPlans] = useState<DayPlan[]>(latestItinerary?.dayPlans || []);
   const [itinerary, setItinerary] = useState<Itinerary | null>(latestItinerary);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleClientNext = (clientData: Client) => {
     setEditedClient(clientData);
@@ -34,11 +39,41 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
     setCurrentStep(3);
   };
 
-  const handleReviewNext = (itineraryData: Itinerary) => {
-    setItinerary(itineraryData);
-    // Directly save and close instead of going to step 4
-    onSave(editedClient);
-    onClose();
+  const handleReviewNext = async (itineraryData: Itinerary) => {
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      // First, update the client in the database
+      await updateClient(editedClient);
+
+      // Then save or update the itinerary
+      let savedItinerary: Itinerary;
+      if (latestItinerary) {
+        // Update existing itinerary
+        const updatedItinerary = {
+          ...itineraryData,
+          id: latestItinerary.id,
+          version: latestItinerary.version + 1,
+          lastUpdated: new Date().toISOString(),
+          updatedBy: authState.user?.email || 'admin'
+        };
+        savedItinerary = await updateItinerary(updatedItinerary);
+        dispatch({ type: 'UPDATE_ITINERARY', payload: savedItinerary });
+      } else {
+        // Create new itinerary
+        savedItinerary = await insertItinerary(itineraryData);
+        dispatch({ type: 'ADD_ITINERARY', payload: savedItinerary });
+      }
+
+      setItinerary(savedItinerary);
+      setCurrentStep(4);
+    } catch (error) {
+      console.error('Error saving itinerary:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to save itinerary');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleBack = () => {
@@ -72,13 +107,43 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
         );
       case 3:
         return (
-          <ReviewCosting
-            client={editedClient}
-            dayPlans={dayPlans}
-            onNext={handleReviewNext}
-            onBack={handleBack}
-            isEditMode={true}
-          />
+          <div>
+            <ReviewCosting
+              client={editedClient}
+              dayPlans={dayPlans}
+              onNext={handleReviewNext}
+              onBack={handleBack}
+              isEditMode={true}
+            />
+            {isSaving && (
+              <div className="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-8 flex flex-col items-center">
+                  <Loader2 className="h-12 w-12 text-green-600 animate-spin mb-4" />
+                  <p className="text-lg font-semibold text-slate-900">Saving Itinerary...</p>
+                  <p className="text-sm text-slate-600 mt-2">Please wait while we update the database</p>
+                </div>
+              </div>
+            )}
+            {saveError && (
+              <div className="fixed bottom-4 right-4 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg max-w-md z-50">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <X className="h-5 w-5 text-red-600" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">Error Saving Itinerary</h3>
+                    <p className="text-sm text-red-700 mt-1">{saveError}</p>
+                  </div>
+                  <button
+                    onClick={() => setSaveError(null)}
+                    className="ml-auto flex-shrink-0 text-red-400 hover:text-red-600"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         );
       case 4:
         return (
