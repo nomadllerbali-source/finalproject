@@ -7,24 +7,26 @@ import { generateUUID } from '../../utils/uuid';
 
 interface ClientDetailsProps {
   onNext: (client: Client) => void;
+  initialData?: Client;
 }
 
-const ClientDetails: React.FC<ClientDetailsProps> = ({ onNext }) => {
+const ClientDetails: React.FC<ClientDetailsProps> = ({ onNext, initialData }) => {
   const { state, dispatch } = useData();
   const { state: authState } = useAuth();
   const { transportations } = state;
   const [formData, setFormData] = useState({
-    name: '',
-    whatsapp: '',
-    countryCode: '+1',
-    startDate: '',
-    endDate: '',
-    isFlexible: false,
-    flexibleMonth: '',
-    adults: 2,
-    children: 0,
-    numberOfDays: 7,
-    transportationMode: ''
+    name: initialData?.name || '',
+    whatsapp: initialData?.whatsapp || '',
+    countryCode: initialData?.countryCode || '+1',
+    startDate: initialData?.travelDates?.startDate || '',
+    endDate: initialData?.travelDates?.endDate || '',
+    isFlexible: initialData?.travelDates?.isFlexible || false,
+    flexibleMonth: initialData?.travelDates?.flexibleMonth || '',
+    adults: initialData?.numberOfPax?.adults || 2,
+    children: initialData?.numberOfPax?.children || 0,
+    numberOfDays: initialData?.numberOfDays || 7,
+    transportationMode: initialData?.transportationMode || '',
+    email: initialData?.email || ''
   });
 
   const countryCodes = [
@@ -81,8 +83,9 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ onNext }) => {
     }
     
     const client: Client = {
-      id: generateUUID(),
+      id: initialData?.id || generateUUID(),
       name: formData.name,
+      email: formData.email || undefined,
       whatsapp: formData.whatsapp,
       countryCode: formData.countryCode,
       travelDates: {
@@ -97,11 +100,13 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ onNext }) => {
       },
       numberOfDays: formData.numberOfDays,
       transportationMode: formData.transportationMode,
-      createdAt: new Date().toISOString(),
-      createdBy: authState.user?.id
+      createdAt: initialData?.createdAt || new Date().toISOString(),
+      createdBy: initialData?.createdBy || authState.user?.id
     };
 
-    dispatch({ type: 'ADD_CLIENT', payload: client });
+    if (!initialData) {
+      dispatch({ type: 'ADD_CLIENT', payload: client });
+    }
     onNext(client);
   };
 
@@ -139,6 +144,19 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ onNext }) => {
                 className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm md:text-base"
                 placeholder="Enter client's full name"
                 required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm md:text-base font-medium text-slate-700 mb-2">
+                Email (Optional)
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm md:text-base"
+                placeholder="Enter client's email address"
               />
             </div>
 

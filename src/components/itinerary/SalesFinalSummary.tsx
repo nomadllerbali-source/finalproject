@@ -16,9 +16,10 @@ interface SalesFinalSummaryProps {
   onBack: () => void;
   onStartNew: () => void;
   onBackToDashboard?: () => void;
+  isViewMode?: boolean;
 }
 
-const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack, onStartNew, onBackToDashboard }) => {
+const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack, onStartNew, onBackToDashboard, isViewMode = false }) => {
   const { state } = useData();
   const { state: authState } = useAuth();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
@@ -26,6 +27,12 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
 
   // Save itinerary to database
   React.useEffect(() => {
+    // Skip saving if in view mode
+    if (isViewMode) {
+      console.log('View mode - skipping save');
+      return;
+    }
+
     // Prevent multiple saves using ref (synchronous check)
     if (hasSavedRef.current) {
       console.log('Already saved, skipping...');
@@ -102,7 +109,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
     };
 
     saveData();
-  }, [itinerary, authState.user?.id]);
+  }, [itinerary, authState.user?.id, isViewMode]);
 
   const copyItineraryToClipboard = () => {
     const totalPax = itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children;
@@ -550,13 +557,15 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6 md:pt-8 border-t border-slate-200">
             <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={onBack}
-                className="inline-flex items-center justify-center px-4 md:px-6 py-3 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors text-sm md:text-base"
-              >
-                <ArrowLeft className="mr-2 h-5 w-5" />
-                Back to Review
-              </button>
+              {!isViewMode && (
+                <button
+                  onClick={onBack}
+                  className="inline-flex items-center justify-center px-4 md:px-6 py-3 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors text-sm md:text-base"
+                >
+                  <ArrowLeft className="mr-2 h-5 w-5" />
+                  Back to Review
+                </button>
+              )}
               <button
                 onClick={generatePDF}
                 className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base"
@@ -572,13 +581,15 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
                 Copy Package
               </button>
             </div>
-            <button
-              onClick={onStartNew}
-              className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm md:text-base font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105"
-            >
-              <RotateCcw className="mr-2 h-5 w-5" />
-              Create New Package
-            </button>
+            {!isViewMode && (
+              <button
+                onClick={onStartNew}
+                className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm md:text-base font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105"
+              >
+                <RotateCcw className="mr-2 h-5 w-5" />
+                Create New Package
+              </button>
+            )}
             {onBackToDashboard && (
               <button
                 onClick={onBackToDashboard}

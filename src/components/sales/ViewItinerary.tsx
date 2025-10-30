@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronDown, ChevronUp, FileText, Calendar, DollarSign, Clock } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, FileText, Calendar, DollarSign, Clock, Copy } from 'lucide-react';
+import { useData } from '../../contexts/DataContext';
 import { SalesClient, ItineraryVersion, getItineraryVersionsByClient } from '../../lib/salesHelpers';
 import { Client, Itinerary } from '../../types';
 import SalesFinalSummary from '../itinerary/SalesFinalSummary';
@@ -11,6 +12,8 @@ interface ViewItineraryProps {
 }
 
 const ViewItinerary: React.FC<ViewItineraryProps> = ({ client: salesClient, onBack }) => {
+  const { state } = useData();
+  const { hotels, sightseeings, activities, entryTickets, meals } = state;
   const [versions, setVersions] = useState<ItineraryVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedVersion, setExpandedVersion] = useState<number | null>(null);
@@ -42,24 +45,37 @@ const ViewItinerary: React.FC<ViewItineraryProps> = ({ client: salesClient, onBa
     const clientData: Client = {
       id: salesClient.id,
       name: salesClient.name,
-      email: salesClient.email || undefined,
+      email: salesClient.email,
       whatsapp: salesClient.whatsapp,
       countryCode: salesClient.country_code,
-      startDate: salesClient.travel_date,
-      endDate: salesClient.travel_date,
-      isFlexible: false,
-      adults: salesClient.number_of_adults,
-      children: salesClient.number_of_children,
+      travelDates: {
+        startDate: salesClient.travel_date,
+        endDate: salesClient.travel_date,
+        isFlexible: false,
+        flexibleMonth: ''
+      },
+      numberOfPax: {
+        adults: salesClient.number_of_adults,
+        children: salesClient.number_of_children
+      },
       numberOfDays: salesClient.number_of_days,
-      transportationMode: salesClient.transportation_mode
+      transportationMode: salesClient.transportation_mode,
+      createdAt: salesClient.created_at,
+      createdBy: salesClient.sales_person_id
     };
 
     const itineraryData: Itinerary = {
+      client: clientData,
+      dayPlans: version.itinerary_data.days || [],
+      totalBaseCost: version.total_cost,
+      profitMargin: 0,
+      finalPrice: version.total_cost,
+      exchangeRate: 85,
       id: version.id,
-      clientId: salesClient.id,
-      days: version.itinerary_data.days || [],
-      totalCost: version.total_cost,
-      status: 'draft'
+      version: version.version_number,
+      lastUpdated: version.created_at,
+      updatedBy: version.created_by,
+      changeLog: []
     };
 
     return { client: clientData, itinerary: itineraryData };
@@ -94,6 +110,104 @@ const ViewItinerary: React.FC<ViewItineraryProps> = ({ client: salesClient, onBa
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
+  };
+
+  const copyLatestItineraryToClipboard = () => {
+    if (versions.length === 0) return;
+
+    const latestVersion = versions[0];
+    const { client, itinerary } = convertToClientItinerary(latestVersion);
+    const totalPax = salesClient.number_of_adults + salesClient.number_of_children;
+
+    let itineraryText = `🌴 PREMIUM TRAVEL PACKAGE 🌴\n\n`;
+    itineraryText += `📋 TRIP DETAILS:\n`;
+    itineraryText += `• Trip Name: ${salesClient.name}\n`;
+    itineraryText += `• Duration: ${salesClient.number_of_days} days\n`;
+    itineraryText += `• Passengers: ${totalPax} pax (${salesClient.number_of_adults} adults, ${salesClient.number_of_children} children)\n`;
+    itineraryText += `• Transportation: ${salesClient.transportation_mode}\n\n`;
+
+    itineraryText += `📅 DAY-BY-DAY ITINERARY:\n\n`;
+
+    itinerary.dayPlans.forEach((dayPlan) => {
+      itineraryText += `🗓️ DAY ${dayPlan.day}:\n`;
+
+      // Sightseeing
+      if (dayPlan.sightseeing.length > 0) {
+        itineraryText += `📍 SIGHTSEEING:\n`;
+        dayPlan.sightseeing.forEach(sightId => {
+          const sight = sightseeings.find(s => s.id === sightId);
+          if (sight) {
+            itineraryText += `   • ${sight.name}\n`;
+          }
+        });
+      }
+
+      // Hotel
+      if (dayPlan.hotel) {
+        const hotel = hotels.find(h => h.id === dayPlan.hotel!.hotelId);
+        const roomType = hotel?.roomTypes.find(rt => rt.id === dayPlan.hotel!.roomTypeId);
+        if (hotel && roomType) {
+          itineraryText += `🏨 ACCOMMODATION:\n`;
+          itineraryText += `   • ${hotel.name} - ${roomType.name}\n`;
+          itineraryText += `   • Location: ${hotel.place}\n`;
+        }
+      }
+
+      // Activities
+      if (dayPlan.activities.length > 0) {
+        itineraryText += `🎯 ACTIVITIES:\n`;
+        dayPlan.activities.forEach(act => {
+          const activity = activities.find(a => a.id === act.activityId);
+          const option = activity?.options.find(o => o.id === act.optionId);
+          if (activity && option) {
+            itineraryText += `   • ${activity.name} - ${option.name}\n`;
+          }
+        });
+      }
+
+      // Entry Tickets
+      if (dayPlan.entryTickets.length > 0) {
+        itineraryText += `🎫 ENTRY TICKETS:\n`;
+        dayPlan.entryTickets.forEach(ticketId => {
+          const ticket = entryTickets.find(t => t.id === ticketId);
+          if (ticket) {
+            itineraryText += `   • ${ticket.name}\n`;
+          }
+        });
+      }
+
+      // Meals
+      if (dayPlan.meals.length > 0) {
+        itineraryText += `🍽️ MEALS:\n`;
+        dayPlan.meals.forEach(mealId => {
+          const meal = meals.find(m => m.id === mealId);
+          if (meal) {
+            itineraryText += `   • ${meal.type.charAt(0).toUpperCase() + meal.type.slice(1)} at ${meal.place}\n`;
+          }
+        });
+      }
+
+      itineraryText += `\n`;
+    });
+
+    itineraryText += `💰 PREMIUM PACKAGE PRICING:\n`;
+    itineraryText += `• Total Package Price: $${latestVersion.total_cost.toFixed(2)}\n`;
+    itineraryText += `• Total Package Price (INR): ₹${(latestVersion.total_cost * 85).toLocaleString('en-IN')}\n`;
+    itineraryText += `• Exchange Rate: 1 USD = ₹85\n\n`;
+
+    itineraryText += `📞 SALES CONTACT:\n`;
+    itineraryText += `${salesClient.name} Premium Travel Package\n`;
+    itineraryText += `Nomadller Solutions - Sales Department\n`;
+    itineraryText += `Professional Travel Planning Services\n\n`;
+
+    itineraryText += `Generated on: ${new Date().toLocaleDateString()}\n`;
+    itineraryText += `Package ID: ${salesClient.id}\n`;
+
+    navigator.clipboard.writeText(itineraryText).then(() => {
+      alert('✅ Complete itinerary copied to clipboard! Ready to share on WhatsApp.');
+    }).catch(() => {
+      alert('❌ Failed to copy itinerary. Please try again.');
+    });
   };
 
   if (loading) {
@@ -147,9 +261,18 @@ const ViewItinerary: React.FC<ViewItineraryProps> = ({ client: salesClient, onBa
             <h2 className="text-2xl font-bold mb-2">{salesClient.name}</h2>
             <p className="text-blue-100">Complete Itinerary Version History</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-            <p className="text-sm text-blue-100">Total Versions</p>
-            <p className="text-3xl font-bold">{versions.length}</p>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={copyLatestItineraryToClipboard}
+              className="inline-flex items-center px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all font-medium shadow-lg"
+            >
+              <Copy className="h-5 w-5 mr-2" />
+              Copy for WhatsApp
+            </button>
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+              <p className="text-sm text-blue-100">Total Versions</p>
+              <p className="text-3xl font-bold">{versions.length}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -244,10 +367,11 @@ const ViewItinerary: React.FC<ViewItineraryProps> = ({ client: salesClient, onBa
                   </div>
                   <div className="bg-white rounded-lg p-4">
                     <SalesFinalSummary
-                      client={client}
                       itinerary={itinerary}
                       onStartNew={() => {}}
+                      onBack={onBack}
                       onBackToDashboard={onBack}
+                      isViewMode={true}
                     />
                   </div>
                 </div>
