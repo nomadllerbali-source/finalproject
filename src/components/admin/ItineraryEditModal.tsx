@@ -36,7 +36,9 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
 
   const handleReviewNext = (itineraryData: Itinerary) => {
     setItinerary(itineraryData);
-    setCurrentStep(4);
+    // Directly save and close instead of going to step 4
+    onSave(editedClient);
+    onClose();
   };
 
   const handleBack = () => {
@@ -75,6 +77,7 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
             dayPlans={dayPlans}
             onNext={handleReviewNext}
             onBack={handleBack}
+            isEditMode={true}
           />
         );
       case 4:

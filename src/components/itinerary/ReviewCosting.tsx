@@ -3,16 +3,17 @@ import { Client, DayPlan, Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { calculateItineraryCost, getSeasonalPrice, formatCurrency } from '../../utils/calculations';
 import { generateUUID } from '../../utils/uuid';
-import { DollarSign, Calendar, Users, MapPin, Building2, Camera, Ticket, Utensils, TrendingUp } from 'lucide-react';
+import { DollarSign, Calendar, Users, MapPin, Building2, Camera, Ticket, Utensils, TrendingUp, Save } from 'lucide-react';
 
 interface ReviewCostingProps {
   client: Client;
   dayPlans: DayPlan[];
   onNext: (itinerary: Itinerary) => void;
   onBack: () => void;
+  isEditMode?: boolean;
 }
 
-const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext, onBack }) => {
+const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext, onBack, isEditMode = false }) => {
   const { state } = useData();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
   const [profitMargin, setProfitMargin] = useState(0);
@@ -290,8 +291,17 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
               onClick={handleSubmit}
               className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white text-sm md:text-base font-semibold rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-200 transform hover:scale-105"
             >
-              Generate Summary
-              <DollarSign className="ml-2 h-5 w-5" />
+              {isEditMode ? (
+                <>
+                  <Save className="mr-2 h-5 w-5" />
+                  Update Itinerary
+                </>
+              ) : (
+                <>
+                  Generate Summary
+                  <DollarSign className="ml-2 h-5 w-5" />
+                </>
+              )}
             </button>
           </div>
         </div>
