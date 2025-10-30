@@ -813,12 +813,20 @@ export const updateSalesPerson = async (salesPerson: Partial<SalesPerson> & { id
 
 export const deleteSalesPerson = async (id: string): Promise<void> => {
   if (!supabase) return;
-  const { error } = await supabase
-    .from('sales_persons')
-    .delete()
-    .eq('id', id);
 
-  if (error) throw error;
+  // Delete the auth user first - this will cascade to sales_persons due to ON DELETE CASCADE
+  const { error: authError } = await supabase.auth.admin.deleteUser(id);
+
+  if (authError) {
+    console.error('Error deleting auth user:', authError);
+    // If auth deletion fails, try deleting from sales_persons directly
+    const { error: salesError } = await supabase
+      .from('sales_persons')
+      .delete()
+      .eq('id', id);
+
+    if (salesError) throw salesError;
+  }
 };
 
 export const hashPassword = async (password: string): Promise<string> => {
