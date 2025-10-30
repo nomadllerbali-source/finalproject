@@ -611,20 +611,20 @@ const ViewClientModal: React.FC<{
             </div>
           </div>
 
-          {itinerary && (
+          {itinerary && itinerary.days && Array.isArray(itinerary.days) && (
             <div>
               <h4 className="font-semibold text-slate-900 mb-3">Itinerary Details</h4>
               <div className="space-y-3">
-                {itinerary.days.map((day, index) => (
+                {itinerary.days.map((day: any, index: number) => (
                   <div key={index} className="bg-slate-50 rounded-lg p-4">
-                    <h5 className="font-medium text-slate-900 mb-2">Day {day.day}</h5>
+                    <h5 className="font-medium text-slate-900 mb-2">Day {day.day || index + 1}</h5>
                     <div className="space-y-1 text-sm text-slate-600">
-                      {day.hotel && <p>🏨 Hotel: {day.hotel.name}</p>}
-                      {day.sightseeing && <p>📸 Sightseeing: {day.sightseeing.name}</p>}
-                      {day.activity && <p>🎯 Activity: {day.activity.name}</p>}
-                      {day.entryTicket && <p>🎫 Entry Ticket: {day.entryTicket.name}</p>}
-                      {day.meal && <p>🍽️ Meal: {day.meal.name}</p>}
-                      {day.transportation && <p>🚗 Transport: {day.transportation.name}</p>}
+                      {day.hotel && <p>🏨 Hotel: {typeof day.hotel === 'string' ? day.hotel : day.hotel.name}</p>}
+                      {day.sightseeing && <p>📸 Sightseeing: {typeof day.sightseeing === 'string' ? day.sightseeing : day.sightseeing.name}</p>}
+                      {day.activity && <p>🎯 Activity: {typeof day.activity === 'string' ? day.activity : day.activity.name}</p>}
+                      {day.entryTicket && <p>🎫 Entry Ticket: {typeof day.entryTicket === 'string' ? day.entryTicket : day.entryTicket.name}</p>}
+                      {day.meal && <p>🍽️ Meal: {typeof day.meal === 'string' ? day.meal : day.meal.name}</p>}
+                      {day.transportation && <p>🚗 Transport: {typeof day.transportation === 'string' ? day.transportation : day.transportation.name}</p>}
                     </div>
                   </div>
                 ))}
