@@ -755,6 +755,23 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
         </div>
 
         <div className="p-4 md:p-8">
+          {/* Edit Mode Indicator */}
+          {initialDayPlans && initialDayPlans.length > 0 && (
+            <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <div className="bg-blue-100 p-2 rounded-lg">
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-blue-900">Editing Existing Itinerary</h4>
+                  <p className="text-blue-700 text-sm mt-1">
+                    You're editing an existing itinerary. All previous selections are pre-loaded. You can modify any day's planning as needed.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Progress Overview */}
           <div className="mb-6">
             <div className="flex items-center justify-between">

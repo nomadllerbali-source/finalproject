@@ -17,7 +17,10 @@ const ItineraryEditModal: React.FC<ItineraryEditModalProps> = ({ client, onClose
   const { getLatestItinerary } = useData();
   const latestItinerary = getLatestItinerary(client.id);
 
-  const [currentStep, setCurrentStep] = useState(1);
+  // Start at DayPlanning step (2) if editing existing itinerary, otherwise start at ClientDetails (1)
+  const initialStep = latestItinerary && latestItinerary.dayPlans.length > 0 ? 2 : 1;
+
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [editedClient, setEditedClient] = useState<Client>(client);
   const [dayPlans, setDayPlans] = useState<DayPlan[]>(latestItinerary?.dayPlans || []);
   const [itinerary, setItinerary] = useState<Itinerary | null>(latestItinerary);
