@@ -242,17 +242,24 @@ export const createPackageAssignmentAndChecklist = async (
     if (assignmentExists) {
       return { success: true, alreadyExists: true };
     }
+    console.log('🟢 Fetching version with ID:', versionId);
+
     const { data: version, error: versionError } = await supabase
       .from('sales_itinerary_versions')
-      .select('itinerary_data')
+      .select('itinerary_data, version_number, client_id')
       .eq('id', versionId)
       .single();
 
+    console.log('🟢 Version fetch result:', { version, error: versionError });
+
     if (versionError || !version) {
+      console.error('❌ Failed to fetch version:', versionError);
       return { success: false, error: 'Failed to fetch itinerary version' };
     }
 
     const itineraryData = version.itinerary_data;
+    console.log('🟢 Version number:', version.version_number);
+    console.log('🟢 Client ID:', version.client_id);
 
     const { data: operationsPerson, error: opsError } = await supabase
       .from('operations_persons')

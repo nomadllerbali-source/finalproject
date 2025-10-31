@@ -169,6 +169,10 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
       });
 
       if (formData.status === 'advance-paid-confirmed') {
+        console.log('🔵 Confirming booking with version:', selectedVersionId);
+        console.log('🔵 Selected version object:', selectedVersion);
+        console.log('🔵 All versions:', versions);
+
         const result = await createPackageAssignmentAndChecklist(
           client.id,
           client.sales_person_id,
