@@ -40,7 +40,12 @@ export interface ChatMessage {
 }
 
 export const getAssignmentsByOperationsPerson = async (operationsPersonId: string): Promise<PackageAssignment[]> => {
-  if (!supabase) return [];
+  if (!supabase) {
+    console.error('❌ Supabase not initialized in getAssignmentsByOperationsPerson');
+    return [];
+  }
+
+  console.log('🟡 Fetching assignments for operations person:', operationsPersonId);
 
   const { data, error } = await supabase
     .from('package_assignments')
@@ -53,11 +58,17 @@ export const getAssignmentsByOperationsPerson = async (operationsPersonId: strin
     return [];
   }
 
+  console.log('🟡 Found', data?.length || 0, 'assignments');
   return data || [];
 };
 
 export const getAssignmentDetails = async (assignmentId: string) => {
-  if (!supabase) return null;
+  if (!supabase) {
+    console.error('❌ Supabase not initialized in getAssignmentDetails');
+    return null;
+  }
+
+  console.log('🟡 Fetching assignment details for:', assignmentId);
 
   const { data, error } = await supabase
     .from('package_assignments')
@@ -74,29 +85,38 @@ export const getAssignmentDetails = async (assignmentId: string) => {
     return null;
   }
 
+  console.log('🟡 Assignment details fetched successfully');
   return data;
 };
 
 export const getChecklistItems = async (assignmentId: string): Promise<ChecklistItem[]> => {
-  if (!supabase) return [];
-
-  console.log('🟡 getChecklistItems: Querying for assignment:', assignmentId);
-
-  const { data, error } = await supabase
-    .from('booking_checklist')
-    .select('*')
-    .eq('assignment_id', assignmentId)
-    .order('day_number', { ascending: true });
-
-  console.log('🟡 getChecklistItems: Query result:', { itemCount: data?.length || 0, error });
-
-  if (error) {
-    console.error('Error fetching checklist items:', error);
+  if (!supabase) {
+    console.error('❌ Supabase not initialized in getChecklistItems');
     return [];
   }
 
-  console.log('🟡 getChecklistItems: Returning', data?.length || 0, 'items');
-  return data || [];
+  console.log('🟡 getChecklistItems: Querying for assignment:', assignmentId);
+
+  try {
+    const { data, error } = await supabase
+      .from('booking_checklist')
+      .select('*')
+      .eq('assignment_id', assignmentId)
+      .order('day_number', { ascending: true });
+
+    console.log('🟡 getChecklistItems: Query result:', { itemCount: data?.length || 0, error });
+
+    if (error) {
+      console.error('❌ Error fetching checklist items:', error);
+      return [];
+    }
+
+    console.log('✅ getChecklistItems: Returning', data?.length || 0, 'items');
+    return data || [];
+  } catch (err) {
+    console.error('❌ Exception in getChecklistItems:', err);
+    return [];
+  }
 };
 
 export const updateChecklistItem = async (

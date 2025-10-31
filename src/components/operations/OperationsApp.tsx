@@ -26,9 +26,25 @@ const OperationsApp: React.FC = () => {
   }, [authState.user]);
 
   const fetchOperationsPerson = async () => {
-    if (!authState.user?.email) return;
+    console.log('🔵 OperationsApp: authState.user:', authState.user);
+    console.log('🔵 OperationsApp: supabase initialized?', !!supabase);
+
+    if (!authState.user?.email) {
+      console.log('❌ No user email available');
+      return;
+    }
+
+    if (!supabase) {
+      console.error('❌ Supabase not initialized');
+      return;
+    }
 
     try {
+      console.log('🔵 Fetching operations person for email:', authState.user.email);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔵 Current session:', session ? 'EXISTS' : 'NULL');
+
       const { data, error } = await supabase
         .from('operations_persons')
         .select('*')
@@ -36,10 +52,12 @@ const OperationsApp: React.FC = () => {
         .eq('is_active', true)
         .maybeSingle();
 
+      console.log('🔵 Operations person query result:', { data, error });
+
       if (error) throw error;
       setOperationsPerson(data);
     } catch (error) {
-      console.error('Error fetching operations person:', error);
+      console.error('❌ Error fetching operations person:', error);
     }
   };
 
