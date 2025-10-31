@@ -238,10 +238,6 @@ export const createPackageAssignmentAndChecklist = async (
   if (!supabase) return { success: false, error: 'Supabase not initialized' };
 
   try {
-    const assignmentExists = await checkAssignmentExists(clientId);
-    if (assignmentExists) {
-      return { success: true, alreadyExists: true };
-    }
     console.log('🟢 Fetching version with ID:', versionId);
 
     const { data: version, error: versionError } = await supabase
@@ -272,7 +268,10 @@ export const createPackageAssignmentAndChecklist = async (
       return { success: false, error: 'No active operations person available' };
     }
 
-    const { data: assignment, error: assignmentError } = await supabase
+    let assignment: any = null;
+    let assignmentAlreadyExisted = false;
+
+    const { data: insertedAssignment, error: assignmentError } = await supabase
       .from('package_assignments')
       .insert({
         sales_client_id: clientId,
@@ -284,15 +283,35 @@ export const createPackageAssignmentAndChecklist = async (
       .single();
 
     if (assignmentError) {
-      console.error('Assignment error:', assignmentError);
+      console.log('Assignment insert error:', assignmentError.code, assignmentError.message);
+
       if (assignmentError.code === '23505') {
-        return { success: false, error: 'Assignment already exists for this client' };
+        console.log('⚠️ Assignment already exists, fetching existing one...');
+        assignmentAlreadyExisted = true;
+
+        const { data: existingAssignment, error: fetchError } = await supabase
+          .from('package_assignments')
+          .select()
+          .eq('sales_client_id', clientId)
+          .single();
+
+        if (fetchError || !existingAssignment) {
+          console.error('Failed to fetch existing assignment:', fetchError);
+          return { success: false, error: 'Failed to fetch existing assignment' };
+        }
+
+        assignment = existingAssignment;
+        console.log('✅ Found existing assignment:', assignment.id);
+      } else {
+        return { success: false, error: 'Failed to create assignment' };
       }
-      return { success: false, error: 'Failed to create assignment' };
+    } else {
+      assignment = insertedAssignment;
+      console.log('✅ Created new assignment:', assignment.id);
     }
 
     if (!assignment) {
-      return { success: false, error: 'Failed to create assignment' };
+      return { success: false, error: 'No assignment available' };
     }
 
     const checklistItems: any[] = [];
@@ -389,6 +408,21 @@ export const createPackageAssignmentAndChecklist = async (
     console.log('Total checklist items to create:', checklistItems.length);
     console.log('Checklist items:', JSON.stringify(checklistItems, null, 2));
 
+    if (assignmentAlreadyExisted) {
+      const { data: existingChecklist, error: checklistCheckError } = await supabase
+        .from('booking_checklist')
+        .select('id')
+        .eq('assignment_id', assignment.id)
+        .limit(1);
+
+      if (checklistCheckError) {
+        console.error('Error checking existing checklist:', checklistCheckError);
+      } else if (existingChecklist && existingChecklist.length > 0) {
+        console.log('✅ Checklist already exists with', existingChecklist.length, 'items');
+        return { success: true, alreadyExists: true };
+      }
+    }
+
     if (checklistItems.length > 0) {
       const { error: checklistError } = await supabase
         .from('booking_checklist')
@@ -396,6 +430,10 @@ export const createPackageAssignmentAndChecklist = async (
 
       if (checklistError) {
         console.error('Checklist creation error:', checklistError);
+        if (checklistError.code === '23505') {
+          console.log('⚠️ Some checklist items already exist, continuing...');
+          return { success: true, alreadyExists: true };
+        }
         return { success: false, error: 'Failed to create checklist items' };
       }
       console.log('✅ Checklist items created successfully');
