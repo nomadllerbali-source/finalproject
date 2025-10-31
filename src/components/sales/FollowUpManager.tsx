@@ -109,9 +109,20 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
         setShowVersionSelector(true);
         return;
       }
-      // Auto-select the only version if there's just one
-      if (versions.length === 1 && !selectedVersionId) {
-        setSelectedVersionId(versions[0].id);
+      // Auto-select the only version if there's just one and proceed
+      if (versions.length === 1) {
+        if (!selectedVersionId) {
+          setSelectedVersionId(versions[0].id);
+        }
+        // Call confirmFollowUp after ensuring version is selected
+        await confirmFollowUp();
+        return;
+      }
+      // No versions available
+      if (versions.length === 0) {
+        alert('No itinerary versions found for this client.');
+        setSaving(false);
+        return;
       }
     }
 
@@ -335,6 +346,73 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
           </div>
         </form>
       </div>
+
+      {/* Version Selector Modal */}
+      {showVersionSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-200">
+              <h3 className="text-xl font-bold text-slate-900">Select Itinerary Version</h3>
+              <p className="text-sm text-slate-600 mt-1">Choose which version to confirm for operations</p>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {versions.map((version) => (
+                <div
+                  key={version.id}
+                  onClick={() => setSelectedVersionId(version.id)}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedVersionId === version.id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="font-semibold text-slate-900">Version {version.version_number}</span>
+                        {version.version_number === latestVersionNumber && (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded">Latest</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-600 mb-2">
+                        Created: {new Date(version.created_at).toLocaleString()}
+                      </p>
+                      {version.notes && (
+                        <p className="text-sm text-slate-700 mt-2">
+                          <span className="font-medium">Notes:</span> {version.notes}
+                        </p>
+                      )}
+                    </div>
+                    {selectedVersionId === version.id && (
+                      <CheckCircle className="h-6 w-6 text-blue-600 flex-shrink-0" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-6 border-t border-slate-200 flex items-center justify-end space-x-4">
+              <button
+                onClick={() => {
+                  setShowVersionSelector(false);
+                  setSaving(false);
+                }}
+                className="px-6 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmFollowUp}
+                disabled={!selectedVersionId || saving}
+                className="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all font-medium disabled:opacity-50"
+              >
+                {saving ? 'Confirming...' : 'Confirm Selection'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
