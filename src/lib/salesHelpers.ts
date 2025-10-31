@@ -213,6 +213,133 @@ export const deleteSalesClient = async (id: string): Promise<void> => {
   if (error) throw error;
 };
 
+export const createPackageAssignmentAndChecklist = async (
+  clientId: string,
+  salesPersonId: string,
+  versionId: string
+): Promise<{ success: boolean; error?: string }> => {
+  if (!supabase) return { success: false, error: 'Supabase not initialized' };
+
+  try {
+    const { data: version, error: versionError } = await supabase
+      .from('sales_itinerary_versions')
+      .select('itinerary_data')
+      .eq('id', versionId)
+      .single();
+
+    if (versionError || !version) {
+      return { success: false, error: 'Failed to fetch itinerary version' };
+    }
+
+    const itineraryData = version.itinerary_data;
+
+    const { data: assignment, error: assignmentError } = await supabase
+      .from('package_assignments')
+      .insert({
+        sales_client_id: clientId,
+        sales_person_id: salesPersonId,
+        itinerary_version_id: versionId,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (assignmentError || !assignment) {
+      return { success: false, error: 'Failed to create assignment' };
+    }
+
+    const checklistItems: any[] = [];
+
+    if (itineraryData?.dayPlans) {
+      itineraryData.dayPlans.forEach((day: any, index: number) => {
+        const dayNumber = index + 1;
+
+        if (day.hotel) {
+          checklistItems.push({
+            client_id: clientId,
+            assignment_id: assignment.id,
+            item_type: 'hotel',
+            item_id: day.hotel.hotelId,
+            item_name: `Hotel - Day ${dayNumber}`,
+            day_number: dayNumber,
+            is_completed: false
+          });
+        }
+
+        if (day.sightseeing) {
+          checklistItems.push({
+            client_id: clientId,
+            assignment_id: assignment.id,
+            item_type: 'sightseeing',
+            item_id: day.sightseeing.sightseeingId,
+            item_name: `Sightseeing - Day ${dayNumber}`,
+            day_number: dayNumber,
+            is_completed: false
+          });
+        }
+
+        if (day.activities && day.activities.length > 0) {
+          day.activities.forEach((activity: any) => {
+            checklistItems.push({
+              client_id: clientId,
+              assignment_id: assignment.id,
+              item_type: 'activity',
+              item_id: activity.activityId,
+              item_name: `Activity - Day ${dayNumber}`,
+              day_number: dayNumber,
+              is_completed: false
+            });
+          });
+        }
+
+        if (day.entryTickets && day.entryTickets.length > 0) {
+          day.entryTickets.forEach((ticket: any) => {
+            checklistItems.push({
+              client_id: clientId,
+              assignment_id: assignment.id,
+              item_type: 'entry_ticket',
+              item_id: ticket.ticketId,
+              item_name: `Entry Ticket - Day ${dayNumber}`,
+              day_number: dayNumber,
+              is_completed: false
+            });
+          });
+        }
+
+        if (day.meals && day.meals.length > 0) {
+          day.meals.forEach((meal: any) => {
+            checklistItems.push({
+              client_id: clientId,
+              assignment_id: assignment.id,
+              item_type: 'meal',
+              item_id: meal.mealId,
+              item_name: `Meal - Day ${dayNumber}`,
+              day_number: dayNumber,
+              is_completed: false
+            });
+          });
+        }
+      });
+    }
+
+    if (checklistItems.length > 0) {
+      const { error: checklistError } = await supabase
+        .from('booking_checklist')
+        .insert(checklistItems);
+
+      if (checklistError) {
+        console.error('Checklist creation error:', checklistError);
+        return { success: false, error: 'Failed to create checklist items' };
+      }
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in createPackageAssignmentAndChecklist:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Follow-up History Operations
 export const getFollowUpHistory = async (clientId: string): Promise<FollowUpHistory[]> => {
   if (!supabase) return [];

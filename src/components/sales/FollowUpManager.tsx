@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, Clock, MessageSquare, CheckCircle, FileText } from 'lucide-react';
-import { SalesClient, updateSalesClient, createFollowUpHistory, getLatestItineraryVersion } from '../../lib/salesHelpers';
+import { SalesClient, updateSalesClient, createFollowUpHistory, getLatestItineraryVersion, getItineraryVersionsByClient, ItineraryVersion, createPackageAssignmentAndChecklist } from '../../lib/salesHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import Layout from '../Layout';
 
@@ -19,19 +19,26 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
   });
   const [saving, setSaving] = useState(false);
   const [latestVersionNumber, setLatestVersionNumber] = useState<number | null>(null);
+  const [versions, setVersions] = useState<ItineraryVersion[]>([]);
+  const [showVersionSelector, setShowVersionSelector] = useState(false);
+  const [selectedVersionId, setSelectedVersionId] = useState<string>('');
 
   useEffect(() => {
-    loadLatestVersion();
+    loadVersions();
   }, [client.id]);
 
-  const loadLatestVersion = async () => {
+  const loadVersions = async () => {
     try {
+      const allVersions = await getItineraryVersionsByClient(client.id);
+      setVersions(allVersions);
+
       const version = await getLatestItineraryVersion(client.id);
       if (version) {
         setLatestVersionNumber(version.version_number);
+        setSelectedVersionId(version.id);
       }
     } catch (error) {
-      console.error('Error loading latest version:', error);
+      console.error('Error loading versions:', error);
     }
   };
 
