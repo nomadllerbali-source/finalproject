@@ -191,9 +191,7 @@ const ViewItinerary: React.FC<ViewItineraryProps> = ({ client: salesClient, onBa
     });
 
     itineraryText += `💰 PREMIUM PACKAGE PRICING:\n`;
-    itineraryText += `• Total Package Price: $${latestVersion.total_cost.toFixed(2)}\n`;
-    itineraryText += `• Total Package Price (IDR): IDR ${(latestVersion.total_cost * 15000).toLocaleString('en-US')}\n`;
-    itineraryText += `• Exchange Rate: 1 USD = IDR 15,000\n\n`;
+    itineraryText += `• Total Package Price: IDR ${latestVersion.total_cost.toLocaleString()}\n\n`;
 
     itineraryText += `📞 SALES CONTACT:\n`;
     itineraryText += `${salesClient.name} Premium Travel Package\n`;

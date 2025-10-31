@@ -178,7 +178,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-slate-500 text-sm font-medium">Total Revenue</p>
-              <p className="text-2xl font-bold text-slate-900">${totalRevenue.toFixed(0)}</p>
+              <p className="text-2xl font-bold text-slate-900">Rp {totalRevenue.toLocaleString('id-ID', {maximumFractionDigits: 0})}</p>
             </div>
             <div className="bg-green-100 p-3 rounded-lg">
               <TrendingUp className="h-6 w-6 text-green-600" />
@@ -190,7 +190,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-slate-500 text-sm font-medium">Avg. Quote Value</p>
-              <p className="text-2xl font-bold text-slate-900">${averageItineraryValue.toFixed(0)}</p>
+              <p className="text-2xl font-bold text-slate-900">Rp {averageItineraryValue.toLocaleString('id-ID', {maximumFractionDigits: 0})}</p>
             </div>
             <div className="bg-amber-100 p-3 rounded-lg">
               <TrendingUp className="h-6 w-6 text-amber-600" />

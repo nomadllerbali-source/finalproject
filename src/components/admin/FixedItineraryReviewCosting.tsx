@@ -135,7 +135,7 @@ const FixedItineraryReviewCosting: React.FC<FixedItineraryReviewCostingProps> = 
             </div>
             <div>
               <span className="text-sm font-medium text-slate-700">Base Cost:</span>
-              <div className="text-base text-green-600 font-semibold">${baseCost.toFixed(2)}</div>
+              <div className="text-base text-green-600 font-semibold">Rp {baseCost.toLocaleString('id-ID')}</div>
             </div>
           </div>
         </div>
@@ -307,7 +307,7 @@ const FixedItineraryReviewCosting: React.FC<FixedItineraryReviewCostingProps> = 
           <div className="flex items-center justify-center">
             <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-xl p-6 text-center">
               <div className="text-sm font-medium mb-2">Base Template Cost</div>
-              <div className="text-3xl font-bold mb-2">${baseCost.toFixed(2)}</div>
+              <div className="text-3xl font-bold mb-2">Rp {baseCost.toLocaleString('id-ID')}</div>
               <div className="text-green-100 text-sm">
                 Calculated from selected services for 2 adults (default)
               </div>

@@ -277,9 +277,7 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
     yPosition += 10;
 
     doc.setFont('helvetica', 'bold');
-    doc.text(`Total Package Price: $${itinerary.finalPrice.toFixed(2)}`, margin, yPosition);
-    yPosition += 8;
-    doc.text(`Total Package Price (IDR): IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
+    doc.text(`Total Package Price: IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
 
     doc.save(`${itinerary.client.name}-itinerary.pdf`);
   };
@@ -502,7 +500,7 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
             <div className="flex items-center justify-center">
               <div className="bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-xl p-6 md:p-8 text-center max-w-md">
                 <div className="text-sm font-medium mb-2">Final Package Price</div>
-                <div className="text-3xl md:text-4xl font-bold mb-2">${itinerary.finalPrice.toFixed(2)}</div>
+                <div className="text-3xl md:text-4xl font-bold mb-2">IDR {(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                 <div className="text-xl md:text-2xl font-bold text-teal-100 mb-4">
                   IDR {(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}
                 </div>

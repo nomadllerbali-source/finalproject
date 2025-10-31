@@ -76,7 +76,7 @@ const FixedItineraryFinalSummary: React.FC<FixedItineraryFinalSummaryProps> = ({
   };
 
   const copyTemplateDetails = () => {
-    const details = `${client.name}\n\nDuration: ${client.numberOfDays} days\nTransportation: ${client.transportationMode}\nBase Cost: $${templateData.baseCost}\n\nInclusions:\n${templateData.inclusions}\n\nExclusions:\n${templateData.exclusions}`;
+    const details = `${client.name}\n\nDuration: ${client.numberOfDays} days\nTransportation: ${client.transportationMode}\nBase Cost: Rp ${templateData.baseCost.toLocaleString('id-ID')}\n\nInclusions:\n${templateData.inclusions}\n\nExclusions:\n${templateData.exclusions}`;
     
     navigator.clipboard.writeText(details).then(() => {
       alert('✅ Template details copied to clipboard!');
@@ -139,7 +139,7 @@ const FixedItineraryFinalSummary: React.FC<FixedItineraryFinalSummaryProps> = ({
               <div className="text-sm text-slate-600">Transportation</div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">${templateData.baseCost.toFixed(0)}</div>
+              <div className="text-2xl font-bold text-green-600">Rp {templateData.baseCost.toLocaleString('id-ID')}</div>
               <div className="text-sm text-slate-600">Base Cost</div>
             </div>
           </div>

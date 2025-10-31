@@ -313,7 +313,7 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
                   </h4>
                   <div className="space-y-1">
                     <div className="text-xl font-bold text-slate-900">
-                      ${baseCost.toFixed(2)}
+                      Rp {baseCost.toLocaleString('id-ID')}
                     </div>
                     <div className="text-lg font-semibold text-blue-600">
                       IDR {(baseCost * exchangeRate).toLocaleString('en-IN')}

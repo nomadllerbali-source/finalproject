@@ -61,7 +61,7 @@ const FixedItineraryManager: React.FC = () => {
   };
 
   const copyItineraryDetails = (itinerary: FixedItinerary) => {
-    const details = `${itinerary.name}\n\nDuration: ${itinerary.numberOfDays} days\nTransportation: ${itinerary.transportationMode}\nBase Cost: $${itinerary.baseCost}\n\nInclusions:\n${itinerary.inclusions}\n\nExclusions:\n${itinerary.exclusions}`;
+    const details = `${itinerary.name}\n\nDuration: ${itinerary.numberOfDays} days\nTransportation: ${itinerary.transportationMode}\nBase Cost: Rp ${itinerary.baseCost.toLocaleString('id-ID')}\n\nInclusions:\n${itinerary.inclusions}\n\nExclusions:\n${itinerary.exclusions}`;
     
     navigator.clipboard.writeText(details).then(() => {
       alert('✅ Itinerary details copied to clipboard!');
@@ -76,7 +76,7 @@ const FixedItineraryManager: React.FC = () => {
     completeItinerary += `• Template Name: ${itinerary.name}\n`;
     completeItinerary += `• Duration: ${itinerary.numberOfDays} days\n`;
     completeItinerary += `• Transportation: ${itinerary.transportationMode}\n`;
-    completeItinerary += `• Base Cost: $${itinerary.baseCost}\n\n`;
+    completeItinerary += `• Base Cost: Rp ${itinerary.baseCost.toLocaleString('id-ID')}\n\n`;
 
     // Add day-by-day itinerary if available
     if (itinerary.dayPlans && itinerary.dayPlans.length > 0) {
@@ -147,7 +147,7 @@ const FixedItineraryManager: React.FC = () => {
     }
 
     completeItinerary += `💰 PRICING:\n`;
-    completeItinerary += `• Base Template Cost: $${itinerary.baseCost}\n`;
+    completeItinerary += `• Base Template Cost: Rp ${itinerary.baseCost.toLocaleString('id-ID')}\n`;
     completeItinerary += `• Transportation: ${itinerary.transportationMode}\n\n`;
 
     completeItinerary += `✅ INCLUSIONS:\n`;
