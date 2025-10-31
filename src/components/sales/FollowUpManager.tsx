@@ -95,6 +95,23 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
       return;
     }
 
+    // Handle version selection for confirmed bookings
+    if (formData.status === 'advance-paid-confirmed') {
+      if (versions.length > 1) {
+        // Show version selector modal if multiple versions exist
+        setShowVersionSelector(true);
+        return;
+      }
+      // Auto-select the only version if there's just one
+      if (versions.length === 1 && !selectedVersionId) {
+        setSelectedVersionId(versions[0].id);
+      }
+    }
+
+    await confirmFollowUp();
+  };
+
+  const confirmFollowUp = async () => {
     setSaving(true);
     try {
       const userId = authState.user?.id;
@@ -116,6 +133,8 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
 
       await updateSalesClient(client.id, updateData);
 
+      const selectedVersion = versions.find(v => v.id === selectedVersionId);
+
       await createFollowUpHistory({
         client_id: client.id,
         sales_person_id: client.sales_person_id,
@@ -123,11 +142,29 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
         remarks: formData.remarks,
         next_follow_up_date: requiresFollowUp ? formData.nextFollowUpDate : undefined,
         next_follow_up_time: requiresFollowUp ? formData.nextFollowUpTime : undefined,
-        itinerary_version_number: latestVersionNumber || undefined,
+        itinerary_version_number: selectedVersion?.version_number || latestVersionNumber || undefined,
         created_by: userId
       });
 
-      alert(`Follow-up updated to: ${formData.status.replace(/-/g, ' ').toUpperCase()}\n\nRemarks: ${formData.remarks}`);
+      if (formData.status === 'advance-paid-confirmed') {
+        const result = await createPackageAssignmentAndChecklist(
+          client.id,
+          client.sales_person_id,
+          selectedVersionId
+        );
+
+        if (!result.success) {
+          alert(`Failed to create assignment: ${result.error}`);
+          setSaving(false);
+          return;
+        }
+
+        alert(`Booking confirmed!\n\nVersion ${selectedVersion?.version_number || latestVersionNumber} has been sent to Operations.\n\nRemarks: ${formData.remarks}`);
+      } else {
+        alert(`Follow-up updated to: ${formData.status.replace(/-/g, ' ').toUpperCase()}\n\nRemarks: ${formData.remarks}`);
+      }
+
+      setShowVersionSelector(false);
       onBack();
     } catch (error) {
       console.error('Error updating follow-up:', error);

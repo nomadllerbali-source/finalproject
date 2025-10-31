@@ -58,9 +58,10 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
         .select(`
           *,
           sales_person:sales_persons(full_name, email),
-          sales_client:sales_clients(*)
+          sales_client:sales_clients!inner(*)
         `)
         .eq('operations_person_id', operationsPersonId)
+        .eq('sales_client.current_follow_up_status', 'advance-paid-confirmed')
         .order('assigned_at', { ascending: false });
 
       if (assignmentsError) throw assignmentsError;
