@@ -670,31 +670,31 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                     {day.accommodation > 0 && (
                       <div className="text-center">
                         <div className="text-slate-600">Hotel</div>
-                        <div className="font-semibold">${day.accommodation.toFixed(2)}</div>
+                        <div className="font-semibold">IDR {(day.accommodation * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                       </div>
                     )}
                     {day.sightseeing > 0 && (
                       <div className="text-center">
                         <div className="text-slate-600">Sightseeing</div>
-                        <div className="font-semibold">${day.sightseeing.toFixed(2)}</div>
+                        <div className="font-semibold">IDR {(day.sightseeing * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                       </div>
                     )}
                     {day.activities > 0 && (
                       <div className="text-center">
                         <div className="text-slate-600">Activities</div>
-                        <div className="font-semibold">${day.activities.toFixed(2)}</div>
+                        <div className="font-semibold">IDR {(day.activities * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                       </div>
                     )}
                     {day.tickets > 0 && (
                       <div className="text-center">
                         <div className="text-slate-600">Tickets</div>
-                        <div className="font-semibold">${day.tickets.toFixed(2)}</div>
+                        <div className="font-semibold">IDR {(day.tickets * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                       </div>
                     )}
                     {day.meals > 0 && (
                       <div className="text-center">
                         <div className="text-slate-600">Meals</div>
-                        <div className="font-semibold">${day.meals.toFixed(2)}</div>
+                        <div className="font-semibold">IDR {(day.meals * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                       </div>
                     )}
                   </div>
@@ -723,7 +723,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                   <div className="text-sm text-slate-600 mb-2">
                     Vehicle: {itinerary.client.transportationMode} • Duration: {itinerary.client.numberOfDays} days
                   </div>
-                  <div className="text-lg font-bold text-slate-900">${costBreakdown.transportation.toFixed(2)}</div>
+                  <div className="text-lg font-bold text-slate-900">IDR {(costBreakdown.transportation * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                   <div className="text-xs text-slate-500 mt-1">
                     Self-drive vehicle rental including fuel and insurance
                   </div>
@@ -737,7 +737,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                   <Building2 className="h-5 w-5 text-blue-600" />
                   <span className="font-medium text-slate-900">Accommodation</span>
                 </div>
-                <div className="text-lg font-bold text-slate-900">${costBreakdown.accommodation.toFixed(2)}</div>
+                <div className="text-lg font-bold text-slate-900">IDR {(costBreakdown.accommodation * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                 <div className="text-sm text-slate-600">Hotels & room charges with seasonal pricing</div>
                 <div className="text-xs text-slate-500 mt-1">
                   {itinerary.client.numberOfDays} night{itinerary.client.numberOfDays !== 1 ? 's' : ''} • Various locations
@@ -749,7 +749,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                   <MapPin className="h-5 w-5 text-blue-600" />
                   <span className="font-medium text-slate-900">Sightseeing</span>
                 </div>
-                <div className="text-lg font-bold text-slate-900">${costBreakdown.sightseeing.toFixed(2)}</div>
+                <div className="text-lg font-bold text-slate-900">IDR {(costBreakdown.sightseeing * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                 <div className="text-sm text-slate-600">
                   {itinerary.client.transportationMode.toLowerCase().includes('cab') 
                     ? 'Vehicle costs based on group size' 
@@ -766,7 +766,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                   <Camera className="h-5 w-5 text-blue-600" />
                   <span className="font-medium text-slate-900">Activities</span>
                 </div>
-                <div className="text-lg font-bold text-slate-900">${costBreakdown.activities.toFixed(2)}</div>
+                <div className="text-lg font-bold text-slate-900">IDR {(costBreakdown.activities * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                 <div className="text-sm text-slate-600">Adventure & experiences with group calculations</div>
                 <div className="text-xs text-slate-500 mt-1">
                   Costs calculated per activity capacity requirements
@@ -778,10 +778,10 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                   <Ticket className="h-5 w-5 text-blue-600" />
                   <span className="font-medium text-slate-900">Entry Tickets</span>
                 </div>
-                <div className="text-lg font-bold text-slate-900">${costBreakdown.tickets.toFixed(2)}</div>
+                <div className="text-lg font-bold text-slate-900">IDR {(costBreakdown.tickets * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                 <div className="text-sm text-slate-600">Attraction entries calculated per person</div>
                 <div className="text-xs text-slate-500 mt-1">
-                  ${costBreakdown.tickets.toFixed(2)} ÷ {itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} = ${(costBreakdown.tickets / (itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children)).toFixed(2)} per person
+                  IDR {(costBreakdown.tickets * itinerary.exchangeRate).toLocaleString('en-IN')} ÷ {itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} = IDR {((costBreakdown.tickets * itinerary.exchangeRate) / (itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children)).toLocaleString('en-IN')} per person
                 </div>
               </div>
 
@@ -790,7 +790,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                   <Utensils className="h-5 w-5 text-blue-600" />
                   <span className="font-medium text-slate-900">Meals</span>
                 </div>
-                <div className="text-lg font-bold text-slate-900">${costBreakdown.meals.toFixed(2)}</div>
+                <div className="text-lg font-bold text-slate-900">IDR {(costBreakdown.meals * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                 <div className="text-sm text-slate-600">Food & beverages calculated per person</div>
                 <div className="text-xs text-slate-500 mt-1">
                   Various restaurants and meal types included
@@ -809,7 +809,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-slate-600">Base Services Total:</span>
-                        <span className="font-semibold">${(costBreakdown.transportation + costBreakdown.accommodation + costBreakdown.sightseeing + costBreakdown.activities + costBreakdown.tickets + costBreakdown.meals).toFixed(2)}</span>
+                        <span className="font-semibold">IDR {((costBreakdown.transportation + costBreakdown.accommodation + costBreakdown.sightseeing + costBreakdown.activities + costBreakdown.tickets + costBreakdown.meals) * itinerary.exchangeRate).toLocaleString('en-IN')}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-600">Passenger Count:</span>
@@ -825,11 +825,11 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-slate-600">Cost per Person:</span>
-                        <span className="font-semibold">${(itinerary.totalBaseCost / (itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children)).toFixed(2)}</span>
+                        <span className="font-semibold">IDR {((itinerary.totalBaseCost * itinerary.exchangeRate) / (itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children)).toLocaleString('en-IN')}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-600">Cost per Day:</span>
-                        <span className="font-semibold">${(itinerary.totalBaseCost / itinerary.client.numberOfDays).toFixed(2)}</span>
+                        <span className="font-semibold">IDR {((itinerary.totalBaseCost * itinerary.exchangeRate) / itinerary.client.numberOfDays).toLocaleString('en-IN')}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-600">Transportation Mode:</span>
@@ -838,7 +838,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                     </div>
                   </div>
                 </div>
-                <div className="text-lg font-bold text-slate-900">${costBreakdown.meals.toFixed(2)}</div>
+                <div className="text-lg font-bold text-slate-900">IDR {(costBreakdown.meals * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                 <div className="text-sm text-slate-600">Food & beverages</div>
               </div>
             </div>
