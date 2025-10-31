@@ -17,7 +17,7 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ onNext, initialData }) =>
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     whatsapp: initialData?.whatsapp || '',
-    countryCode: initialData?.countryCode || '+1',
+    countryCode: initialData?.countryCode || '+91',
     startDate: initialData?.travelDates?.startDate || '',
     endDate: initialData?.travelDates?.endDate || '',
     isFlexible: initialData?.travelDates?.isFlexible || false,
@@ -30,9 +30,11 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ onNext, initialData }) =>
   });
 
   const countryCodes = [
+    { code: '+91', country: 'India' },
+    { code: '+971', country: 'UAE' },
+    { code: '+974', country: 'Qatar' },
     { code: '+1', country: 'US/CA' },
     { code: '+44', country: 'UK' },
-    { code: '+91', country: 'IN' },
     { code: '+61', country: 'AU' },
     { code: '+49', country: 'DE' },
     { code: '+33', country: 'FR' },
