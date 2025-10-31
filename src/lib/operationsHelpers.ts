@@ -92,8 +92,8 @@ export const getAssignmentDetails = async (assignmentId: string) => {
       .eq('id', data.sales_client.confirmed_version_id)
       .maybeSingle();
 
-    if (versionData?.itinerary_data) {
-      const confirmedDays = versionData.itinerary_data.client?.numberOfDays || 0;
+    if (versionData?.itinerary_data?.days) {
+      const confirmedDays = versionData.itinerary_data.days.length;
       data.sales_client.number_of_days = confirmedDays;
     }
   }

@@ -98,8 +98,8 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
               .eq('id', assignment.sales_client.confirmed_version_id)
               .maybeSingle();
 
-            if (versionData?.itinerary_data) {
-              confirmedDays = versionData.itinerary_data.client?.numberOfDays || 0;
+            if (versionData?.itinerary_data?.days) {
+              confirmedDays = versionData.itinerary_data.days.length;
             }
           }
 
