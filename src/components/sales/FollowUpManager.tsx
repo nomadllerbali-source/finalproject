@@ -149,6 +149,10 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
         updateData.next_follow_up_time = null;
       }
 
+      if (formData.status === 'advance-paid-confirmed' && selectedVersionId) {
+        updateData.confirmed_version_id = selectedVersionId;
+      }
+
       await updateSalesClient(client.id, updateData);
 
       const selectedVersion = versions.find(v => v.id === selectedVersionId);

@@ -233,18 +233,30 @@ export const createPackageAssignmentAndChecklist = async (
 
     const itineraryData = version.itinerary_data;
 
+    const { data: operationsPerson, error: opsError } = await supabase
+      .from('operations_persons')
+      .select('id')
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+
+    if (opsError || !operationsPerson) {
+      return { success: false, error: 'No active operations person available' };
+    }
+
     const { data: assignment, error: assignmentError } = await supabase
       .from('package_assignments')
       .insert({
         sales_client_id: clientId,
         sales_person_id: salesPersonId,
-        itinerary_version_id: versionId,
+        operations_person_id: operationsPerson.id,
         status: 'pending'
       })
       .select()
       .single();
 
     if (assignmentError || !assignment) {
+      console.error('Assignment error:', assignmentError);
       return { success: false, error: 'Failed to create assignment' };
     }
 
