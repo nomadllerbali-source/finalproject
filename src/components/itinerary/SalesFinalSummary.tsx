@@ -146,9 +146,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
     });
 
     itineraryText += `💰 PREMIUM PACKAGE PRICING:\n`;
-    itineraryText += `• Total Package Price: $${itinerary.finalPrice.toFixed(2)}\n`;
-    itineraryText += `• Total Package Price (IDR): IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}\n`;
-    itineraryText += `• Exchange Rate: 1 USD = IDR ${itinerary.exchangeRate}\n\n`;
+    itineraryText += `• Total Package Price: IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}\n\n`;
 
     // Calculate hotel nights by hotel
     const hotelNights = new Map<string, { hotel: any; roomType: any; nights: number }>();
@@ -289,9 +287,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
     yPosition += 10;
 
     doc.setFont('helvetica', 'bold');
-    doc.text(`Total Package Price: $${itinerary.finalPrice.toFixed(2)}`, margin, yPosition);
-    yPosition += 8;
-    doc.text(`Total Package Price (IDR): IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
+    doc.text(`Total Package Price: IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
 
     doc.save(`${itinerary.client.name}-sales-package.pdf`);
   };
@@ -514,20 +510,17 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
             <div className="flex items-center justify-center">
               <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl p-6 md:p-8 text-center max-w-md">
                 <div className="text-sm font-medium mb-2">Final Sales Package Price</div>
-                <div className="text-3xl md:text-4xl font-bold mb-2">${itinerary.finalPrice.toFixed(2)}</div>
+                <div className="text-3xl md:text-4xl font-bold mb-2">IDR {(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                 <div className="text-xl md:text-2xl font-bold text-purple-100 mb-4">
                   IDR {(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}
                 </div>
                 <div className="text-purple-100 text-sm md:text-base">
                   Premium package for {itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} passengers
                 </div>
-                <div className="text-xs text-purple-100 mt-3">
-                  Exchange Rate: 1 USD = IDR {itinerary.exchangeRate}
-                </div>
                 {itinerary.profitMargin > 0 && (
                   <div className="mt-4 pt-4 border-t border-purple-400 border-opacity-50">
-                    <div className="text-sm">
-                      <div>Your Commission: ${itinerary.profitMargin.toFixed(2)} / IDR {(itinerary.profitMargin * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
+                    <div className="text-sm text-purple-100">
+                      <div>Your Commission: IDR {(itinerary.profitMargin * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                     </div>
                   </div>
                 )}

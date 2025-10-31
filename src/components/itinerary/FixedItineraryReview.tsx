@@ -291,7 +291,7 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
               <div className="space-y-4">
                 <div className="bg-white rounded-lg p-4">
                   <label className="block text-sm font-semibold text-slate-900 mb-3">
-                    Exchange Rate (USD to IDR)
+                    Exchange Rate
                   </label>
                   <input
                     type="number"
@@ -329,16 +329,16 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
 
                 <div className="bg-white rounded-lg p-4">
                   <label className="block text-sm font-semibold text-slate-900 mb-3">
-                    Add {getProfitLabel()} (USD)
+                    Add {getProfitLabel()} (IDR)
                   </label>
                   <input
                     type="number"
                     min="0"
-                    step={userType === 'admin' ? '50' : userType === 'agent' ? '10' : '25'}
+                    step={userType === 'admin' ? '500000' : userType === 'agent' ? '100000' : '250000'}
                     value={profitMargin}
                     onChange={(e) => setProfitMargin(parseFloat(e.target.value) || 0)}
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    placeholder={`Enter your ${getProfitLabel().toLowerCase()} in USD`}
+                    placeholder={`Enter your ${getProfitLabel().toLowerCase()} in IDR`}
                   />
                   <p className="text-sm text-slate-600 mt-1">
                     Your {getProfitLabel().toLowerCase()} on this package
@@ -351,9 +351,6 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
                   <h4 className="text-base font-semibold mb-2">Final Quote Price</h4>
                   <div className="space-y-2 mb-2">
                     <div className="text-3xl font-bold">
-                      ${finalPrice.toFixed(2)}
-                    </div>
-                    <div className="text-2xl font-bold text-opacity-80">
                       IDR {(finalPrice * exchangeRate).toLocaleString('en-IN')}
                     </div>
                   </div>
@@ -363,8 +360,8 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
                   {profitMargin > 0 && (
                     <div className="mt-4 pt-4 border-t border-white border-opacity-30">
                       <div className="text-sm space-y-1 text-opacity-80">
-                        <div>Base Cost: ${baseCost.toFixed(2)} / IDR {(baseCost * exchangeRate).toLocaleString('en-IN')}</div>
-                        <div>Your {getProfitLabel()}: ${profitMargin.toFixed(2)} / IDR {(profitMargin * exchangeRate).toLocaleString('en-IN')}</div>
+                        <div>Base Cost: IDR {(baseCost * exchangeRate).toLocaleString('en-IN')}</div>
+                        <div>Your {getProfitLabel()}: IDR {(profitMargin * exchangeRate).toLocaleString('en-IN')}</div>
                       </div>
                     </div>
                   )}

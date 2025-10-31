@@ -127,9 +127,7 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
     });
 
     itineraryText += `💰 PACKAGE PRICING:\n`;
-    itineraryText += `• Total Package Price: $${itinerary.finalPrice.toFixed(2)}\n`;
-    itineraryText += `• Total Package Price (IDR): IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}\n`;
-    itineraryText += `• Exchange Rate: 1 USD = IDR ${itinerary.exchangeRate}\n\n`;
+    itineraryText += `• Total Package Price: IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}\n\n`;
 
     // Calculate hotel nights by hotel
     const hotelNights = new Map<string, { hotel: any; roomType: any; nights: number }>();
@@ -511,13 +509,10 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
                 <div className="text-teal-100 text-sm md:text-base">
                   Complete package for {itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} passengers
                 </div>
-                <div className="text-xs text-teal-100 mt-3">
-                  Exchange Rate: 1 USD = IDR {itinerary.exchangeRate}
-                </div>
                 {itinerary.profitMargin > 0 && (
                   <div className="mt-4 pt-4 border-t border-teal-400 border-opacity-50">
-                    <div className="text-sm">
-                      <div>Your Profit: ${itinerary.profitMargin.toFixed(2)} / IDR {(itinerary.profitMargin * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
+                    <div className="text-sm text-teal-100">
+                      <div>Your Profit: IDR {(itinerary.profitMargin * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                     </div>
                   </div>
                 )}

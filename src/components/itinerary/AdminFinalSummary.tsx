@@ -159,15 +159,8 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
     doc.text('Pricing Summary:', margin, yPosition);
     yPosition += 10;
 
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Base Cost: $${itinerary.totalBaseCost.toFixed(2)}`, margin, yPosition);
-    yPosition += 8;
-    doc.text(`Profit Margin: $${itinerary.profitMargin.toFixed(2)}`, margin, yPosition);
-    yPosition += 8;
     doc.setFont('helvetica', 'bold');
-    doc.text(`Total Price: $${itinerary.finalPrice.toFixed(2)}`, margin, yPosition);
-    yPosition += 8;
-    doc.text(`Total Price (IDR): IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
+    doc.text(`Total Price: IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
 
     doc.save(`${itinerary.client.name}-itinerary.pdf`);
   };
@@ -409,9 +402,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
     });
 
     itineraryText += `💰 PRICING:\n`;
-    itineraryText += `• Total Package Price: $${itinerary.finalPrice.toFixed(2)}\n`;
-    itineraryText += `• Total Package Price (IDR): IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}\n`;
-    itineraryText += `• Exchange Rate: 1 USD = IDR ${itinerary.exchangeRate}\n\n`;
+    itineraryText += `• Total Package Price: IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}\n\n`;
 
     // Calculate hotel nights by hotel
     const hotelNights = new Map<string, { hotel: any; roomType: any; nights: number }>();
@@ -673,7 +664,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                 <div key={day.day} className="bg-white rounded-lg p-4 border border-indigo-200">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-semibold text-slate-900">Day {day.day}</h4>
-                    <div className="text-lg font-bold text-indigo-600">${day.total.toFixed(2)}</div>
+                    <div className="text-lg font-bold text-indigo-600">IDR {(day.total * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
                     {day.accommodation > 0 && (
@@ -854,28 +845,16 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
 
             <div className="mt-6 pt-6 border-t border-slate-200">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-700">Subtotal (Base Cost):</span>
-                  <span className="font-semibold text-slate-900">${itinerary.totalBaseCost.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-700">Profit Margin:</span>
-                  <span className="font-semibold text-slate-900">${itinerary.profitMargin.toFixed(2)}</span>
-                </div>
                 <div className="flex justify-between items-center text-lg font-bold">
-                  <span className="text-slate-900">Total (USD):</span>
-                  <span className="text-green-600">${itinerary.finalPrice.toFixed(2)}</span>
+                  <span className="text-slate-900">Total Price:</span>
+                  <span className="text-green-600">IDR {(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}</span>
                 </div>
               </div>
               <div className="flex items-center justify-center mt-6">
                 <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-xl p-6 text-center">
                   <div className="text-sm font-medium mb-2">Total Package Price</div>
-                  <div className="text-2xl font-bold mb-1">${itinerary.finalPrice.toFixed(2)}</div>
-                  <div className="text-lg font-semibold text-green-100">
+                  <div className="text-3xl font-bold">
                     IDR {(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}
-                  </div>
-                  <div className="text-xs text-green-100 mt-2">
-                    Exchange Rate: 1 USD = IDR {itinerary.exchangeRate}
                   </div>
                 </div>
               </div>
