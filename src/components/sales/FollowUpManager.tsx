@@ -169,19 +169,23 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
       });
 
       if (formData.status === 'advance-paid-confirmed') {
-        const result = await createPackageAssignmentAndChecklist(
-          client.id,
-          client.sales_person_id,
-          selectedVersionId
-        );
+        if (client.current_follow_up_status !== 'advance-paid-confirmed') {
+          const result = await createPackageAssignmentAndChecklist(
+            client.id,
+            client.sales_person_id,
+            selectedVersionId
+          );
 
-        if (!result.success) {
-          alert(`Failed to create assignment: ${result.error}`);
-          setSaving(false);
-          return;
+          if (!result.success) {
+            alert(`Failed to create assignment: ${result.error}`);
+            setSaving(false);
+            return;
+          }
+
+          alert(`Booking confirmed!\n\nVersion ${selectedVersion?.version_number || latestVersionNumber} has been sent to Operations.\n\nRemarks: ${formData.remarks}`);
+        } else {
+          alert(`Status updated. Assignment already exists.\n\nRemarks: ${formData.remarks}`);
         }
-
-        alert(`Booking confirmed!\n\nVersion ${selectedVersion?.version_number || latestVersionNumber} has been sent to Operations.\n\nRemarks: ${formData.remarks}`);
       } else {
         alert(`Follow-up updated to: ${formData.status.replace(/-/g, ' ').toUpperCase()}\n\nRemarks: ${formData.remarks}`);
       }
