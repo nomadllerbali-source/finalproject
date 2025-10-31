@@ -85,12 +85,11 @@ export const getAssignmentDetails = async (assignmentId: string) => {
     return null;
   }
 
-  if (data?.sales_client?.confirmed_version_number) {
+  if (data?.sales_client?.confirmed_version_id) {
     const { data: versionData } = await supabase
       .from('sales_itinerary_versions')
       .select('itinerary_data')
-      .eq('client_id', data.sales_client.id)
-      .eq('version_number', data.sales_client.confirmed_version_number)
+      .eq('id', data.sales_client.confirmed_version_id)
       .maybeSingle();
 
     if (versionData?.itinerary_data) {
