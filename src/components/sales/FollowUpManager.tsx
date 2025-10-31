@@ -30,6 +30,7 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
   const loadVersions = async () => {
     try {
       const allVersions = await getItineraryVersionsByClient(client.id);
+      console.log('📋 Loaded versions for client:', client.id, 'Count:', allVersions.length);
       setVersions(allVersions);
 
       const version = await getLatestItineraryVersion(client.id);
@@ -104,13 +105,16 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
 
     // Handle version selection for confirmed bookings
     if (formData.status === 'advance-paid-confirmed') {
+      console.log('🔍 Checking versions for confirmation. Count:', versions.length);
       if (versions.length >= 1) {
+        console.log('✅ Showing version selector modal');
         // Show version selector modal if one or more versions exist
         setShowVersionSelector(true);
         return;
       }
       // No versions available
       if (versions.length === 0) {
+        console.log('❌ No versions found');
         alert('No itinerary versions found for this client.');
         setSaving(false);
         return;
