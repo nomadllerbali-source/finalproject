@@ -80,17 +80,22 @@ export const getAssignmentDetails = async (assignmentId: string) => {
 export const getChecklistItems = async (assignmentId: string): Promise<ChecklistItem[]> => {
   if (!supabase) return [];
 
+  console.log('🟡 getChecklistItems: Querying for assignment:', assignmentId);
+
   const { data, error } = await supabase
     .from('booking_checklist')
     .select('*')
     .eq('assignment_id', assignmentId)
     .order('day_number', { ascending: true });
 
+  console.log('🟡 getChecklistItems: Query result:', { itemCount: data?.length || 0, error });
+
   if (error) {
     console.error('Error fetching checklist items:', error);
     return [];
   }
 
+  console.log('🟡 getChecklistItems: Returning', data?.length || 0, 'items');
   return data || [];
 };
 

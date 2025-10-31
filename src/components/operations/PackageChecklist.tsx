@@ -61,7 +61,10 @@ const PackageChecklist: React.FC<PackageChecklistProps> = ({ assignmentId, opera
   const fetchChecklistItems = async () => {
     try {
       setLoading(true);
+      console.log('🔵 Operations Portal: Fetching checklist for assignment:', assignmentId);
       const items = await getChecklistItems(assignmentId);
+      console.log('🔵 Operations Portal: Received', items.length, 'checklist items');
+      console.log('🔵 Checklist items:', items);
       setChecklistItems(items);
     } catch (error) {
       console.error('Error fetching checklist:', error);
