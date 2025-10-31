@@ -199,7 +199,7 @@ const ViewClientDetails: React.FC<ViewClientDetailsProps> = ({ client, onBack })
                   <DollarSign className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-slate-500">Total Cost</p>
-                    <p className="text-2xl font-bold text-green-600">₹{client.total_cost.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-green-600">IDR {client.total_cost.toLocaleString()}</p>
                   </div>
                 </div>
 

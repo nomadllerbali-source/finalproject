@@ -291,7 +291,7 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
               <div className="space-y-4">
                 <div className="bg-white rounded-lg p-4">
                   <label className="block text-sm font-semibold text-slate-900 mb-3">
-                    Exchange Rate (USD to INR)
+                    Exchange Rate (USD to IDR)
                   </label>
                   <input
                     type="number"
@@ -303,7 +303,7 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
                     placeholder="Enter current exchange rate"
                   />
                   <p className="text-sm text-slate-600 mt-1">
-                    Current rate: 1 USD = ₹{exchangeRate}
+                    Current rate: 1 USD = IDR {exchangeRate}
                   </p>
                 </div>
 
@@ -316,7 +316,7 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
                       ${baseCost.toFixed(2)}
                     </div>
                     <div className="text-lg font-semibold text-blue-600">
-                      ₹{(baseCost * exchangeRate).toLocaleString('en-IN')}
+                      IDR {(baseCost * exchangeRate).toLocaleString('en-IN')}
                     </div>
                   </div>
                   <p className="text-sm text-slate-600 mt-1">
@@ -354,7 +354,7 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
                       ${finalPrice.toFixed(2)}
                     </div>
                     <div className="text-2xl font-bold text-opacity-80">
-                      ₹{(finalPrice * exchangeRate).toLocaleString('en-IN')}
+                      IDR {(finalPrice * exchangeRate).toLocaleString('en-IN')}
                     </div>
                   </div>
                   <p className="text-opacity-80 text-sm">
@@ -363,8 +363,8 @@ const FixedItineraryReview: React.FC<FixedItineraryReviewProps> = ({
                   {profitMargin > 0 && (
                     <div className="mt-4 pt-4 border-t border-white border-opacity-30">
                       <div className="text-sm space-y-1 text-opacity-80">
-                        <div>Base Cost: ${baseCost.toFixed(2)} / ₹{(baseCost * exchangeRate).toLocaleString('en-IN')}</div>
-                        <div>Your {getProfitLabel()}: ${profitMargin.toFixed(2)} / ₹{(profitMargin * exchangeRate).toLocaleString('en-IN')}</div>
+                        <div>Base Cost: ${baseCost.toFixed(2)} / IDR {(baseCost * exchangeRate).toLocaleString('en-IN')}</div>
+                        <div>Your {getProfitLabel()}: ${profitMargin.toFixed(2)} / IDR {(profitMargin * exchangeRate).toLocaleString('en-IN')}</div>
                       </div>
                     </div>
                   )}

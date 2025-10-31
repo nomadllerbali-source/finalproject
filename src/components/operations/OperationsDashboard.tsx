@@ -326,7 +326,7 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
                         </div>
                         <div className="flex items-center gap-2 text-slate-600">
                           <DollarSign className="h-4 w-4" />
-                          <span>₹{client.total_cost?.toLocaleString() || 0}</span>
+                          <span>IDR {client.total_cost?.toLocaleString() || 0}</span>
                         </div>
                       </div>
                     )}

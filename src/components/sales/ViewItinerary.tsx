@@ -192,8 +192,8 @@ const ViewItinerary: React.FC<ViewItineraryProps> = ({ client: salesClient, onBa
 
     itineraryText += `💰 PREMIUM PACKAGE PRICING:\n`;
     itineraryText += `• Total Package Price: $${latestVersion.total_cost.toFixed(2)}\n`;
-    itineraryText += `• Total Package Price (INR): ₹${(latestVersion.total_cost * 85).toLocaleString('en-IN')}\n`;
-    itineraryText += `• Exchange Rate: 1 USD = ₹85\n\n`;
+    itineraryText += `• Total Package Price (IDR): IDR ${(latestVersion.total_cost * 15000).toLocaleString('en-US')}\n`;
+    itineraryText += `• Exchange Rate: 1 USD = IDR 15,000\n\n`;
 
     itineraryText += `📞 SALES CONTACT:\n`;
     itineraryText += `${salesClient.name} Premium Travel Package\n`;
@@ -336,7 +336,7 @@ const ViewItinerary: React.FC<ViewItineraryProps> = ({ client: salesClient, onBa
                       </div>
                       <div className="flex items-center text-slate-600">
                         <DollarSign className="h-4 w-4 mr-2 text-green-600" />
-                        Total Cost: ₹{version.total_cost.toLocaleString()}
+                        Total Cost: IDR {version.total_cost.toLocaleString()}
                       </div>
                     </div>
                   </div>
@@ -390,7 +390,7 @@ const ViewItinerary: React.FC<ViewItineraryProps> = ({ client: salesClient, onBa
           </div>
           <div>
             <p className="text-slate-600 text-sm mb-1">Current Cost</p>
-            <p className="text-2xl font-bold text-green-600">₹{versions[0]?.total_cost.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-green-600">IDR {versions[0]?.total_cost.toLocaleString()}</p>
           </div>
           <div>
             <p className="text-slate-600 text-sm mb-1">Last Updated</p>

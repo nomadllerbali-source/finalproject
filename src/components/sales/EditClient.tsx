@@ -128,7 +128,7 @@ const EditClient: React.FC<EditClientProps> = ({ client: salesClient, onBack, on
               <span className="font-medium">Change Description:</span> {latestVersion.change_description}
             </p>
             <p className="text-sm text-slate-700 mt-2">
-              <span className="font-medium">Total Cost:</span> ₹{latestVersion.total_cost.toLocaleString()}
+              <span className="font-medium">Total Cost:</span> IDR {latestVersion.total_cost.toLocaleString()}
             </p>
             <p className="text-sm text-slate-700 mt-2">
               <span className="font-medium">Days in Itinerary:</span> {salesClient.number_of_days}

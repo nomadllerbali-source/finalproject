@@ -1,7 +1,7 @@
 import React from 'react';
 import { Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
-import { getSeasonalPrice, getVehicleCostByPax, formatCurrency } from '../../utils/calculations';
+import { getSeasonalPrice, getVehicleCostByPax, formatCurrency, convertToIDR } from '../../utils/calculations';
 import { Copy, MessageCircle, Calendar, Users, MapPin, Building2, Camera, Ticket, Utensils, CheckCircle, Phone, Download } from 'lucide-react';
 
 interface FinalSummaryProps {
@@ -319,7 +319,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
     text += `*TOTAL COST:*\n`;
     text += `💵 ${formatCurrency(itinerary.finalPrice, 'USD')}\n`;
-    text += `💰 ${formatCurrency(convertToINR(itinerary.finalPrice, itinerary.exchangeRate), 'INR')}\n\n`;
+    text += `💰 ${formatCurrency(convertToIDR(itinerary.finalPrice, itinerary.exchangeRate), 'IDR')}\n\n`;
     text += `Thank you for choosing our travel services! 🌟`;
 
     return text;
@@ -460,7 +460,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       doc.setFont('helvetica', 'bold');
       doc.text('TOTAL PACKAGE PRICE', 25, yPosition + 5);
       doc.setFontSize(14);
-      doc.text(`${formatCurrency(itinerary.finalPrice, 'USD')} | ${formatCurrency(convertToINR(itinerary.finalPrice, itinerary.exchangeRate), 'INR')}`, 25, yPosition + 15);
+      doc.text(`${formatCurrency(itinerary.finalPrice, 'USD')} | ${formatCurrency(convertToIDR(itinerary.finalPrice, itinerary.exchangeRate), 'IDR')}`, 25, yPosition + 15);
       
       // Footer on every page
       const pageCount = doc.getNumberOfPages();
@@ -558,7 +558,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                     {formatCurrency(itinerary.finalPrice, 'USD')}
                   </div>
                   <div className="text-lg md:text-xl font-bold text-blue-600">
-                    {formatCurrency(convertToINR(itinerary.finalPrice, itinerary.exchangeRate), 'INR')}
+                    {formatCurrency(convertToIDR(itinerary.finalPrice, itinerary.exchangeRate), 'IDR')}
                   </div>
                   <div className="text-xs md:text-sm text-slate-600">Total Package Price</div>
                 </div>
@@ -839,7 +839,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                 {formatCurrency(itinerary.finalPrice, 'USD')}
               </div>
               <div className="text-2xl md:text-3xl font-bold text-green-100">
-                {formatCurrency(convertToINR(itinerary.finalPrice, itinerary.exchangeRate), 'INR')}
+                {formatCurrency(convertToIDR(itinerary.finalPrice, itinerary.exchangeRate), 'IDR')}
               </div>
             </div>
             <p className="text-green-100">
@@ -851,12 +851,12 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                   <div>
                     <div className="font-medium">Base Cost:</div>
                     <div>{formatCurrency(itinerary.totalBaseCost, 'USD')}</div>
-                    <div className="text-xs">{formatCurrency(convertToINR(itinerary.totalBaseCost, itinerary.exchangeRate), 'INR')}</div>
+                    <div className="text-xs">{formatCurrency(convertToIDR(itinerary.totalBaseCost, itinerary.exchangeRate), 'IDR')}</div>
                   </div>
                   <div>
                     <div className="font-medium">Your Profit:</div>
                     <div>{formatCurrency(itinerary.profitMargin, 'USD')}</div>
-                    <div className="text-xs">{formatCurrency(convertToINR(itinerary.profitMargin, itinerary.exchangeRate), 'INR')}</div>
+                    <div className="text-xs">{formatCurrency(convertToIDR(itinerary.profitMargin, itinerary.exchangeRate), 'IDR')}</div>
                   </div>
                 </div>
               </div>
@@ -887,7 +887,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                       </span>
                       <div className="text-right">
                         <div className="font-semibold text-slate-900">{formatCurrency(costBreakdown.transportation, 'USD')}</div>
-                        <div className="text-xs text-slate-600">{formatCurrency(convertToINR(costBreakdown.transportation, itinerary.exchangeRate), 'INR')}</div>
+                        <div className="text-xs text-slate-600">{formatCurrency(convertToIDR(costBreakdown.transportation, itinerary.exchangeRate), 'IDR')}</div>
                       </div>
                     </div>
                   </div>
@@ -914,7 +914,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                         </div>
                         <div className="text-right">
                           <div className="font-semibold text-slate-900">{formatCurrency(hotel.total, 'USD')}</div>
-                          <div className="text-xs text-slate-600">{formatCurrency(convertToINR(hotel.total, itinerary.exchangeRate), 'INR')}</div>
+                          <div className="text-xs text-slate-600">{formatCurrency(convertToIDR(hotel.total, itinerary.exchangeRate), 'IDR')}</div>
                         </div>
                       </div>
                     ))}
@@ -942,7 +942,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                         </div>
                         <div className="text-right">
                           <div className="font-semibold text-slate-900">{formatCurrency(sight.vehicleCost, 'USD')}</div>
-                          <div className="text-xs text-slate-600">{formatCurrency(convertToINR(sight.vehicleCost, itinerary.exchangeRate), 'INR')}</div>
+                          <div className="text-xs text-slate-600">{formatCurrency(convertToIDR(sight.vehicleCost, itinerary.exchangeRate), 'IDR')}</div>
                         </div>
                       </div>
                     ))}
@@ -970,7 +970,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                         </div>
                         <div className="text-right">
                           <div className="font-semibold text-slate-900">{formatCurrency(activity.totalCost, 'USD')}</div>
-                          <div className="text-xs text-slate-600">{formatCurrency(convertToINR(activity.totalCost, itinerary.exchangeRate), 'INR')}</div>
+                          <div className="text-xs text-slate-600">{formatCurrency(convertToIDR(activity.totalCost, itinerary.exchangeRate), 'IDR')}</div>
                         </div>
                       </div>
                     ))}
@@ -998,7 +998,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                         </div>
                         <div className="text-right">
                           <div className="font-semibold text-slate-900">{formatCurrency(ticket.totalCost, 'USD')}</div>
-                          <div className="text-xs text-slate-600">{formatCurrency(convertToINR(ticket.totalCost, itinerary.exchangeRate), 'INR')}</div>
+                          <div className="text-xs text-slate-600">{formatCurrency(convertToIDR(ticket.totalCost, itinerary.exchangeRate), 'IDR')}</div>
                         </div>
                       </div>
                     ))}
@@ -1026,7 +1026,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                         </div>
                         <div className="text-right">
                           <div className="font-semibold text-slate-900">{formatCurrency(meal.totalCost, 'USD')}</div>
-                          <div className="text-xs text-slate-600">{formatCurrency(convertToINR(meal.totalCost, itinerary.exchangeRate), 'INR')}</div>
+                          <div className="text-xs text-slate-600">{formatCurrency(convertToIDR(meal.totalCost, itinerary.exchangeRate), 'IDR')}</div>
                         </div>
                       </div>
                     ))}
@@ -1041,7 +1041,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                     <span className="font-semibold text-slate-900">Subtotal (Base Cost):</span>
                     <div className="text-right">
                       <div className="font-bold text-slate-900">{formatCurrency(itinerary.totalBaseCost, 'USD')}</div>
-                      <div className="text-sm text-slate-600">{formatCurrency(convertToINR(itinerary.totalBaseCost, itinerary.exchangeRate), 'INR')}</div>
+                      <div className="text-sm text-slate-600">{formatCurrency(convertToIDR(itinerary.totalBaseCost, itinerary.exchangeRate), 'IDR')}</div>
                     </div>
                   </div>
                   {itinerary.profitMargin > 0 && (
@@ -1049,7 +1049,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                       <span className="text-slate-700">Agent Commission/Profit:</span>
                       <div className="text-right">
                         <div className="font-semibold text-slate-900">{formatCurrency(itinerary.profitMargin, 'USD')}</div>
-                        <div className="text-sm text-slate-600">{formatCurrency(convertToINR(itinerary.profitMargin, itinerary.exchangeRate), 'INR')}</div>
+                        <div className="text-sm text-slate-600">{formatCurrency(convertToIDR(itinerary.profitMargin, itinerary.exchangeRate), 'IDR')}</div>
                       </div>
                     </div>
                   )}
@@ -1058,7 +1058,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                       <span className="font-bold text-slate-900">Total Package Price:</span>
                       <div className="text-right">
                         <div className="font-bold text-green-600">{formatCurrency(itinerary.finalPrice, 'USD')}</div>
-                        <div className="text-lg font-bold text-blue-600">{formatCurrency(convertToINR(itinerary.finalPrice, itinerary.exchangeRate), 'INR')}</div>
+                        <div className="text-lg font-bold text-blue-600">{formatCurrency(convertToIDR(itinerary.finalPrice, itinerary.exchangeRate), 'IDR')}</div>
                       </div>
                     </div>
                   </div>

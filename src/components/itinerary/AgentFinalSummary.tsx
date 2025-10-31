@@ -128,8 +128,8 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
 
     itineraryText += `💰 PACKAGE PRICING:\n`;
     itineraryText += `• Total Package Price: $${itinerary.finalPrice.toFixed(2)}\n`;
-    itineraryText += `• Total Package Price (INR): ₹${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}\n`;
-    itineraryText += `• Exchange Rate: 1 USD = ₹${itinerary.exchangeRate}\n\n`;
+    itineraryText += `• Total Package Price (IDR): IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}\n`;
+    itineraryText += `• Exchange Rate: 1 USD = IDR ${itinerary.exchangeRate}\n\n`;
 
     // Calculate hotel nights by hotel
     const hotelNights = new Map<string, { hotel: any; roomType: any; nights: number }>();
@@ -281,7 +281,7 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
     doc.setFont('helvetica', 'bold');
     doc.text(`Total Package Price: $${itinerary.finalPrice.toFixed(2)}`, margin, yPosition);
     yPosition += 8;
-    doc.text(`Total Package Price (INR): ₹${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
+    doc.text(`Total Package Price (IDR): IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
 
     doc.save(`${itinerary.client.name}-itinerary.pdf`);
   };
@@ -506,18 +506,18 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
                 <div className="text-sm font-medium mb-2">Final Package Price</div>
                 <div className="text-3xl md:text-4xl font-bold mb-2">${itinerary.finalPrice.toFixed(2)}</div>
                 <div className="text-xl md:text-2xl font-bold text-teal-100 mb-4">
-                  ₹{(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}
+                  IDR {(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}
                 </div>
                 <div className="text-teal-100 text-sm md:text-base">
                   Complete package for {itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} passengers
                 </div>
                 <div className="text-xs text-teal-100 mt-3">
-                  Exchange Rate: 1 USD = ₹{itinerary.exchangeRate}
+                  Exchange Rate: 1 USD = IDR {itinerary.exchangeRate}
                 </div>
                 {itinerary.profitMargin > 0 && (
                   <div className="mt-4 pt-4 border-t border-teal-400 border-opacity-50">
                     <div className="text-sm">
-                      <div>Your Profit: ${itinerary.profitMargin.toFixed(2)} / ₹{(itinerary.profitMargin * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
+                      <div>Your Profit: ${itinerary.profitMargin.toFixed(2)} / IDR {(itinerary.profitMargin * itinerary.exchangeRate).toLocaleString('en-IN')}</div>
                     </div>
                   </div>
                 )}

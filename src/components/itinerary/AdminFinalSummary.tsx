@@ -167,7 +167,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
     doc.setFont('helvetica', 'bold');
     doc.text(`Total Price: $${itinerary.finalPrice.toFixed(2)}`, margin, yPosition);
     yPosition += 8;
-    doc.text(`Total Price (INR): ₹${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
+    doc.text(`Total Price (IDR): IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
 
     doc.save(`${itinerary.client.name}-itinerary.pdf`);
   };
@@ -410,8 +410,8 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
 
     itineraryText += `💰 PRICING:\n`;
     itineraryText += `• Total Package Price: $${itinerary.finalPrice.toFixed(2)}\n`;
-    itineraryText += `• Total Package Price (INR): ₹${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}\n`;
-    itineraryText += `• Exchange Rate: 1 USD = ₹${itinerary.exchangeRate}\n\n`;
+    itineraryText += `• Total Package Price (IDR): IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}\n`;
+    itineraryText += `• Exchange Rate: 1 USD = IDR ${itinerary.exchangeRate}\n\n`;
 
     // Calculate hotel nights by hotel
     const hotelNights = new Map<string, { hotel: any; roomType: any; nights: number }>();
@@ -872,10 +872,10 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                   <div className="text-sm font-medium mb-2">Total Package Price</div>
                   <div className="text-2xl font-bold mb-1">${itinerary.finalPrice.toFixed(2)}</div>
                   <div className="text-lg font-semibold text-green-100">
-                    ₹{(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}
+                    IDR {(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}
                   </div>
                   <div className="text-xs text-green-100 mt-2">
-                    Exchange Rate: 1 USD = ₹{itinerary.exchangeRate}
+                    Exchange Rate: 1 USD = IDR {itinerary.exchangeRate}
                   </div>
                 </div>
               </div>

@@ -202,7 +202,7 @@ const EditItinerary: React.FC<EditItineraryProps> = ({ client: salesClient, onBa
                 <h4 className="font-semibold text-blue-900">Editing Itinerary Version {latestVersion.version_number}</h4>
                 <p className="text-blue-700 text-sm mt-1">
                   Last updated: {new Date(latestVersion.created_at).toLocaleDateString()} •
-                  Current cost: ₹{latestVersion.total_cost.toLocaleString()}
+                  Current cost: IDR {latestVersion.total_cost.toLocaleString()}
                 </p>
                 <p className="text-blue-600 text-sm mt-1">
                   Previous change: {latestVersion.change_description}

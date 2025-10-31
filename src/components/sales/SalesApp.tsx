@@ -378,7 +378,7 @@ const SalesApp: React.FC = () => {
             <div>
               <p className="text-slate-500 text-sm font-medium">Total Revenue</p>
               <p className="text-2xl font-bold text-slate-900">
-                ₹{confirmedClients.reduce((sum, c) => sum + c.total_cost, 0).toLocaleString()}
+                IDR {confirmedClients.reduce((sum, c) => sum + c.total_cost, 0).toLocaleString()}
               </p>
             </div>
             <div className="bg-emerald-100 p-3 rounded-lg">
@@ -481,7 +481,7 @@ const SalesApp: React.FC = () => {
                         {getStatusLabel(client.current_follow_up_status)}
                       </span>
                       <div className="text-xs text-slate-500 mt-1">
-                        ₹{client.total_cost.toLocaleString()}
+                        IDR {client.total_cost.toLocaleString()}
                       </div>
                     </td>
                     <td className="px-6 py-4">

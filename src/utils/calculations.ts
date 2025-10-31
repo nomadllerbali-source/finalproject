@@ -130,8 +130,15 @@ export const calculateItineraryCost = (
   return totalCost;
 };
 
-export const formatCurrency = (amount: number, currency: 'IDR' = 'IDR'): string => {
-  return `Rp ${amount.toLocaleString('id-ID', { maximumFractionDigits: 0 })}`;
+export const convertToIDR = (usdAmount: number, exchangeRate: number): number => {
+  return usdAmount * exchangeRate;
+};
+
+export const formatCurrency = (amount: number, currency: 'USD' | 'IDR' = 'IDR'): string => {
+  if (currency === 'USD') {
+    return `$${amount.toFixed(2)}`;
+  }
+  return `IDR ${amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 };
 // Helper function to recalculate itinerary costs when data changes
 export const recalculateItineraryCosts = (

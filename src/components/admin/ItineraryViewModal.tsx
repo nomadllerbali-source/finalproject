@@ -179,8 +179,8 @@ const ItineraryViewModal: React.FC<ItineraryViewModalProps> = ({ client, onClose
 
     itineraryText += `💰 PRICING:\n`;
     itineraryText += `• Total Package Price: $${updatedFinalPrice.toFixed(2)}\n`;
-    itineraryText += `• Total Package Price (INR): ₹${(updatedFinalPrice * (displayItinerary?.exchangeRate || 83)).toLocaleString('en-IN')}\n`;
-    itineraryText += `• Exchange Rate: 1 USD = ₹${displayItinerary?.exchangeRate || 83}\n\n`;
+    itineraryText += `• Total Package Price (IDR): IDR ${(updatedFinalPrice * (displayItinerary?.exchangeRate || 83)).toLocaleString('en-IN')}\n`;
+    itineraryText += `• Exchange Rate: 1 USD = IDR ${displayItinerary?.exchangeRate || 83}\n\n`;
 
     const hotelNights = new Map<string, { hotel: any; roomType: any; nights: number }>();
     displayItinerary.dayPlans.forEach(dayPlan => {
@@ -332,7 +332,7 @@ const ItineraryViewModal: React.FC<ItineraryViewModalProps> = ({ client, onClose
     doc.setFont('helvetica', 'normal');
     doc.text(`Total Price: $${displayItinerary.finalPrice.toFixed(2)}`, margin, yPosition);
     yPosition += 8;
-    doc.text(`Total Price (INR): ₹${(displayItinerary.finalPrice * displayItinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
+    doc.text(`Total Price (IDR): IDR ${(displayItinerary.finalPrice * displayItinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
 
     doc.save(`${client.name}-itinerary.pdf`);
   };
@@ -502,7 +502,7 @@ const ItineraryViewModal: React.FC<ItineraryViewModalProps> = ({ client, onClose
                               </div>
                               <div className="flex items-center text-xs text-slate-600">
                                 <DollarSign className="h-3 w-3 mr-1 text-green-600" />
-                                <span className="font-semibold">₹{version.total_cost.toLocaleString()}</span>
+                                <span className="font-semibold">IDR {version.total_cost.toLocaleString()}</span>
                               </div>
                             </div>
                           )}
@@ -632,10 +632,10 @@ const ItineraryViewModal: React.FC<ItineraryViewModalProps> = ({ client, onClose
                   <div className="text-sm font-medium mb-2">Total Package Price</div>
                   <div className="text-3xl font-bold mb-2">${updatedFinalPrice.toFixed(2)}</div>
                   <div className="text-xl font-bold text-green-100">
-                    ₹{(updatedFinalPrice * (displayItinerary?.exchangeRate || 83)).toLocaleString('en-IN')}
+                    IDR {(updatedFinalPrice * (displayItinerary?.exchangeRate || 83)).toLocaleString('en-IN')}
                   </div>
                   <div className="text-xs text-green-100 mt-2">
-                    Exchange Rate: 1 USD = ₹{displayItinerary?.exchangeRate || 83}
+                    Exchange Rate: 1 USD = IDR {displayItinerary?.exchangeRate || 83}
                   </div>
                 </div>
               </div>
