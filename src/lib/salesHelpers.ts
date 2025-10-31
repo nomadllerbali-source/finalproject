@@ -292,6 +292,10 @@ export const createPackageAssignmentAndChecklist = async (
 
     const days = itineraryData?.days || itineraryData?.dayPlans || [];
 
+    console.log('Creating checklist for client:', clientId);
+    console.log('Itinerary data structure:', itineraryData);
+    console.log('Days found:', days.length);
+
     if (days.length > 0) {
       days.forEach((day: any, index: number) => {
         const dayNumber = day.day || index + 1;
@@ -375,6 +379,9 @@ export const createPackageAssignmentAndChecklist = async (
       });
     }
 
+    console.log('Total checklist items to create:', checklistItems.length);
+    console.log('Checklist items:', JSON.stringify(checklistItems, null, 2));
+
     if (checklistItems.length > 0) {
       const { error: checklistError } = await supabase
         .from('booking_checklist')
@@ -384,6 +391,9 @@ export const createPackageAssignmentAndChecklist = async (
         console.error('Checklist creation error:', checklistError);
         return { success: false, error: 'Failed to create checklist items' };
       }
+      console.log('✅ Checklist items created successfully');
+    } else {
+      console.warn('⚠️ No checklist items to create - itinerary may be empty');
     }
 
     return { success: true };
