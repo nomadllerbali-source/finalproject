@@ -58,7 +58,16 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
         .select(`
           *,
           sales_person:sales_persons(full_name, email),
-          sales_client:sales_clients!inner(*)
+          sales_client:sales_clients!inner(
+            id,
+            name,
+            travel_date,
+            number_of_adults,
+            number_of_children,
+            transportation_mode,
+            total_cost,
+            confirmed_version_number
+          )
         `)
         .eq('operations_person_id', operationsPersonId)
         .eq('sales_client.current_follow_up_status', 'advance-paid-confirmed')
@@ -81,8 +90,26 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
             };
           }
 
+          let confirmedDays = 0;
+          if (assignment.sales_client?.confirmed_version_number) {
+            const { data: versionData } = await supabase
+              .from('sales_itinerary_versions')
+              .select('itinerary_data')
+              .eq('client_id', assignment.sales_client.id)
+              .eq('version_number', assignment.sales_client.confirmed_version_number)
+              .maybeSingle();
+
+            if (versionData?.itinerary_data) {
+              confirmedDays = versionData.itinerary_data.client?.numberOfDays || 0;
+            }
+          }
+
           return {
             ...assignment,
+            sales_client: {
+              ...assignment.sales_client,
+              number_of_days: confirmedDays || assignment.sales_client.number_of_days
+            },
             checklist_stats: {
               total: checklistData?.length || 0,
               completed: checklistData?.filter(item => item.is_completed).length || 0

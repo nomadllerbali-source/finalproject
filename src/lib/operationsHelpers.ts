@@ -85,6 +85,20 @@ export const getAssignmentDetails = async (assignmentId: string) => {
     return null;
   }
 
+  if (data?.sales_client?.confirmed_version_number) {
+    const { data: versionData } = await supabase
+      .from('sales_itinerary_versions')
+      .select('itinerary_data')
+      .eq('client_id', data.sales_client.id)
+      .eq('version_number', data.sales_client.confirmed_version_number)
+      .maybeSingle();
+
+    if (versionData?.itinerary_data) {
+      const confirmedDays = versionData.itinerary_data.client?.numberOfDays || 0;
+      data.sales_client.number_of_days = confirmedDays;
+    }
+  }
+
   console.log('🟡 Assignment details fetched successfully');
   return data;
 };
