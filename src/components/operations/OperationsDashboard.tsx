@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, CheckCircle2, Clock, AlertCircle, Calendar, Users, ChevronRight, DollarSign, MessageSquare } from 'lucide-react';
-import { getAssignmentsByOperationsPerson, PackageAssignment } from '../../lib/operationsHelpers';
+import { getAssignmentsByOperationsPerson, getUnreadMessageCountForAssignment, PackageAssignment } from '../../lib/operationsHelpers';
 import { supabase } from '../../lib/supabase';
 import SalesOperationsChat from '../shared/SalesOperationsChat';
 
@@ -41,6 +41,7 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
   const [filter, setFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
   const [showChat, setShowChat] = useState(false);
   const [chatClient, setChatClient] = useState<ClientForChat | null>(null);
+  const [unreadCounts, setUnreadCounts] = useState<{[assignmentId: string]: number}>({});
 
   useEffect(() => {
     if (operationsPersonId) {
@@ -90,12 +91,42 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
       );
 
       setAssignments(assignmentsWithStats);
+      loadUnreadCounts(assignmentsWithStats);
     } catch (error) {
       console.error('Error fetching assignments:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const loadUnreadCounts = async (assignments: AssignmentWithDetails[]) => {
+    const counts: {[assignmentId: string]: number} = {};
+    for (const assignment of assignments) {
+      try {
+        const count = await getUnreadMessageCountForAssignment(assignment.id, operationsPersonId);
+        counts[assignment.id] = count;
+      } catch (error) {
+        console.error('Error loading unread count for assignment:', assignment.id, error);
+      }
+    }
+    setUnreadCounts(counts);
+  };
+
+  useEffect(() => {
+    if (!showChat) {
+      loadUnreadCounts(assignments);
+    }
+  }, [showChat]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!showChat) {
+        loadUnreadCounts(assignments);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [assignments, showChat, operationsPersonId]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -332,11 +363,16 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
                     {client && (
                       <button
                         onClick={() => handleOpenChat({ id: client.id, name: client.name })}
-                        className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors relative"
                         title="Chat with Sales"
                       >
                         <MessageSquare className="h-4 w-4 mr-2" />
                         Chat
+                        {unreadCounts[assignment.id] > 0 && (
+                          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
+                            {unreadCounts[assignment.id]}
+                          </span>
+                        )}
                       </button>
                     )}
                   </div>

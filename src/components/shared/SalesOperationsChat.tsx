@@ -5,6 +5,7 @@ import {
   getChatMessages,
   sendChatMessage,
   subscribeToAssignmentChat,
+  markMessagesAsRead,
   ChatMessage
 } from '../../lib/operationsHelpers';
 import { getAssignmentForClient } from '../../lib/operationsHelpers';
@@ -71,8 +72,13 @@ const SalesOperationsChat: React.FC<SalesOperationsChatProps> = ({
       const chatMessages = await getChatMessages(assignment.id);
       setMessages(chatMessages);
 
+      await markMessagesAsRead(assignment.id, authState.user.id);
+
       const subscription = subscribeToAssignmentChat(assignment.id, (newMessage) => {
         setMessages(prev => [...prev, newMessage]);
+        if (newMessage.sender_id !== authState.user.id) {
+          markMessagesAsRead(assignment.id, authState.user.id);
+        }
       });
 
       return () => {

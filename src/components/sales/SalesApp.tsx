@@ -19,6 +19,10 @@ import {
   deleteSalesClient,
   SalesClient
 } from '../../lib/salesHelpers';
+import {
+  getAssignmentForClient,
+  getUnreadMessageCountForAssignment
+} from '../../lib/operationsHelpers';
 
 type TabType = 'all' | 'confirmed' | 'followups';
 type ViewType = 'viewItinerary' | 'viewDetails' | 'edit' | 'editItinerary' | 'followUp' | 'chat';
@@ -35,6 +39,7 @@ const SalesApp: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [chatClient, setChatClient] = useState<SalesClient | null>(null);
+  const [unreadCounts, setUnreadCounts] = useState<{[clientId: string]: number}>({});
 
   useEffect(() => {
     loadData();
@@ -54,6 +59,8 @@ const SalesApp: React.FC = () => {
       setAllClients(all);
       setConfirmedClients(confirmed);
       setFollowUpClients(followups);
+
+      loadUnreadCounts(confirmed);
     } catch (error) {
       console.error('Error loading sales data:', error);
     } finally {
@@ -150,10 +157,44 @@ const SalesApp: React.FC = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  const loadUnreadCounts = async (clients: SalesClient[]) => {
+    if (!authState.user?.id) return;
+
+    const counts: {[clientId: string]: number} = {};
+    for (const client of clients) {
+      try {
+        const assignment = await getAssignmentForClient(client.id);
+        if (assignment) {
+          const count = await getUnreadMessageCountForAssignment(assignment.id, authState.user.id);
+          counts[client.id] = count;
+        }
+      } catch (error) {
+        console.error('Error loading unread count for client:', client.id, error);
+      }
+    }
+    setUnreadCounts(counts);
+  };
+
   const handleOpenChat = (client: SalesClient) => {
     setChatClient(client);
     setShowChat(true);
   };
+
+  useEffect(() => {
+    if (!showChat) {
+      loadUnreadCounts(confirmedClients);
+    }
+  }, [showChat]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!showChat) {
+        loadUnreadCounts(confirmedClients);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [confirmedClients, showChat, authState.user?.id]);
 
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -539,10 +580,15 @@ const SalesApp: React.FC = () => {
                         {activeTab === 'confirmed' && (client as any).operations_person && (
                           <button
                             onClick={() => handleOpenChat(client)}
-                            className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors"
+                            className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors relative"
                             title="Chat with Operations"
                           >
                             <MessageSquare className="h-4 w-4" />
+                            {unreadCounts[client.id] > 0 && (
+                              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                                {unreadCounts[client.id]}
+                              </span>
+                            )}
                           </button>
                         )}
                         <button

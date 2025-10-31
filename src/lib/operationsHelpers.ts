@@ -229,3 +229,67 @@ export const getOperationsPersonDetails = async (operationsPersonId: string) => 
 
   return data;
 };
+
+export const getUnreadMessageCountForAssignment = async (assignmentId: string, userId: string): Promise<number> => {
+  if (!supabase) return 0;
+
+  const { data, error } = await supabase
+    .from('operations_chat')
+    .select('id', { count: 'exact', head: true })
+    .eq('assignment_id', assignmentId)
+    .eq('is_read', false)
+    .neq('sender_id', userId);
+
+  if (error) {
+    console.error('Error fetching unread count:', error);
+    return 0;
+  }
+
+  return data?.length || 0;
+};
+
+export const getUnreadMessageCountByUser = async (userId: string): Promise<{[assignmentId: string]: number}> => {
+  if (!supabase) return {};
+
+  const { data: assignments, error: assignmentsError } = await supabase
+    .from('package_assignments')
+    .select('id')
+    .or(`sales_person_id.eq.${userId},operations_person_id.eq.${userId}`);
+
+  if (assignmentsError || !assignments) {
+    console.error('Error fetching assignments:', assignmentsError);
+    return {};
+  }
+
+  const counts: {[key: string]: number} = {};
+
+  for (const assignment of assignments) {
+    const { count, error } = await supabase
+      .from('operations_chat')
+      .select('*', { count: 'exact', head: true })
+      .eq('assignment_id', assignment.id)
+      .eq('is_read', false)
+      .neq('sender_id', userId);
+
+    if (!error) {
+      counts[assignment.id] = count || 0;
+    }
+  }
+
+  return counts;
+};
+
+export const markMessagesAsRead = async (assignmentId: string, userId: string): Promise<void> => {
+  if (!supabase) return;
+
+  const { error } = await supabase
+    .from('operations_chat')
+    .update({ is_read: true })
+    .eq('assignment_id', assignmentId)
+    .neq('sender_id', userId)
+    .eq('is_read', false);
+
+  if (error) {
+    console.error('Error marking messages as read:', error);
+  }
+};
