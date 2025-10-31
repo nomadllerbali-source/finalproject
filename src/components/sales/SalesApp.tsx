@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { DataProvider } from '../../contexts/DataContext';
-import { Users, CheckCircle, Clock, Plus, Eye, Edit2, Trash2, MessageCircle, Phone, FileText, X, Calendar, MapPin, Car, DollarSign, Send, Filter, LogOut, Mail } from 'lucide-react';
+import { Users, CheckCircle, Clock, Plus, Eye, Edit2, Trash2, MessageCircle, Phone, FileText, X, Calendar, MapPin, Car, DollarSign, Send, Filter, LogOut, Mail, MessageSquare } from 'lucide-react';
 import Layout from '../Layout';
 import SalesItineraryBuilder from '../itinerary/SalesItineraryBuilder';
 import ViewItinerary from './ViewItinerary';
@@ -9,6 +9,7 @@ import ViewClientDetails from './ViewClientDetails';
 import EditClient from './EditClient';
 import EditItinerary from './EditItinerary';
 import FollowUpManager from './FollowUpManager';
+import SalesOperationsChat from '../shared/SalesOperationsChat';
 import {
   getSalesClientsBySalesPerson,
   getConfirmedClients,
@@ -20,7 +21,7 @@ import {
 } from '../../lib/salesHelpers';
 
 type TabType = 'all' | 'confirmed' | 'followups';
-type ViewType = 'viewItinerary' | 'viewDetails' | 'edit' | 'editItinerary' | 'followUp';
+type ViewType = 'viewItinerary' | 'viewDetails' | 'edit' | 'editItinerary' | 'followUp' | 'chat';
 
 const SalesApp: React.FC = () => {
   const { state: authState, logout } = useAuth();
@@ -32,6 +33,8 @@ const SalesApp: React.FC = () => {
   const [showItineraryBuilder, setShowItineraryBuilder] = useState(false);
   const [selectedClient, setSelectedClient] = useState<SalesClient | null>(null);
   const [currentView, setCurrentView] = useState<ViewType | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const [chatClient, setChatClient] = useState<SalesClient | null>(null);
 
   useEffect(() => {
     loadData();
@@ -147,6 +150,11 @@ const SalesApp: React.FC = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  const handleOpenChat = (client: SalesClient) => {
+    setChatClient(client);
+    setShowChat(true);
+  };
+
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
       await logout();
@@ -179,6 +187,19 @@ const SalesApp: React.FC = () => {
         {currentView === 'editItinerary' && <EditItinerary client={selectedClient} onBack={handleBack} onSuccess={handleBack} />}
         {currentView === 'followUp' && <FollowUpManager client={selectedClient} onBack={handleBack} />}
       </DataProvider>
+    );
+  }
+
+  if (showChat && chatClient) {
+    return (
+      <SalesOperationsChat
+        clientId={chatClient.id}
+        clientName={chatClient.name}
+        onClose={() => {
+          setShowChat(false);
+          setChatClient(null);
+        }}
+      />
     );
   }
 
@@ -515,6 +536,15 @@ const SalesApp: React.FC = () => {
                         >
                           <Phone className="h-4 w-4" />
                         </button>
+                        {activeTab === 'confirmed' && (client as any).operations_person && (
+                          <button
+                            onClick={() => handleOpenChat(client)}
+                            className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors"
+                            title="Chat with Operations"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteClient(client.id, client.name)}
                           className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"

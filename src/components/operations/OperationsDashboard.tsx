@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Package, CheckCircle2, Clock, AlertCircle, Calendar, Users, ChevronRight, DollarSign } from 'lucide-react';
+import { Package, CheckCircle2, Clock, AlertCircle, Calendar, Users, ChevronRight, DollarSign, MessageSquare } from 'lucide-react';
 import { getAssignmentsByOperationsPerson, PackageAssignment } from '../../lib/operationsHelpers';
 import { supabase } from '../../lib/supabase';
+import SalesOperationsChat from '../shared/SalesOperationsChat';
 
 interface AssignmentWithDetails extends PackageAssignment {
   sales_person: {
@@ -29,10 +30,17 @@ interface OperationsDashboardProps {
   onViewChecklist: (assignmentId: string) => void;
 }
 
+interface ClientForChat {
+  id: string;
+  name: string;
+}
+
 const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPersonId, onViewChecklist }) => {
   const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
+  const [showChat, setShowChat] = useState(false);
+  const [chatClient, setChatClient] = useState<ClientForChat | null>(null);
 
   useEffect(() => {
     if (operationsPersonId) {
@@ -124,6 +132,24 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
     if (filter === 'all') return true;
     return assignment.status === filter;
   });
+
+  const handleOpenChat = (client: ClientForChat) => {
+    setChatClient(client);
+    setShowChat(true);
+  };
+
+  if (showChat && chatClient) {
+    return (
+      <SalesOperationsChat
+        clientId={chatClient.id}
+        clientName={chatClient.name}
+        onClose={() => {
+          setShowChat(false);
+          setChatClient(null);
+        }}
+      />
+    );
+  }
 
   const stats = {
     total: assignments.length,
@@ -303,6 +329,16 @@ const OperationsDashboard: React.FC<OperationsDashboardProps> = ({ operationsPer
                       View Checklist
                       <ChevronRight className="h-4 w-4 ml-1" />
                     </button>
+                    {client && (
+                      <button
+                        onClick={() => handleOpenChat({ id: client.id, name: client.name })}
+                        className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        title="Chat with Sales"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Chat
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
