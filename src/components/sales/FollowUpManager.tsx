@@ -104,18 +104,9 @@ const FollowUpManager: React.FC<FollowUpManagerProps> = ({ client, onBack }) => 
 
     // Handle version selection for confirmed bookings
     if (formData.status === 'advance-paid-confirmed') {
-      if (versions.length > 1) {
-        // Show version selector modal if multiple versions exist
+      if (versions.length >= 1) {
+        // Show version selector modal if one or more versions exist
         setShowVersionSelector(true);
-        return;
-      }
-      // Auto-select the only version if there's just one and proceed
-      if (versions.length === 1) {
-        if (!selectedVersionId) {
-          setSelectedVersionId(versions[0].id);
-        }
-        // Call confirmFollowUp after ensuring version is selected
-        await confirmFollowUp();
         return;
       }
       // No versions available
