@@ -13,6 +13,14 @@ interface EditClientProps {
 
 const EditClient: React.FC<EditClientProps> = ({ client: salesClient, onBack, onEditItinerary }) => {
 
+  // Calculate end date from start date and number of days
+  const calculateEndDate = (startDate: string, numberOfDays: number): string => {
+    const start = new Date(startDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + numberOfDays - 1);
+    return end.toISOString().split('T')[0];
+  };
+
   // Client data
   const [clientData, setClientData] = useState<Client>({
     id: salesClient.id,
@@ -22,7 +30,7 @@ const EditClient: React.FC<EditClientProps> = ({ client: salesClient, onBack, on
     countryCode: salesClient.country_code,
     travelDates: {
       startDate: salesClient.travel_date,
-      endDate: salesClient.travel_date,
+      endDate: calculateEndDate(salesClient.travel_date, salesClient.number_of_days),
       isFlexible: false,
       flexibleMonth: ''
     },
