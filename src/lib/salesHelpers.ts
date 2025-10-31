@@ -221,17 +221,6 @@ export const createPackageAssignmentAndChecklist = async (
   if (!supabase) return { success: false, error: 'Supabase not initialized' };
 
   try {
-    const { data: existingAssignment } = await supabase
-      .from('package_assignments')
-      .select('id')
-      .eq('sales_client_id', clientId)
-      .limit(1)
-      .maybeSingle();
-
-    if (existingAssignment) {
-      return { success: false, error: 'Assignment already exists for this client' };
-    }
-
     const { data: version, error: versionError } = await supabase
       .from('sales_itinerary_versions')
       .select('itinerary_data')
@@ -266,18 +255,27 @@ export const createPackageAssignmentAndChecklist = async (
       .select()
       .single();
 
-    if (assignmentError || !assignment) {
+    if (assignmentError) {
       console.error('Assignment error:', assignmentError);
+      if (assignmentError.code === '23505') {
+        return { success: false, error: 'Assignment already exists for this client' };
+      }
+      return { success: false, error: 'Failed to create assignment' };
+    }
+
+    if (!assignment) {
       return { success: false, error: 'Failed to create assignment' };
     }
 
     const checklistItems: any[] = [];
 
-    if (itineraryData?.dayPlans) {
-      itineraryData.dayPlans.forEach((day: any, index: number) => {
-        const dayNumber = index + 1;
+    const days = itineraryData?.days || itineraryData?.dayPlans || [];
 
-        if (day.hotel) {
+    if (days.length > 0) {
+      days.forEach((day: any, index: number) => {
+        const dayNumber = day.day || index + 1;
+
+        if (day.hotel && day.hotel.hotelId) {
           checklistItems.push({
             client_id: clientId,
             assignment_id: assignment.id,
@@ -289,57 +287,68 @@ export const createPackageAssignmentAndChecklist = async (
           });
         }
 
-        if (day.sightseeing) {
-          checklistItems.push({
-            client_id: clientId,
-            assignment_id: assignment.id,
-            item_type: 'sightseeing',
-            item_id: day.sightseeing.sightseeingId,
-            item_name: `Sightseeing - Day ${dayNumber}`,
-            day_number: dayNumber,
-            is_completed: false
+        if (day.sightseeing && Array.isArray(day.sightseeing)) {
+          day.sightseeing.forEach((sightseeingId: string) => {
+            if (sightseeingId) {
+              checklistItems.push({
+                client_id: clientId,
+                assignment_id: assignment.id,
+                item_type: 'sightseeing',
+                item_id: sightseeingId,
+                item_name: `Sightseeing - Day ${dayNumber}`,
+                day_number: dayNumber,
+                is_completed: false
+              });
+            }
           });
         }
 
-        if (day.activities && day.activities.length > 0) {
+        if (day.activities && Array.isArray(day.activities) && day.activities.length > 0) {
           day.activities.forEach((activity: any) => {
-            checklistItems.push({
-              client_id: clientId,
-              assignment_id: assignment.id,
-              item_type: 'activity',
-              item_id: activity.activityId,
-              item_name: `Activity - Day ${dayNumber}`,
-              day_number: dayNumber,
-              is_completed: false
-            });
+            if (activity.activityId) {
+              checklistItems.push({
+                client_id: clientId,
+                assignment_id: assignment.id,
+                item_type: 'activity',
+                item_id: activity.activityId,
+                item_name: `Activity - Day ${dayNumber}`,
+                day_number: dayNumber,
+                is_completed: false
+              });
+            }
           });
         }
 
-        if (day.entryTickets && day.entryTickets.length > 0) {
-          day.entryTickets.forEach((ticket: any) => {
-            checklistItems.push({
-              client_id: clientId,
-              assignment_id: assignment.id,
-              item_type: 'entry_ticket',
-              item_id: ticket.ticketId,
-              item_name: `Entry Ticket - Day ${dayNumber}`,
-              day_number: dayNumber,
-              is_completed: false
-            });
+        if (day.entryTickets && Array.isArray(day.entryTickets) && day.entryTickets.length > 0) {
+          day.entryTickets.forEach((ticketId: string) => {
+            if (ticketId) {
+              checklistItems.push({
+                client_id: clientId,
+                assignment_id: assignment.id,
+                item_type: 'entry_ticket',
+                item_id: ticketId,
+                item_name: `Entry Ticket - Day ${dayNumber}`,
+                day_number: dayNumber,
+                is_completed: false
+              });
+            }
           });
         }
 
-        if (day.meals && day.meals.length > 0) {
+        if (day.meals && Array.isArray(day.meals) && day.meals.length > 0) {
           day.meals.forEach((meal: any) => {
-            checklistItems.push({
-              client_id: clientId,
-              assignment_id: assignment.id,
-              item_type: 'meal',
-              item_id: meal.mealId,
-              item_name: `Meal - Day ${dayNumber}`,
-              day_number: dayNumber,
-              is_completed: false
-            });
+            const mealId = typeof meal === 'string' ? meal : meal.mealId;
+            if (mealId) {
+              checklistItems.push({
+                client_id: clientId,
+                assignment_id: assignment.id,
+                item_type: 'meal',
+                item_id: mealId,
+                item_name: `Meal - Day ${dayNumber}`,
+                day_number: dayNumber,
+                is_completed: false
+              });
+            }
           });
         }
       });
