@@ -203,6 +203,8 @@ export const getAssignmentForClient = async (clientId: string): Promise<PackageA
     .from('package_assignments')
     .select('*')
     .eq('sales_client_id', clientId)
+    .order('created_at', { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (error) {

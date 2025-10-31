@@ -221,6 +221,17 @@ export const createPackageAssignmentAndChecklist = async (
   if (!supabase) return { success: false, error: 'Supabase not initialized' };
 
   try {
+    const { data: existingAssignment } = await supabase
+      .from('package_assignments')
+      .select('id')
+      .eq('sales_client_id', clientId)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingAssignment) {
+      return { success: false, error: 'Assignment already exists for this client' };
+    }
+
     const { data: version, error: versionError } = await supabase
       .from('sales_itinerary_versions')
       .select('itinerary_data')
@@ -238,7 +249,7 @@ export const createPackageAssignmentAndChecklist = async (
       .select('id')
       .eq('is_active', true)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (opsError || !operationsPerson) {
       return { success: false, error: 'No active operations person available' };
