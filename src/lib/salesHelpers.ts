@@ -213,14 +213,35 @@ export const deleteSalesClient = async (id: string): Promise<void> => {
   if (error) throw error;
 };
 
+export const checkAssignmentExists = async (clientId: string): Promise<boolean> => {
+  if (!supabase) return false;
+
+  const { data, error } = await supabase
+    .from('package_assignments')
+    .select('id')
+    .eq('sales_client_id', clientId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error checking assignment:', error);
+    return false;
+  }
+
+  return !!data;
+};
+
 export const createPackageAssignmentAndChecklist = async (
   clientId: string,
   salesPersonId: string,
   versionId: string
-): Promise<{ success: boolean; error?: string }> => {
+): Promise<{ success: boolean; error?: string; alreadyExists?: boolean }> => {
   if (!supabase) return { success: false, error: 'Supabase not initialized' };
 
   try {
+    const assignmentExists = await checkAssignmentExists(clientId);
+    if (assignmentExists) {
+      return { success: true, alreadyExists: true };
+    }
     const { data: version, error: versionError } = await supabase
       .from('sales_itinerary_versions')
       .select('itinerary_data')
