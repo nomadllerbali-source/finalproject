@@ -67,11 +67,9 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
 
   // Filter sightseeing based on transportation mode
   const filteredSightseeing = sightseeings.filter(sight => {
-    const transportMode = client.transportationMode.toLowerCase();
-    if (transportMode.includes('cab')) return sight.transportationMode === 'cab';
-    if (transportMode.includes('car')) return sight.transportationMode === 'self-drive-car';
-    if (transportMode.includes('scooter')) return sight.transportationMode === 'self-drive-scooter';
-    return true;
+    const transportMode = client.transportationMode;
+    if (!transportMode) return true;
+    return sight.transportationMode === transportMode;
   });
 
   const updateSearchTerm = (step: PlanningStep, term: string) => {

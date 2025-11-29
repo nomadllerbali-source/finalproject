@@ -333,7 +333,7 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ onNext, initialData }) =>
                 >
                   <option value="">Select transportation</option>
                   {transportations.map(transport => (
-                    <option key={transport.id} value={transport.vehicleName}>
+                    <option key={transport.id} value={transport.type}>
                       {transport.vehicleName} ({transport.type.replace('-', ' ')})
                     </option>
                   ))}
