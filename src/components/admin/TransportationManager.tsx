@@ -1,28 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
-import { Transportation } from '../../types';
-import { Car, Truck, Bike, Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Transportation, Area } from '../../types';
+import { Car, Truck, Bike, Plus, Edit2, Trash2, Save, X, MapPin, Search } from 'lucide-react';
 import Layout from '../Layout';
+import { supabase } from '../../lib/supabase';
 
 const TransportationManager: React.FC = () => {
   const { state, addTransportation, updateTransportationData, deleteTransportationData } = useData();
   const { transportations } = state;
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [filterArea, setFilterArea] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Transportation>>({});
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTransportation, setNewTransportation] = useState<Omit<Transportation, 'id'>>({
     type: 'cab',
     vehicleName: '',
-    costPerDay: 0
+    costPerDay: 0,
+    areaId: '',
+    areaName: ''
+  });
+
+  useEffect(() => {
+    fetchAreas();
+  }, []);
+
+  const fetchAreas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('areas')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      setAreas(data || []);
+    } catch (error) {
+      console.error('Error fetching areas:', error);
+    }
+  };
+
+  const filteredTransportations = transportations.filter(transport => {
+    const matchesArea = filterArea === 'all' || transport.areaId === filterArea;
+    const matchesSearch =
+      transport.vehicleName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (transport.areaName || '').toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesArea && matchesSearch;
   });
 
   const handleAdd = async () => {
+    if (!newTransportation.areaId) {
+      alert('Please select an area first');
+      return;
+    }
     const transportation: Transportation = {
       ...newTransportation,
       id: Date.now().toString()
     };
     await addTransportation(transportation);
-    setNewTransportation({ type: 'cab', vehicleName: '', costPerDay: 0 });
+    setNewTransportation({ type: 'cab', vehicleName: '', costPerDay: 0, areaId: '', areaName: '' });
     setShowAddForm(false);
   };
 
@@ -74,7 +109,30 @@ const TransportationManager: React.FC = () => {
 
           {showAddForm && (
             <div className="p-3 sm:p-6 border-b border-slate-200 bg-slate-50">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    <MapPin className="h-4 w-4 inline mr-1" />
+                    Area *
+                  </label>
+                  <select
+                    value={newTransportation.areaId}
+                    onChange={(e) => {
+                      const selectedArea = areas.find(a => a.id === e.target.value);
+                      setNewTransportation({
+                        ...newTransportation,
+                        areaId: e.target.value,
+                        areaName: selectedArea?.name || ''
+                      });
+                    }}
+                    className="w-full p-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
+                  >
+                    <option value="">Select area first...</option>
+                    {areas.map(area => (
+                      <option key={area.id} value={area.id}>{area.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     Transportation Type
@@ -137,7 +195,7 @@ const TransportationManager: React.FC = () => {
                 </button>
                 <button
                   onClick={handleAdd}
-                  disabled={!newTransportation.vehicleName}
+                  disabled={!newTransportation.vehicleName || !newTransportation.areaId}
                   className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-target"
                 >
                   <Save className="h-4 w-4 mr-2" />
@@ -151,10 +209,32 @@ const TransportationManager: React.FC = () => {
         {/* Transportation List */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">
           <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
-            <h3 className="text-base sm:text-lg font-semibold text-slate-900">All Transportation Options</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-4">All Transportation Options</h3>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="text"
+                  placeholder="Search transportation..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <select
+                value={filterArea}
+                onChange={(e) => setFilterArea(e.target.value)}
+                className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">All Areas</option>
+                {areas.map(area => (
+                  <option key={area.id} value={area.id}>{area.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {transportations.length === 0 ? (
+          {filteredTransportations.length === 0 ? (
             <div className="p-6 sm:p-12 text-center">
               <Car className="h-10 w-10 sm:h-12 sm:w-12 text-slate-400 mx-auto mb-3 sm:mb-4" />
               <h4 className="text-base sm:text-lg text-slate-900 font-medium">No transportation options yet</h4>
@@ -165,6 +245,7 @@ const TransportationManager: React.FC = () => {
               <table className="w-full min-w-full">
                 <thead className="bg-slate-50">
                   <tr>
+                    <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Area</th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Vehicle</th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Cost/Day</th>
@@ -172,10 +253,29 @@ const TransportationManager: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {transportations.map((transport) => (
+                  {filteredTransportations.map((transport) => (
                     <tr key={transport.id} className="hover:bg-slate-50 transition-colors">
                       {isEditing === transport.id ? (
                         <>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <select
+                              value={editForm.areaId}
+                              onChange={(e) => {
+                                const selectedArea = areas.find(a => a.id === e.target.value);
+                                setEditForm({
+                                  ...editForm,
+                                  areaId: e.target.value,
+                                  areaName: selectedArea?.name || ''
+                                });
+                              }}
+                              className="w-full p-2 text-base border border-slate-300 rounded-lg touch-target"
+                            >
+                              <option value="">Select area...</option>
+                              {areas.map(area => (
+                                <option key={area.id} value={area.id}>{area.name}</option>
+                              ))}
+                            </select>
+                          </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <select
                               value={editForm.type}
@@ -237,6 +337,12 @@ const TransportationManager: React.FC = () => {
                         </>
                       ) : (
                         <>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              {transport.areaName || 'No Area'}
+                            </span>
+                          </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <div className="flex items-center space-x-2 sm:space-x-3">
                               <div className="text-slate-600 flex-shrink-0">

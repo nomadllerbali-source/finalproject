@@ -43,11 +43,21 @@ export interface FollowUpRecord {
   updatedBy: string;
 }
 
+export interface Area {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Transportation {
   id: string;
   type: 'cab' | 'self-drive-car' | 'self-drive-scooter';
   vehicleName: string;
   costPerDay: number;
+  areaId?: string;
+  areaName?: string;
 }
 
 export interface RoomType {
@@ -64,6 +74,8 @@ export interface Hotel {
   place: string;
   starCategory: '3-star' | '4-star' | '5-star';
   roomTypes: RoomType[];
+  areaId?: string;
+  areaName?: string;
 }
 
 export interface VehicleCost {
@@ -80,6 +92,8 @@ export interface Sightseeing {
   description: string;
   transportationMode: 'cab' | 'self-drive-car' | 'self-drive-scooter';
   vehicleCosts?: VehicleCost;
+  areaId?: string;
+  areaName?: string;
 }
 
 export interface ActivityOption {
@@ -94,6 +108,8 @@ export interface Activity {
   name: string;
   location: string;
   options: ActivityOption[];
+  areaId?: string;
+  areaName?: string;
 }
 
 export interface EntryTicket {
@@ -101,6 +117,8 @@ export interface EntryTicket {
   name: string;
   cost: number;
   sightseeingId: string;
+  areaId?: string;
+  areaName?: string;
 }
 
 export interface Meal {
@@ -108,6 +126,8 @@ export interface Meal {
   type: 'breakfast' | 'lunch' | 'dinner';
   place: string;
   cost: number;
+  areaId?: string;
+  areaName?: string;
 }
 
 export interface DayPlan {
