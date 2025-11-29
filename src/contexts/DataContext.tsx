@@ -1048,6 +1048,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('Loading initial data from Supabase...');
           const data = await fetchAllData();
           if (data) {
+            console.log('Activities loaded:', data.activities.length);
+            data.activities.forEach(a => {
+              console.log(`Activity: ${a.name}, Options: ${a.options?.length || 0}`);
+            });
             dispatch({ type: 'SET_DATA', payload: data });
             console.log('Initial data loaded successfully');
           } else {
@@ -1309,7 +1313,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addActivity = async (activity: Activity) => {
     if (isSupabaseConfigured()) {
       try {
+        console.log('Adding activity:', activity.name, 'with options:', activity.options.length);
         const newActivity = await insertActivity(activity);
+        console.log('Received activity from DB:', newActivity?.name, 'with options:', newActivity?.options?.length || 0);
         if (newActivity) dispatch({ type: 'ADD_ACTIVITY', payload: newActivity });
       } catch (error) {
         console.error('Error adding activity to Supabase:', error);
