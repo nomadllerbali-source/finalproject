@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
-import { Activity, ActivityOption } from '../../types';
-import { Camera, Plus, Edit2, Trash2, Save, X, Search } from 'lucide-react';
+import { Activity, ActivityOption, Area } from '../../types';
+import { Camera, Plus, Edit2, Trash2, Save, X, Search, MapPin } from 'lucide-react';
 import Layout from '../Layout';
+import { supabase } from '../../lib/supabase';
 
 const ActivityManager: React.FC = () => {
   const { state, addActivity, updateActivityData, deleteActivityData } = useData();
   const { activities, sightseeings } = state;
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [filterArea, setFilterArea] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Activity>>({});
@@ -14,14 +17,37 @@ const ActivityManager: React.FC = () => {
   const [newActivity, setNewActivity] = useState<Omit<Activity, 'id'>>({
     name: '',
     location: '',
-    options: []
+    options: [],
+    areaId: '',
+    areaName: ''
   });
 
-  const filteredActivities = activities.filter(activity =>
-    activity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    activity.options.some(option => option.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    activity.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    fetchAreas();
+  }, []);
+
+  const fetchAreas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('areas')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      setAreas(data || []);
+    } catch (error) {
+      console.error('Error fetching areas:', error);
+    }
+  };
+
+  const filteredActivities = activities.filter(activity => {
+    const matchesArea = filterArea === 'all' || activity.areaId === filterArea;
+    const matchesSearch =
+      activity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity.options.some(option => option.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      activity.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (activity.areaName || '').toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesArea && matchesSearch;
+  });
 
   const getSightseeingLocationName = (sightseeingId: string): string => {
     const sightseeing = sightseeings.find(s => s.id === sightseeingId);
@@ -79,6 +105,10 @@ const ActivityManager: React.FC = () => {
   };
 
   const handleAdd = async () => {
+    if (!newActivity.areaId) {
+      alert('Please select an area first');
+      return;
+    }
     if (newActivity.options.length === 0) {
       alert('Please add at least one activity option.');
       return;
@@ -89,7 +119,7 @@ const ActivityManager: React.FC = () => {
       id: Date.now().toString()
     };
     await addActivity(activity);
-    setNewActivity({ name: '', location: '', options: [] });
+    setNewActivity({ name: '', location: '', options: [], areaId: '', areaName: '' });
     setShowAddForm(false);
   };
 
@@ -146,6 +176,28 @@ const ActivityManager: React.FC = () => {
             <div className="p-6 border-b border-slate-200 bg-slate-50">
               <div className="mb-6">
                 <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <MapPin className="h-4 w-4 inline mr-1" />
+                  Area *
+                </label>
+                <select
+                  value={newActivity.areaId}
+                  onChange={(e) => {
+                    const selectedArea = areas.find(a => a.id === e.target.value);
+                    setNewActivity({
+                      ...newActivity,
+                      areaId: e.target.value,
+                      areaName: selectedArea?.name || ''
+                    });
+                  }}
+                  className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select area first...</option>
+                  {areas.map(area => (
+                    <option key={area.id} value={area.id}>{area.name}</option>
+                  ))}
+                </select>
+
+                <label className="block text-sm font-medium text-slate-700 mb-1 mt-4">
                   Activity Name
                 </label>
                 <input
@@ -260,6 +312,30 @@ const ActivityManager: React.FC = () => {
         </div>
 
         {/* Activities List */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search activities..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <select
+              value={filterArea}
+              onChange={(e) => setFilterArea(e.target.value)}
+              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Areas</option>
+              {areas.map(area => (
+                <option key={area.id} value={area.id}>{area.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         <div className="space-y-4">
           {filteredActivities.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
@@ -391,7 +467,13 @@ const ActivityManager: React.FC = () => {
                             <Camera className="h-6 w-6 text-blue-600" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-semibold text-slate-900">{activity.name}</h3>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-lg font-semibold text-slate-900">{activity.name}</h3>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                                <MapPin className="h-3 w-3 mr-1" />
+                                {activity.areaName || 'No Area'}
+                              </span>
+                            </div>
                             <div className="flex items-center space-x-3 mt-1">
                               <span className="text-slate-600">{activity.location}</span>
                               <span className="text-slate-400">•</span>
