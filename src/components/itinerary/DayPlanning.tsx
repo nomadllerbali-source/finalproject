@@ -112,13 +112,14 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
   // Filter functions for search
   const getFilteredSightseeing = (dayIndex: number) => {
     const { availableSightseeing } = getAvailableItemsForDay(dayIndex);
+    const currentDayPlan = dayPlans[dayIndex];
     const searchTerm = searchTerms.sightseeing.toLowerCase();
 
     return availableSightseeing.filter(sight => {
+      const matchesArea = !currentDayPlan?.areaId || sight.areaId === currentDayPlan.areaId;
       const matchesSearch = sight.name.toLowerCase().includes(searchTerm) ||
-        sight.description.toLowerCase().includes(searchTerm) ||
-        (sight.areaName || '').toLowerCase().includes(searchTerm);
-      return matchesSearch;
+        sight.description.toLowerCase().includes(searchTerm);
+      return matchesArea && matchesSearch;
     });
   };
 
@@ -358,12 +359,44 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
               <p className="text-blue-700 text-sm">Choose the places you want to visit on Day {currentDay}. You can select multiple locations.</p>
             </div>
 
+            {/* Area Filter */}
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+              <label className="block text-sm font-medium text-teal-900 mb-2">
+                <MapPin className="h-4 w-4 inline mr-1" />
+                Filter by Area (Optional)
+              </label>
+              <select
+                value={dayPlan.areaId || ''}
+                onChange={(e) => {
+                  const selectedArea = areas.find(a => a.id === e.target.value);
+                  const updatedDayPlans = [...dayPlans];
+                  updatedDayPlans[dayIndex] = {
+                    ...updatedDayPlans[dayIndex],
+                    areaId: e.target.value,
+                    areaName: selectedArea?.name || ''
+                  };
+                  setDayPlans(updatedDayPlans);
+                }}
+                className="w-full p-3 border-2 border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+              >
+                <option value="">All Areas - Show All Sightseeing</option>
+                {areas.map(area => (
+                  <option key={area.id} value={area.id}>{area.name}</option>
+                ))}
+              </select>
+              <p className="text-sm text-teal-700 mt-2">
+                {dayPlan.areaId
+                  ? `Showing sightseeing spots in ${dayPlan.areaName}. Change to "All Areas" to see more options.`
+                  : 'Showing all available sightseeing spots from all areas.'}
+              </p>
+            </div>
+
             {/* Search Bar */}
             <div className="relative">
               <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search sightseeing spots by name, description, or area..."
+                placeholder="Search sightseeing spots by name or description..."
                 value={searchTerms.sightseeing}
                 onChange={(e) => updateSearchTerm('sightseeing', e.target.value)}
                 className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -411,8 +444,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
               </div>
             )}
 
-            (
-              <div className="space-y-3">
+            <div className="space-y-3">
               {getFilteredSightseeing(dayIndex).map(sight => (
                 <label key={sight.id} className="flex items-start space-x-3 p-4 border-2 border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
                   <input
@@ -449,13 +481,14 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                   <p>
                     {searchTerms.sightseeing
                       ? 'No sightseeing spots match your search.'
+                      : dayPlan.areaId
+                      ? `All available sightseeing spots in ${dayPlan.areaName} have been selected. Try selecting "All Areas" to see more options.`
                       : 'All available sightseeing spots for this transportation mode have been selected in previous days.'
                     }
                   </p>
                 </div>
               )}
             </div>
-            )
           </div>
         );
 
