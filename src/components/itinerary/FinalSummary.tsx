@@ -339,11 +339,14 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
   const downloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
+      console.log('Starting PDF generation...');
       const { jsPDF } = await import('jspdf');
       const doc = new jsPDF();
+      console.log('jsPDF loaded');
 
       // Add letterhead header
       addLetterheadHeader(doc);
+      console.log('Letterhead header added');
 
       let yPosition = MARGINS.contentStart;
 
@@ -371,7 +374,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         const selectedSightseeing = sightseeings.filter(s => dayPlan.sightseeing.includes(s.id));
         if (selectedSightseeing.length > 0) {
           dayContent.push({
-            title: '🏛️ Sightseeing',
+            title: 'Sightseeing',
             items: selectedSightseeing.map(s => s.name)
           });
         }
@@ -385,7 +388,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
         if (selectedActivities.length > 0) {
           dayContent.push({
-            title: '🎯 Activities',
+            title: 'Activities',
             items: selectedActivities.map((item: any) => `${item.activity?.name} - ${item.option?.name}`)
           });
         }
@@ -394,7 +397,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         const selectedTickets = entryTickets.filter(t => dayPlan.entryTickets.includes(t.id));
         if (selectedTickets.length > 0) {
           dayContent.push({
-            title: '🎫 Entry Tickets',
+            title: 'Entry Tickets',
             items: selectedTickets.map(t => t.name)
           });
         }
@@ -407,7 +410,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
         if (selectedMeals.length > 0) {
           dayContent.push({
-            title: '🍽️ Meals',
+            title: 'Meals',
             items: selectedMeals.map((m: any) => `${m.mealType} at ${m.placeName}`)
           });
         }
@@ -418,7 +421,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
           const roomType = hotel?.roomTypes.find(rt => rt.id === dayPlan.hotel!.roomTypeId);
           if (hotel && roomType) {
             dayContent.push({
-              title: '🏨 Accommodation',
+              title: 'Accommodation',
               items: [`${hotel.name} - ${roomType.name}`]
             });
           }
@@ -507,16 +510,19 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition);
 
       // Finalize with footers
-      finalizeLetterheadPDF(doc)
-      
+      console.log('Finalizing PDF with footers...');
+      finalizeLetterheadPDF(doc);
+
       // Generate filename with client name and date
       const today = new Date().toISOString().split('T')[0];
       const filename = `${itinerary.client.name.replace(/\s+/g, '_')}_Itinerary_${today}.pdf`;
-      
+
+      console.log('Saving PDF:', filename);
       doc.save(filename);
+      console.log('PDF saved successfully!');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsGeneratingPDF(false);
     }

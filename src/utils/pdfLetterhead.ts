@@ -7,15 +7,15 @@ export interface LetterheadConfig {
 }
 
 export const COLORS = {
-  black: [0, 0, 0],
-  white: [255, 255, 255],
-  gold: [218, 165, 32],
-  darkGold: [184, 134, 11],
-  lightGray: [240, 240, 240],
-  mediumGray: [128, 128, 128],
-  darkGray: [64, 64, 64],
-  accentBlue: [41, 128, 185]
-} as const;
+  black: [0, 0, 0] as [number, number, number],
+  white: [255, 255, 255] as [number, number, number],
+  gold: [218, 165, 32] as [number, number, number],
+  darkGold: [184, 134, 11] as [number, number, number],
+  lightGray: [240, 240, 240] as [number, number, number],
+  mediumGray: [128, 128, 128] as [number, number, number],
+  darkGray: [64, 64, 64] as [number, number, number],
+  accentBlue: [41, 128, 185] as [number, number, number]
+};
 
 export const MARGINS = {
   top: 45,
@@ -82,8 +82,8 @@ export function addLetterheadFooter(config: LetterheadConfig): void {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
 
-  const footerText1 = '📞 +91 8129165766  |  +91 8590766166  |  +91 8501918751';
-  const footerText2 = '📧 nomadllercommunity@gmail.com  |  🌐 www.nomadller.in';
+  const footerText1 = 'Phone: +91 8129165766  |  +91 8590766166  |  +91 8501918751';
+  const footerText2 = 'Email: nomadllercommunity@gmail.com  |  Web: www.nomadller.in';
 
   doc.text(footerText1, pageWidth / 2, pageHeight - 16, { align: 'center' });
   doc.text(footerText2, pageWidth / 2, pageHeight - 10, { align: 'center' });

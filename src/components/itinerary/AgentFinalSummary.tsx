@@ -228,7 +228,7 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
       const selectedSightseeing = sightseeings.filter(s => dayPlan.sightseeing.includes(s.id));
       if (selectedSightseeing.length > 0) {
         dayContent.push({
-          title: '🏛️ Sightseeing',
+          title: 'Sightseeing',
           items: selectedSightseeing.map(s => s.name)
         });
       }
@@ -241,7 +241,7 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
 
       if (selectedActivities.length > 0) {
         dayContent.push({
-          title: '🎯 Activities',
+          title: 'Activities',
           items: selectedActivities.map((item: any) => `${item.activity?.name} - ${item.option?.name}`)
         });
       }
@@ -249,7 +249,7 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
       const selectedTickets = entryTickets.filter(t => dayPlan.entryTickets.includes(t.id));
       if (selectedTickets.length > 0) {
         dayContent.push({
-          title: '🎫 Entry Tickets',
+          title: 'Entry Tickets',
           items: selectedTickets.map(t => t.name)
         });
       }
@@ -261,7 +261,7 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
 
       if (selectedMeals.length > 0) {
         dayContent.push({
-          title: '🍽️ Meals',
+          title: 'Meals',
           items: selectedMeals.map((m: any) => `${m.mealType} at ${m.placeName}`)
         });
       }
@@ -271,7 +271,7 @@ const AgentFinalSummary: React.FC<AgentFinalSummaryProps> = ({ itinerary, onBack
         const roomType = hotel?.roomTypes.find(rt => rt.id === dayPlan.hotel!.roomTypeId);
         if (hotel && roomType) {
           dayContent.push({
-            title: '🏨 Accommodation',
+            title: 'Accommodation',
             items: [`${hotel.name} - ${roomType.name}`]
           });
         }
