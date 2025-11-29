@@ -176,15 +176,16 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
 
     if (transport) {
       if (transport.type === 'cab') {
-        inclusions.push('Private cab with driver for all transfers and sightseeing as per itinerary');
+        inclusions.push('All transportation by private cab');
         inclusions.push('Professional English-speaking driver');
-        inclusions.push('All entry tickets and permits');
+        inclusions.push('All entry tickets as mentioned');
+        inclusions.push('Nusa Penida island tour');
       } else if (transport.type === 'self-drive-car') {
-        inclusions.push(`${itinerary.client.numberOfDays} days self-drive car rental`);
-        inclusions.push('Vehicle insurance');
+        inclusions.push(`${itinerary.client.numberOfDays} days self-drive car for sightseeing`);
+        inclusions.push('Up and down boat ticket to Nusa Penida');
       } else if (transport.type === 'self-drive-scooter') {
-        inclusions.push(`${itinerary.client.numberOfDays} days self-drive scooter rental`);
-        inclusions.push('Helmets and basic safety gear');
+        inclusions.push(`${itinerary.client.numberOfDays} days self-drive scooter for sightseeing`);
+        inclusions.push('Up and down boat ticket to Nusa Penida');
       }
     }
 

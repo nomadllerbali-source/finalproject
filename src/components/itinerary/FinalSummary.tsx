@@ -453,15 +453,16 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       // Transportation inclusion
       if (transport) {
         if (transport.type === 'cab') {
-          inclusions.push('Private cab with driver for all transfers and sightseeing as per itinerary');
+          inclusions.push('All transportation by private cab');
           inclusions.push('Professional English-speaking driver');
-          inclusions.push('All entry tickets and permits');
+          inclusions.push('All entry tickets as mentioned');
+          inclusions.push('Nusa Penida island tour');
         } else if (transport.type === 'self-drive-car') {
-          inclusions.push(`${itinerary.client.numberOfDays} days self-drive car rental`);
-          inclusions.push('Vehicle insurance');
+          inclusions.push(`${itinerary.client.numberOfDays} days self-drive car for sightseeing`);
+          inclusions.push('Up and down boat ticket to Nusa Penida');
         } else if (transport.type === 'self-drive-scooter') {
-          inclusions.push(`${itinerary.client.numberOfDays} days self-drive scooter rental`);
-          inclusions.push('Helmets and basic safety gear');
+          inclusions.push(`${itinerary.client.numberOfDays} days self-drive scooter for sightseeing`);
+          inclusions.push('Up and down boat ticket to Nusa Penida');
         }
       }
 
@@ -781,15 +782,16 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
                   if (transport) {
                     if (transport.type === 'cab') {
-                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Private cab with driver for all transfers and sightseeing as per itinerary</li>);
+                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>All transportation by private cab</li>);
                       items.push(<li key="driver" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Professional English-speaking driver</li>);
-                      items.push(<li key="tickets" className="flex items-start"><span className="text-green-600 mr-2">✓</span>All entry tickets and permits</li>);
+                      items.push(<li key="tickets" className="flex items-start"><span className="text-green-600 mr-2">✓</span>All entry tickets as mentioned</li>);
+                      items.push(<li key="nusapenida" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Nusa Penida island tour</li>);
                     } else if (transport.type === 'self-drive-car') {
-                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>{itinerary.client.numberOfDays} days self-drive car rental</li>);
-                      items.push(<li key="insurance" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Vehicle insurance</li>);
+                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>{itinerary.client.numberOfDays} days self-drive car for sightseeing</li>);
+                      items.push(<li key="boat" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Up and down boat ticket to Nusa Penida</li>);
                     } else if (transport.type === 'self-drive-scooter') {
-                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>{itinerary.client.numberOfDays} days self-drive scooter rental</li>);
-                      items.push(<li key="safety" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Helmets and basic safety gear</li>);
+                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>{itinerary.client.numberOfDays} days self-drive scooter for sightseeing</li>);
+                      items.push(<li key="boat" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Up and down boat ticket to Nusa Penida</li>);
                     }
                   }
 
