@@ -210,11 +210,12 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       if (selectedSightseeing.length > 0) {
         text += `📍 *Sightseeing:*\n`;
         selectedSightseeing.forEach(sight => {
-          text += `   • ${sight.name}\n`;
+          text += `\n*${sight.name}*\n`;
           if (sight.description) {
-            text += `     ${sight.description}\n`;
+            text += `${sight.description}\n`;
           }
         });
+        text += `\n`;
       }
 
       // Activities
@@ -638,21 +639,18 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                       {/* Sightseeing */}
                       {summary.sightseeing.length > 0 && (
                         <div>
-                          <h5 className="font-semibold text-slate-900 flex items-center mb-2">
+                          <h5 className="font-semibold text-slate-900 flex items-center mb-3">
                             <MapPin className="h-4 w-4 mr-2 text-blue-600" />
                             Sightseeing Spots
                           </h5>
-                          <ul className="text-sm text-slate-700 space-y-1 ml-6">
+                          <div className="space-y-3">
                             {summary.sightseeing.map((sight: any) => (
-                              <li key={sight.id} className="flex items-start">
-                                <span className="text-blue-600 mr-2">•</span>
-                                <div>
-                                  <div className="font-medium">{sight.name}</div>
-                                  <div className="text-slate-600 text-xs">{sight.description}</div>
-                                </div>
-                              </li>
+                              <div key={sight.id} className="ml-2">
+                                <div className="font-bold text-slate-900 text-base">{sight.name}</div>
+                                <div className="text-slate-600 text-sm mt-1">{sight.description}</div>
+                              </div>
                             ))}
-                          </ul>
+                          </div>
                         </div>
                       )}
 

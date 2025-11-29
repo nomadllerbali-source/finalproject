@@ -112,14 +112,13 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
   // Filter functions for search
   const getFilteredSightseeing = (dayIndex: number) => {
     const { availableSightseeing } = getAvailableItemsForDay(dayIndex);
-    const currentDayPlan = dayPlans[dayIndex];
     const searchTerm = searchTerms.sightseeing.toLowerCase();
 
     return availableSightseeing.filter(sight => {
-      const matchesArea = !currentDayPlan?.areaId || sight.areaId === currentDayPlan.areaId;
       const matchesSearch = sight.name.toLowerCase().includes(searchTerm) ||
-        sight.description.toLowerCase().includes(searchTerm);
-      return matchesArea && matchesSearch;
+        sight.description.toLowerCase().includes(searchTerm) ||
+        (sight.areaName || '').toLowerCase().includes(searchTerm);
+      return matchesSearch;
     });
   };
 
@@ -359,64 +358,60 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
               <p className="text-blue-700 text-sm">Choose the places you want to visit on Day {currentDay}. You can select multiple locations.</p>
             </div>
 
-            {/* Area Selection */}
-            <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 mb-4">
-              <label className="block text-sm font-medium text-teal-900 mb-2">
-                <MapPin className="h-4 w-4 inline mr-1" />
-                Select Area for Day {currentDay} *
-              </label>
-              <select
-                value={dayPlan.areaId || ''}
-                onChange={(e) => {
-                  const selectedArea = areas.find(a => a.id === e.target.value);
-                  const updatedDayPlans = [...dayPlans];
-                  updatedDayPlans[dayIndex] = {
-                    ...updatedDayPlans[dayIndex],
-                    areaId: e.target.value,
-                    areaName: selectedArea?.name || '',
-                    sightseeing: [],
-                    activities: [],
-                    meals: []
-                  };
-                  setDayPlans(updatedDayPlans);
-                }}
-                className="w-full p-3 border-2 border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
-              >
-                <option value="">Choose an area first...</option>
-                {areas.map(area => (
-                  <option key={area.id} value={area.id}>{area.name}</option>
-                ))}
-              </select>
-              {!dayPlan.areaId && (
-                <p className="text-sm text-teal-700 mt-2">Please select an area to view available sightseeing spots, activities, and meals.</p>
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search sightseeing spots by name, description, or area..."
+                value={searchTerms.sightseeing}
+                onChange={(e) => updateSearchTerm('sightseeing', e.target.value)}
+                className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {searchTerms.sightseeing && (
+                <button
+                  onClick={() => clearSearch('sightseeing')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               )}
             </div>
 
-            {dayPlan.areaId && (
-              <>
-                {/* Search Bar */}
-                <div className="relative">
-                  <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search sightseeing spots..."
-                    value={searchTerms.sightseeing}
-                    onChange={(e) => updateSearchTerm('sightseeing', e.target.value)}
-                    className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  {searchTerms.sightseeing && (
-                    <button
-                      onClick={() => clearSearch('sightseeing')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  )}
+            {/* Selected Sightseeing */}
+            {dayPlan.sightseeing.length > 0 && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="font-semibold text-green-900 mb-2 flex items-center">
+                  <Check className="h-5 w-5 mr-2" />
+                  Selected Sightseeing ({dayPlan.sightseeing.length})
+                </h4>
+                <div className="space-y-2">
+                  {dayPlan.sightseeing.map(sId => {
+                    const sight = sightseeings.find(s => s.id === sId);
+                    if (!sight) return null;
+                    return (
+                      <div key={sId} className="flex items-center justify-between bg-white p-2 rounded">
+                        <div className="flex-1">
+                          <span className="font-medium text-green-900">{sight.name}</span>
+                          <span className="text-sm text-green-600 ml-2">({sight.areaName})</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const updated = dayPlan.sightseeing.filter(id => id !== sId);
+                            updateDayPlan(dayIndex, 'sightseeing', updated);
+                          }}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
-              </>
+              </div>
             )}
 
-            {dayPlan.areaId && (
+            (
               <div className="space-y-3">
               {getFilteredSightseeing(dayIndex).map(sight => (
                 <label key={sight.id} className="flex items-start space-x-3 p-4 border-2 border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
@@ -435,8 +430,14 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                   <div className="flex-1">
                     <div className="font-semibold text-slate-900">{sight.name}</div>
                     <div className="text-sm text-slate-600 mt-1">{sight.description}</div>
-                    <div className="text-xs text-blue-600 mt-2 capitalize">
-                      Transportation: {sight.transportationMode.replace('-', ' ')}
+                    <div className="flex items-center gap-3 mt-2">
+                      <div className="text-xs text-teal-600 font-medium flex items-center">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        {sight.areaName}
+                      </div>
+                      <div className="text-xs text-blue-600 capitalize">
+                        {sight.transportationMode.replace('-', ' ')}
+                      </div>
                     </div>
                   </div>
                 </label>
@@ -454,7 +455,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                 </div>
               )}
             </div>
-            )}
+            )
           </div>
         );
 
