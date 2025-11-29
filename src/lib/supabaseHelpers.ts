@@ -549,13 +549,21 @@ export const insertActivity = async (a: Activity) => {
   const { data: activityData, error: activityError } = await supabase.from('activities').insert(activityInsertData).select().single();
   if (activityError) throw activityError;
 
+  console.log('Activity inserted, ID:', activityData.id);
+  console.log('Number of options to insert:', a.options.length);
+
   if (a.options.length > 0) {
     const optionsToInsert = a.options.map(ao => {
       const { id, ...optionData } = toDbActivityOption(ao, activityData.id);
       return optionData;
     });
-    const { error: optionsError } = await supabase.from('activity_options').insert(optionsToInsert);
-    if (optionsError) throw optionsError;
+    console.log('Options to insert:', JSON.stringify(optionsToInsert, null, 2));
+    const { data: insertedOptions, error: optionsError } = await supabase.from('activity_options').insert(optionsToInsert).select();
+    if (optionsError) {
+      console.error('Error inserting activity options:', optionsError);
+      throw optionsError;
+    }
+    console.log('Options inserted successfully:', insertedOptions?.length);
   }
 
   return fromDbActivity({ ...activityData, activity_options: a.options.map(ao => toDbActivityOption(ao, activityData.id)) });
