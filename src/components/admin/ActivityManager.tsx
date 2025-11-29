@@ -4,6 +4,7 @@ import { Activity, ActivityOption, Area } from '../../types';
 import { Camera, Plus, Edit2, Trash2, Save, X, Search, MapPin } from 'lucide-react';
 import Layout from '../Layout';
 import { supabase } from '../../lib/supabase';
+import { generateUUID } from '../../utils/uuid';
 
 const ActivityManager: React.FC = () => {
   const { state, addActivity, updateActivityData, deleteActivityData } = useData();
@@ -63,7 +64,7 @@ const ActivityManager: React.FC = () => {
   }, [] as Array<{ id: string; name: string }>);
   const addOption = (isNew: boolean = false) => {
     const newOption: ActivityOption = {
-      id: Date.now().toString(),
+      id: generateUUID(),
       name: '',
       cost: 0,
       costForHowMany: 1
@@ -116,7 +117,7 @@ const ActivityManager: React.FC = () => {
 
     const activity: Activity = {
       ...newActivity,
-      id: Date.now().toString()
+      id: generateUUID()
     };
     await addActivity(activity);
     setNewActivity({ name: '', location: '', options: [], areaId: '', areaName: '' });
