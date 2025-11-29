@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import LandingPage from './components/landing/LandingPage';
 import LoginForm from './components/auth/LoginForm';
 
 // Separate Apps
@@ -8,7 +10,7 @@ import AgentApp from './components/agent/AgentApp';
 import SalesApp from './components/sales/SalesApp';
 import OperationsApp from './components/operations/OperationsApp';
 
-function AppContent() {
+function ProtectedAppRoute() {
   const { state: authState } = useAuth();
 
   // Show login form if not authenticated
@@ -34,7 +36,11 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/app" element={<ProtectedAppRoute />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </AuthProvider>
   );
 }

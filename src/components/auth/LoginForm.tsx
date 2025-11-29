@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Users, Lock, User, Eye, EyeOff, AlertCircle, UserPlus, Mail } from 'lucide-react';
+import { Users, Lock, User, Eye, EyeOff, AlertCircle, UserPlus, Mail, ArrowLeft } from 'lucide-react';
 import AgentRegistration from './AgentRegistration';
 import ForgotPassword from './ForgotPassword';
 import SignUpForm from './SignUpForm';
@@ -9,6 +10,7 @@ type AuthView = 'login' | 'register' | 'forgot' | 'signup';
 
 const LoginForm: React.FC = () => {
   const { login, state } = useAuth();
+  const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<AuthView>('login');
   const [formData, setFormData] = useState({
     email: '',
@@ -68,6 +70,14 @@ const LoginForm: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center px-4 py-8">
       <div className="max-w-md w-full">
+        <button
+          onClick={() => navigate('/')}
+          className="mb-4 flex items-center space-x-2 text-slate-600 hover:text-emerald-600 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>Back to Home</span>
+        </button>
+
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-teal-600 px-6 md:px-8 py-6">
