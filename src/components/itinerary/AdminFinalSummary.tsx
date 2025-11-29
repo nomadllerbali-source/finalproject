@@ -161,13 +161,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
       yPosition = addDayPlanBox(doc, dayPlan.day, dayContent, yPosition);
     });
 
-    const costBreakdown = calculateDetailedCostBreakdown();
     const pricingItems = [
-      { label: 'Transportation', usd: `$${(costBreakdown.transportation || 0).toFixed(2)}`, idr: `IDR ${((costBreakdown.transportation || 0) * itinerary.exchangeRate).toLocaleString('en-IN')}` },
-      { label: 'Accommodation', usd: `$${(costBreakdown.accommodation || 0).toFixed(2)}`, idr: `IDR ${((costBreakdown.accommodation || 0) * itinerary.exchangeRate).toLocaleString('en-IN')}` },
-      { label: 'Activities', usd: `$${(costBreakdown.activities || 0).toFixed(2)}`, idr: `IDR ${((costBreakdown.activities || 0) * itinerary.exchangeRate).toLocaleString('en-IN')}` },
-      { label: 'Entry Tickets', usd: `$${(costBreakdown.tickets || 0).toFixed(2)}`, idr: `IDR ${((costBreakdown.tickets || 0) * itinerary.exchangeRate).toLocaleString('en-IN')}` },
-      { label: 'Meals', usd: `$${(costBreakdown.meals || 0).toFixed(2)}`, idr: `IDR ${((costBreakdown.meals || 0) * itinerary.exchangeRate).toLocaleString('en-IN')}` },
       { label: 'TOTAL PACKAGE PRICE', usd: `$${itinerary.finalPrice.toFixed(2)}`, idr: `IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}` }
     ];
 

@@ -213,8 +213,7 @@ export function addDayPlanBox(doc: jsPDF, dayNumber: number, content: { title: s
 
 export function addPricingBox(doc: jsPDF, pricing: { label: string; usd: string; idr: string }[], yPosition: number): number {
   const boxWidth = 170;
-  const lineHeight = 8;
-  const boxHeight = (pricing.length + 2) * lineHeight + 10;
+  const boxHeight = 30;
 
   yPosition = checkPageBreak(doc, yPosition, boxHeight);
 
@@ -224,27 +223,13 @@ export function addPricingBox(doc: jsPDF, pricing: { label: string; usd: string;
   doc.setTextColor(...COLORS.white);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('PACKAGE PRICING', MARGINS.left + 5, yPosition + 10);
+  doc.text('TOTAL PACKAGE PRICE', MARGINS.left + 5, yPosition + 12);
 
-  let priceY = yPosition + 20;
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-
-  pricing.forEach((item, index) => {
-    if (index === pricing.length - 1) {
-      doc.setDrawColor(...COLORS.white);
-      doc.setLineWidth(0.5);
-      doc.line(MARGINS.left + 5, priceY - 3, MARGINS.left + boxWidth - 5, priceY - 3);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-    }
-
-    doc.text(item.label, MARGINS.left + 5, priceY);
-    doc.text(item.usd, MARGINS.left + 90, priceY, { align: 'right' });
-    doc.text(item.idr, MARGINS.left + boxWidth - 5, priceY, { align: 'right' });
-    priceY += lineHeight;
-  });
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  const totalItem = pricing[pricing.length - 1];
+  doc.text(totalItem.usd, MARGINS.left + 5, yPosition + 22);
+  doc.text(totalItem.idr, MARGINS.left + boxWidth - 5, yPosition + 22, { align: 'right' });
 
   return yPosition + boxHeight + 10;
 }

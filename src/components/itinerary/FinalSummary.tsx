@@ -430,61 +430,12 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         yPosition = addDayPlanBox(doc, dayPlan.day, dayContent, yPosition);
       });
 
-      // Pricing breakdown
-      const breakdown = calculateDetailedBreakdown();
-      const totalPax = itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children;
-
-      const pricingItems: { label: string; usd: string; idr: string }[] = [];
-
-      if (breakdown.transportation > 0) {
-        pricingItems.push({
-          label: 'Transportation',
-          usd: formatCurrency(breakdown.transportation, 'USD'),
-          idr: formatCurrency(convertToIDR(breakdown.transportation, itinerary.exchangeRate), 'IDR')
-        });
-      }
-
-      const totalHotelCost = breakdown.hotels.reduce((sum, h) => sum + h.total, 0);
-      if (totalHotelCost > 0) {
-        pricingItems.push({
-          label: 'Hotel Accommodation',
-          usd: formatCurrency(totalHotelCost, 'USD'),
-          idr: formatCurrency(convertToIDR(totalHotelCost, itinerary.exchangeRate), 'IDR')
-        });
-      }
-
-      const totalActivitiesCost = breakdown.activities.reduce((sum, a) => sum + a.totalCost, 0);
-      if (totalActivitiesCost > 0) {
-        pricingItems.push({
-          label: 'Activities & Experiences',
-          usd: formatCurrency(totalActivitiesCost, 'USD'),
-          idr: formatCurrency(convertToIDR(totalActivitiesCost, itinerary.exchangeRate), 'IDR')
-        });
-      }
-
-      const totalTicketsCost = breakdown.entryTickets.reduce((sum, t) => sum + t.totalCost, 0);
-      if (totalTicketsCost > 0) {
-        pricingItems.push({
-          label: 'Entry Tickets',
-          usd: formatCurrency(totalTicketsCost, 'USD'),
-          idr: formatCurrency(convertToIDR(totalTicketsCost, itinerary.exchangeRate), 'IDR')
-        });
-      }
-
-      const totalMealsCost = breakdown.meals.reduce((sum, m) => sum + m.totalCost, 0);
-      if (totalMealsCost > 0) {
-        pricingItems.push({
-          label: 'Meals',
-          usd: formatCurrency(totalMealsCost, 'USD'),
-          idr: formatCurrency(convertToIDR(totalMealsCost, itinerary.exchangeRate), 'IDR')
-        });
-      }
-
-      pricingItems.push({
+      // Total pricing only
+      const pricingItems = [{
         label: 'TOTAL PACKAGE PRICE',
         usd: formatCurrency(itinerary.finalPrice, 'USD'),
         idr: formatCurrency(convertToIDR(itinerary.finalPrice, itinerary.exchangeRate), 'IDR')
-      });
+      }];
 
       yPosition = addPricingBox(doc, pricingItems, yPosition);
 
