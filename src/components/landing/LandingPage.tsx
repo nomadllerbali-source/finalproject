@@ -17,7 +17,15 @@ import {
   Phone,
   Facebook,
   Instagram,
-  Twitter
+  Twitter,
+  Zap,
+  Shield,
+  TrendingUp,
+  Globe,
+  Palette,
+  Waves,
+  Plane,
+  ChevronRight
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -164,8 +172,14 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600">
-          <div className="absolute inset-0 bg-black/30"></div>
+        <div className="absolute inset-0">
+          <img
+            src="https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt="Bali Temple"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/80 via-teal-900/70 to-cyan-900/80"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(16,185,129,0.2),transparent)]" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -178,13 +192,13 @@ export default function LandingPage() {
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white leading-tight">
               Discover the Magic of
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-orange-300">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-300 to-amber-200 animate-pulse">
                 Bali Paradise
               </span>
             </h1>
 
-            <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-              Streamline your travel agency operations with our comprehensive itinerary management platform designed for Bali adventures
+            <p className="text-lg sm:text-xl md:text-2xl text-white/95 max-w-3xl mx-auto drop-shadow-lg">
+              Next-generation travel management platform powered by AI and automation. Transform your Bali adventures into unforgettable experiences.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
@@ -213,7 +227,11 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-slate-50">
+      <section id="features" className="py-20 bg-gradient-to-b from-slate-50 via-white to-slate-50 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-emerald-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-500 rounded-full blur-3xl"></div>
+        </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
@@ -224,44 +242,44 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow group">
-              <div className="w-14 h-14 bg-emerald-100 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Calendar className="w-7 h-7 text-emerald-600" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+            <div className="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all group border border-slate-100 hover:border-emerald-200 hover:-translate-y-2 duration-300">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform shadow-lg">
+                <Zap className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">Itinerary Builder</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Lightning Fast</h3>
               <p className="text-slate-600">
-                Create detailed day-by-day itineraries with hotels, activities, and transportation seamlessly integrated
+                Build complete itineraries in minutes with AI-powered suggestions and smart automation
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow group">
-              <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Users className="w-7 h-7 text-blue-600" />
+            <div className="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all group border border-slate-100 hover:border-blue-200 hover:-translate-y-2 duration-300">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform shadow-lg">
+                <Users className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">Team Collaboration</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Team Sync</h3>
               <p className="text-slate-600">
-                Multi-role access for admin, sales, operations, and agents with role-specific dashboards
+                Real-time collaboration with built-in chat, role-based access, and instant notifications
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow group">
-              <div className="w-14 h-14 bg-amber-100 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <DollarSign className="w-7 h-7 text-amber-600" />
+            <div className="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all group border border-slate-100 hover:border-amber-200 hover:-translate-y-2 duration-300">
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform shadow-lg">
+                <Shield className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">Cost Management</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Secure & Reliable</h3>
               <p className="text-slate-600">
-                Automated cost calculations, markup management, and detailed pricing breakdowns for transparency
+                Enterprise-grade security with automated backups and 99.9% uptime guarantee
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow group">
-              <div className="w-14 h-14 bg-teal-100 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <BarChart3 className="w-7 h-7 text-teal-600" />
+            <div className="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all group border border-slate-100 hover:border-teal-200 hover:-translate-y-2 duration-300">
+              <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform shadow-lg">
+                <TrendingUp className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">Real-time Tracking</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Smart Analytics</h3>
               <p className="text-slate-600">
-                Monitor client follow-ups, booking statuses, and operations checklists in real-time
+                Advanced insights, revenue tracking, and performance metrics at your fingertips
               </p>
             </div>
           </div>
@@ -269,7 +287,10 @@ export default function LandingPage() {
       </section>
 
       {/* Destinations Section */}
-      <section id="destinations" className="py-20 bg-white">
+      <section id="destinations" className="py-20 bg-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
+        </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
@@ -280,52 +301,94 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all">
-              <div className="aspect-[4/3] bg-gradient-to-br from-green-400 to-emerald-600"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-                <h3 className="text-2xl font-bold text-white mb-2">Ubud</h3>
-                <p className="text-white/90">Cultural heart with rice terraces and art galleries</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+            <div className="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer">
+              <div className="aspect-[4/3] overflow-hidden">
+                <img
+                  src="https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg?auto=compress&cs=tinysrgb&w=800"
+                  alt="Ubud Rice Terraces"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 group-hover:from-emerald-900/90 transition-all duration-300">
+                <h3 className="text-2xl font-bold text-white mb-2 group-hover:translate-x-2 transition-transform">Ubud</h3>
+                <p className="text-white/95 group-hover:translate-x-2 transition-transform">Cultural heart with rice terraces and art galleries</p>
+                <ChevronRight className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 bottom-6" />
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all">
-              <div className="aspect-[4/3] bg-gradient-to-br from-blue-400 to-cyan-600"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-                <h3 className="text-2xl font-bold text-white mb-2">Seminyak</h3>
-                <p className="text-white/90">Trendy beach town with world-class dining</p>
+            <div className="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer">
+              <div className="aspect-[4/3] overflow-hidden">
+                <img
+                  src="https://images.pexels.com/photos/1285625/pexels-photo-1285625.jpeg?auto=compress&cs=tinysrgb&w=800"
+                  alt="Seminyak Beach"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 group-hover:from-blue-900/90 transition-all duration-300">
+                <h3 className="text-2xl font-bold text-white mb-2 group-hover:translate-x-2 transition-transform">Seminyak</h3>
+                <p className="text-white/95 group-hover:translate-x-2 transition-transform">Trendy beach town with world-class dining</p>
+                <ChevronRight className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 bottom-6" />
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all">
-              <div className="aspect-[4/3] bg-gradient-to-br from-orange-400 to-red-600"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-                <h3 className="text-2xl font-bold text-white mb-2">Uluwatu</h3>
-                <p className="text-white/90">Dramatic cliffs and stunning sunset views</p>
+            <div className="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer">
+              <div className="aspect-[4/3] overflow-hidden">
+                <img
+                  src="https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg?auto=compress&cs=tinysrgb&w=800"
+                  alt="Uluwatu Temple"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 group-hover:from-orange-900/90 transition-all duration-300">
+                <h3 className="text-2xl font-bold text-white mb-2 group-hover:translate-x-2 transition-transform">Uluwatu</h3>
+                <p className="text-white/95 group-hover:translate-x-2 transition-transform">Dramatic cliffs and stunning sunset views</p>
+                <ChevronRight className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 bottom-6" />
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all">
-              <div className="aspect-[4/3] bg-gradient-to-br from-teal-400 to-blue-600"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-                <h3 className="text-2xl font-bold text-white mb-2">Nusa Penida</h3>
-                <p className="text-white/90">Pristine island paradise with crystal waters</p>
+            <div className="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer">
+              <div className="aspect-[4/3] overflow-hidden">
+                <img
+                  src="https://images.pexels.com/photos/1450360/pexels-photo-1450360.jpeg?auto=compress&cs=tinysrgb&w=800"
+                  alt="Nusa Penida"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 group-hover:from-cyan-900/90 transition-all duration-300">
+                <h3 className="text-2xl font-bold text-white mb-2 group-hover:translate-x-2 transition-transform">Nusa Penida</h3>
+                <p className="text-white/95 group-hover:translate-x-2 transition-transform">Pristine island paradise with crystal waters</p>
+                <ChevronRight className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 bottom-6" />
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all">
-              <div className="aspect-[4/3] bg-gradient-to-br from-amber-400 to-orange-600"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-                <h3 className="text-2xl font-bold text-white mb-2">Canggu</h3>
-                <p className="text-white/90">Surfer's haven with vibrant nightlife</p>
+            <div className="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer">
+              <div className="aspect-[4/3] overflow-hidden">
+                <img
+                  src="https://images.pexels.com/photos/994605/pexels-photo-994605.jpeg?auto=compress&cs=tinysrgb&w=800"
+                  alt="Canggu Beach"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 group-hover:from-amber-900/90 transition-all duration-300">
+                <h3 className="text-2xl font-bold text-white mb-2 group-hover:translate-x-2 transition-transform">Canggu</h3>
+                <p className="text-white/95 group-hover:translate-x-2 transition-transform">Surfer's haven with vibrant nightlife</p>
+                <ChevronRight className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 bottom-6" />
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all">
-              <div className="aspect-[4/3] bg-gradient-to-br from-emerald-400 to-green-600"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-                <h3 className="text-2xl font-bold text-white mb-2">Sanur</h3>
-                <p className="text-white/90">Peaceful beach town perfect for families</p>
+            <div className="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer">
+              <div className="aspect-[4/3] overflow-hidden">
+                <img
+                  src="https://images.pexels.com/photos/3225531/pexels-photo-3225531.jpeg?auto=compress&cs=tinysrgb&w=800"
+                  alt="Sanur Beach"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 group-hover:from-emerald-900/90 transition-all duration-300">
+                <h3 className="text-2xl font-bold text-white mb-2 group-hover:translate-x-2 transition-transform">Sanur</h3>
+                <p className="text-white/95 group-hover:translate-x-2 transition-transform">Peaceful beach town perfect for families</p>
+                <ChevronRight className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 bottom-6" />
               </div>
             </div>
           </div>
@@ -333,7 +396,16 @@ export default function LandingPage() {
       </section>
 
       {/* Why Choose Us Section */}
-      <section id="why-us" className="py-20 bg-gradient-to-br from-emerald-600 to-teal-600 text-white">
+      <section id="why-us" className="py-20 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="https://images.pexels.com/photos/3225531/pexels-photo-3225531.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt="Bali Beach"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/95 to-teal-600/95"></div>
+        </div>
+        <div className="relative z-10 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold mb-4">
@@ -394,22 +466,32 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="mt-16 bg-white/10 backdrop-blur-sm rounded-2xl p-8 md:p-12 max-w-4xl mx-auto">
+          <div className="mt-16 bg-white/10 backdrop-blur-md rounded-3xl p-8 md:p-12 max-w-4xl mx-auto border border-white/20 shadow-2xl">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-              <div>
-                <div className="text-4xl md:text-5xl font-bold mb-2">500+</div>
-                <div className="text-white/80">Itineraries Created</div>
+              <div className="transform hover:scale-110 transition-transform duration-300">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-4">
+                  <Plane className="w-10 h-10 text-white" />
+                </div>
+                <div className="text-5xl md:text-6xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-white">500+</div>
+                <div className="text-white/90 font-semibold">Itineraries Created</div>
               </div>
-              <div>
-                <div className="text-4xl md:text-5xl font-bold mb-2">50+</div>
-                <div className="text-white/80">Travel Agents</div>
+              <div className="transform hover:scale-110 transition-transform duration-300">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-4">
+                  <Globe className="w-10 h-10 text-white" />
+                </div>
+                <div className="text-5xl md:text-6xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-white">50+</div>
+                <div className="text-white/90 font-semibold">Travel Agents</div>
               </div>
-              <div>
-                <div className="text-4xl md:text-5xl font-bold mb-2">98%</div>
-                <div className="text-white/80">Client Satisfaction</div>
+              <div className="transform hover:scale-110 transition-transform duration-300">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-4">
+                  <Waves className="w-10 h-10 text-white" />
+                </div>
+                <div className="text-5xl md:text-6xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-white">98%</div>
+                <div className="text-white/90 font-semibold">Client Satisfaction</div>
               </div>
             </div>
           </div>
+        </div>
         </div>
       </section>
 
