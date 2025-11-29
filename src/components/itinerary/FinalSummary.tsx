@@ -254,39 +254,22 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       text += `\n`;
     });
 
-    // Inclusions
+    // Inclusions - exact format as requested
     text += `*INCLUSIONS:*\n`;
-    
+
     // Transportation
     const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
+    const isSelfDrive = transport?.type === 'self-drive-car' || transport?.type === 'self-drive-scooter';
+
     if (transport) {
       if (transport.type === 'cab') {
-        text += `✅ Private cab for all transfers and sightseeing as per the itinerary\n`;
-      } else {
-        text += `✅ ${itinerary.client.numberOfDays} days ${transport.vehicleName} rental\n`;
+        text += `✅ All transportation by private cab (${transport.vehicleName})\n`;
+      } else if (transport.type === 'self-drive-car') {
+        text += `✅ ${itinerary.client.numberOfDays} day self-drive car for sightseeing\n`;
+      } else if (transport.type === 'self-drive-scooter') {
+        text += `✅ ${itinerary.client.numberOfDays} day self-drive scooter for sightseeing\n`;
       }
     }
-
-    // Hotels
-    const hotelStays = new Map<string, { hotel: any; roomType: any; nights: number }>();
-    itinerary.dayPlans.forEach(dayPlan => {
-      if (dayPlan.hotel) {
-        const hotel = hotels.find(h => h.id === dayPlan.hotel!.hotelId);
-        const roomType = hotel?.roomTypes.find(rt => rt.id === dayPlan.hotel!.roomTypeId);
-        if (hotel && roomType) {
-          const key = `${hotel.id}-${roomType.id}`;
-          if (hotelStays.has(key)) {
-            hotelStays.get(key)!.nights++;
-          } else {
-            hotelStays.set(key, { hotel, roomType, nights: 1 });
-          }
-        }
-      }
-    });
-
-    hotelStays.forEach(({ hotel, roomType, nights }) => {
-      text += `✅ ${nights} night${nights > 1 ? 's' : ''} stay at ${hotel.name} in ${roomType.name}\n`;
-    });
 
     // Activities summary
     const allActivities = new Set();
@@ -299,39 +282,39 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         }
       });
     });
-    allActivities.forEach(activity => {
-      text += `✅ ${activity}\n`;
-    });
+    if (allActivities.size > 0) {
+      text += `✅ Activities - ${Array.from(allActivities).join(', ')}\n`;
+    }
 
-    // Entry tickets
-    const allTickets = new Set();
-    itinerary.dayPlans.forEach(dayPlan => {
-      dayPlan.entryTickets.forEach(ticketId => {
-        const ticket = entryTickets.find(t => t.id === ticketId);
-        if (ticket) allTickets.add(ticket.name);
-      });
-    });
-    allTickets.forEach(ticket => {
-      text += `✅ ${ticket}\n`;
-    });
+    // Entry tickets - only for cab mode
+    if (transport?.type === 'cab') {
+      text += `✅ All entry tickets mentioned in itinerary\n`;
+    }
 
-    // Meals
-    const allMeals = new Set();
-    itinerary.dayPlans.forEach(dayPlan => {
-      dayPlan.meals.forEach(mealId => {
-        const meal = meals.find(m => m.id === mealId);
-        if (meal) allMeals.add(`${meal.type.charAt(0).toUpperCase() + meal.type.slice(1)} at ${meal.place}`);
-      });
-    });
-    allMeals.forEach(meal => {
-      text += `✅ ${meal}\n`;
-    });
+    // Accommodations
+    text += `✅ All accommodations mentioned in itinerary\n`;
+
+    // Boat and bike for self-drive modes
+    if (isSelfDrive) {
+      text += `✅ Up and down boat ticket to Nusa Penida\n`;
+      text += `✅ Bike for Nusa Penida sightseeing\n`;
+    }
 
     text += `\n*EXCLUSIONS:*\n`;
-    text += `❌ Airfare\n`;
-    text += `❌ Visa\n`;
-    text += `❌ Any meal not mentioned in the itinerary\n`;
-    text += `❌ Anything not mentioned in inclusions\n\n`;
+    text += `❌ International/domestic airfare\n`;
+    text += `❌ Travel insurance\n`;
+    if (isSelfDrive) {
+      text += `❌ Entry tickets\n`;
+    }
+    text += `❌ Personal expenses and tips\n`;
+    text += `❌ Visa fees and documentation\n`;
+    text += `❌ Emergency medical expenses\n`;
+    text += `❌ All meals and beverage\n`;
+
+    if (isSelfDrive) {
+      text += `\n*NOTE:* IDP (International Driving Permit) compulsory\n`;
+    }
+    text += `\n`;
 
     text += `*TOTAL COST:*\n`;
     text += `💵 ${formatCurrency(itinerary.finalPrice, 'USD')}\n`;
@@ -444,7 +427,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
       yPosition = addPricingBox(doc, pricingItems, yPosition);
 
-      // Inclusions and Exclusions - Dynamic based on transportation mode
+      // Inclusions and Exclusions - Exact format as requested
       const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
       const isSelfDrive = transport?.type === 'self-drive-car' || transport?.type === 'self-drive-scooter';
 
@@ -453,26 +436,12 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       // Transportation inclusion
       if (transport) {
         if (transport.type === 'cab') {
-          inclusions.push('All transportation by private cab');
-          inclusions.push('Professional English-speaking driver');
-          inclusions.push('All entry tickets as mentioned');
-          inclusions.push('Nusa Penida island tour');
+          inclusions.push(`All transportation by private cab (${transport.vehicleName})`);
         } else if (transport.type === 'self-drive-car') {
-          inclusions.push(`${itinerary.client.numberOfDays} days self-drive car for sightseeing`);
-          inclusions.push('Up and down boat ticket to Nusa Penida');
+          inclusions.push(`${itinerary.client.numberOfDays} day self-drive car for sightseeing`);
         } else if (transport.type === 'self-drive-scooter') {
-          inclusions.push(`${itinerary.client.numberOfDays} days self-drive scooter for sightseeing`);
-          inclusions.push('Up and down boat ticket to Nusa Penida');
+          inclusions.push(`${itinerary.client.numberOfDays} day self-drive scooter for sightseeing`);
         }
-      }
-
-      // Accommodation
-      inclusions.push('Accommodation as per itinerary');
-
-      // Meals
-      const hasMeals = itinerary.dayPlans.some(day => day.meals && day.meals.length > 0);
-      if (hasMeals) {
-        inclusions.push('Meals as mentioned in itinerary');
       }
 
       // Activities
@@ -490,37 +459,44 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       });
 
       if (allActivitiesForInclusions.size > 0) {
-        allActivitiesForInclusions.forEach(activityStr => {
-          inclusions.push(activityStr);
-        });
+        inclusions.push('Activities - ' + Array.from(allActivitiesForInclusions).join(', '));
       }
 
-      // Common inclusions
-      inclusions.push('All applicable taxes');
+      // Entry tickets (cab mode only)
+      if (transport?.type === 'cab') {
+        inclusions.push('All entry tickets mentioned in itinerary');
+      }
 
-      // Exclusions - Dynamic based on transportation mode
+      // Accommodations
+      inclusions.push('All accommodations mentioned in itinerary');
+
+      // Boat and bike for self-drive modes
+      if (isSelfDrive) {
+        inclusions.push('Up and down boat ticket to Nusa Penida');
+        inclusions.push('Bike for Nusa Penida sightseeing');
+      }
+
+      // Exclusions - Exact format as requested
       const exclusions = [
         'International/domestic airfare',
         'Travel insurance',
         'Personal expenses and tips',
         'Visa fees and documentation',
-        'Emergency medical expenses'
+        'Emergency medical expenses',
+        'All meals and beverage'
       ];
 
       if (isSelfDrive) {
-        exclusions.push('Entry tickets and permits (to be purchased by traveler)');
-        exclusions.push('Fuel costs');
-        exclusions.push('Parking fees');
-        exclusions.push('Traffic fines and violations');
+        exclusions.splice(2, 0, 'Entry tickets');
       }
 
-      if (!hasMeals) {
-        exclusions.push('All meals and beverages');
-      } else {
-        exclusions.push('Meals not mentioned in itinerary');
+      // Add IDP note for self-drive
+      let exclusionsNote = '';
+      if (isSelfDrive) {
+        exclusionsNote = 'NOTE: IDP (International Driving Permit) compulsory';
       }
 
-      yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition);
+      yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition, exclusionsNote || undefined);
 
       // Finalize with footers
       console.log('Finalizing PDF with footers...');
@@ -782,48 +758,17 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
                   if (transport) {
                     if (transport.type === 'cab') {
-                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>All transportation by private cab</li>);
-                      items.push(<li key="driver" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Professional English-speaking driver</li>);
-                      items.push(<li key="tickets" className="flex items-start"><span className="text-green-600 mr-2">✓</span>All entry tickets as mentioned</li>);
-                      items.push(<li key="nusapenida" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Nusa Penida island tour</li>);
+                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>All transportation by private cab ({transport.vehicleName})</li>);
                     } else if (transport.type === 'self-drive-car') {
-                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>{itinerary.client.numberOfDays} days self-drive car for sightseeing</li>);
-                      items.push(<li key="boat" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Up and down boat ticket to Nusa Penida</li>);
+                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>{itinerary.client.numberOfDays} day self-drive car for sightseeing</li>);
                     } else if (transport.type === 'self-drive-scooter') {
-                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>{itinerary.client.numberOfDays} days self-drive scooter for sightseeing</li>);
-                      items.push(<li key="boat" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Up and down boat ticket to Nusa Penida</li>);
+                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>{itinerary.client.numberOfDays} day self-drive scooter for sightseeing</li>);
                     }
                   }
 
                   return items;
                 })()}
                 
-                {/* Hotels */}
-                {(() => {
-                  const hotelStays = new Map();
-                  itinerary.dayPlans.forEach(dayPlan => {
-                    if (dayPlan.hotel) {
-                      const hotel = hotels.find(h => h.id === dayPlan.hotel!.hotelId);
-                      const roomType = hotel?.roomTypes.find(rt => rt.id === dayPlan.hotel!.roomTypeId);
-                      if (hotel && roomType) {
-                        const key = `${hotel.id}-${roomType.id}`;
-                        if (hotelStays.has(key)) {
-                          hotelStays.get(key).nights++;
-                        } else {
-                          hotelStays.set(key, { hotel, roomType, nights: 1 });
-                        }
-                      }
-                    }
-                  });
-
-                  return Array.from(hotelStays.values()).map(({ hotel, roomType, nights }, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="text-green-600 mr-2">✓</span>
-                      {nights} night{nights > 1 ? 's' : ''} stay at {hotel.name} in {roomType.name}
-                    </li>
-                  ));
-                })()}
-
                 {/* Activities */}
                 {(() => {
                   const allActivities = new Set();
@@ -836,52 +781,60 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                       }
                     });
                   });
-                  return Array.from(allActivities).map((activity: any, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="text-green-600 mr-2">✓</span>
-                      {activity}
-                    </li>
-                  ));
+                  if (allActivities.size > 0) {
+                    return (
+                      <li key="activities" className="flex items-start">
+                        <span className="text-green-600 mr-2">✓</span>
+                        <div>
+                          <span className="font-semibold">Activities - </span>
+                          {Array.from(allActivities).join(', ')}
+                        </div>
+                      </li>
+                    );
+                  }
+                  return null;
                 })()}
 
                 {/* Entry tickets - only for cab mode */}
                 {(() => {
                   const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
-                  if (transport?.type !== 'cab') return null;
-
-                  const allTickets = new Set();
-                  itinerary.dayPlans.forEach(dayPlan => {
-                    dayPlan.entryTickets.forEach(ticketId => {
-                      const ticket = entryTickets.find(t => t.id === ticketId);
-                      if (ticket) allTickets.add(ticket.name);
-                    });
-                  });
-                  return Array.from(allTickets).map((ticket: any, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="text-green-600 mr-2">✓</span>
-                      {ticket}
-                    </li>
-                  ));
+                  if (transport?.type === 'cab') {
+                    return (
+                      <li key="tickets" className="flex items-start">
+                        <span className="text-green-600 mr-2">✓</span>
+                        All entry tickets mentioned in itinerary
+                      </li>
+                    );
+                  }
+                  return null;
                 })()}
 
-                {/* Meals */}
-                {(() => {
-                  const hasMeals = itinerary.dayPlans.some(day => day.meals && day.meals.length > 0);
-                  if (!hasMeals) return null;
-
-                  return (
-                    <li key="meals-general" className="flex items-start">
-                      <span className="text-green-600 mr-2">✓</span>
-                      Meals as mentioned in itinerary
-                    </li>
-                  );
-                })()}
-
-                {/* Taxes */}
+                {/* Accommodations */}
                 <li className="flex items-start">
                   <span className="text-green-600 mr-2">✓</span>
-                  All applicable taxes
+                  All accommodations mentioned in itinerary
                 </li>
+
+                {/* Boat and bike for self-drive modes */}
+                {(() => {
+                  const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
+                  const isSelfDrive = transport?.type === 'self-drive-car' || transport?.type === 'self-drive-scooter';
+                  if (isSelfDrive) {
+                    return (
+                      <>
+                        <li key="boat" className="flex items-start">
+                          <span className="text-green-600 mr-2">✓</span>
+                          Up and down boat ticket to Nusa Penida
+                        </li>
+                        <li key="bike" className="flex items-start">
+                          <span className="text-green-600 mr-2">✓</span>
+                          Bike for Nusa Penida sightseeing
+                        </li>
+                      </>
+                    );
+                  }
+                  return null;
+                })()}
               </ul>
             </div>
 
@@ -890,31 +843,38 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
               <ul className="space-y-2 text-sm">
                 <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>International/domestic airfare</li>
                 <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Travel insurance</li>
-                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Personal expenses and tips</li>
-                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Visa fees and documentation</li>
-                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Emergency medical expenses</li>
                 {(() => {
                   const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
                   const isSelfDrive = transport?.type === 'self-drive-car' || transport?.type === 'self-drive-scooter';
-                  const items = [];
-
                   if (isSelfDrive) {
-                    items.push(<li key="tickets" className="flex items-start"><span className="text-red-600 mr-2">✗</span>Entry tickets and permits (to be purchased by traveler)</li>);
-                    items.push(<li key="fuel" className="flex items-start"><span className="text-red-600 mr-2">✗</span>Fuel costs</li>);
-                    items.push(<li key="parking" className="flex items-start"><span className="text-red-600 mr-2">✗</span>Parking fees</li>);
-                    items.push(<li key="fines" className="flex items-start"><span className="text-red-600 mr-2">✗</span>Traffic fines and violations</li>);
+                    return (
+                      <li key="tickets" className="flex items-start">
+                        <span className="text-red-600 mr-2">✗</span>
+                        Entry tickets
+                      </li>
+                    );
                   }
-
-                  const hasMeals = itinerary.dayPlans.some(day => day.meals && day.meals.length > 0);
-                  if (!hasMeals) {
-                    items.push(<li key="meals" className="flex items-start"><span className="text-red-600 mr-2">✗</span>All meals and beverages</li>);
-                  } else {
-                    items.push(<li key="meals" className="flex items-start"><span className="text-red-600 mr-2">✗</span>Meals not mentioned in itinerary</li>);
-                  }
-
-                  return items;
+                  return null;
                 })()}
+                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Personal expenses and tips</li>
+                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Visa fees and documentation</li>
+                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Emergency medical expenses</li>
+                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>All meals and beverage</li>
               </ul>
+              {(() => {
+                const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
+                const isSelfDrive = transport?.type === 'self-drive-car' || transport?.type === 'self-drive-scooter';
+                if (isSelfDrive) {
+                  return (
+                    <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg">
+                      <p className="text-sm font-bold text-red-900">
+                        NOTE: IDP (International Driving Permit) compulsory
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </div>
 

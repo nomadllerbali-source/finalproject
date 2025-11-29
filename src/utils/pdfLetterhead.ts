@@ -300,7 +300,7 @@ export function addPricingBox(doc: jsPDF, pricing: { label: string; usd: string;
   return yPosition + boxHeight + 10;
 }
 
-export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclusions: string[], yPosition: number): number {
+export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclusions: string[], yPosition: number, note?: string): number {
   yPosition = checkPageBreak(doc, yPosition, 40);
 
   yPosition = addSectionHeader(doc, 'INCLUSIONS', yPosition);
@@ -345,6 +345,21 @@ export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclus
       yPosition += 6;
     });
   });
+
+  // Add note if provided
+  if (note) {
+    yPosition += 5;
+    yPosition = checkPageBreak(doc, yPosition, 10);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(200, 0, 0);
+    const wrappedNote = doc.splitTextToSize(note, 160);
+    wrappedNote.forEach((line: string) => {
+      doc.text(line, MARGINS.left + 5, yPosition);
+      yPosition += 6;
+    });
+    doc.setTextColor(...COLORS.black);
+  }
 
   return yPosition + 10;
 }

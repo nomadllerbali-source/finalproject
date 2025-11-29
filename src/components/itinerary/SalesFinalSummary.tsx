@@ -309,35 +309,24 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
 
     yPosition = addPricingBox(doc, pricingItems, yPosition);
 
-    // Dynamic inclusions/exclusions based on transport mode
+    // Inclusions and Exclusions - Exact format as requested
     const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
     const isSelfDrive = transport?.type === 'self-drive-car' || transport?.type === 'self-drive-scooter';
 
     const inclusions: string[] = [];
 
+    // Transportation inclusion
     if (transport) {
       if (transport.type === 'cab') {
-        inclusions.push('All transportation by private cab');
-        inclusions.push('Professional English-speaking driver');
-        inclusions.push('All entry tickets as mentioned');
-        inclusions.push('Nusa Penida island tour');
+        inclusions.push(`All transportation by private cab (${transport.vehicleName})`);
       } else if (transport.type === 'self-drive-car') {
-        inclusions.push(`${itinerary.client.numberOfDays} days self-drive car for sightseeing`);
-        inclusions.push('Up and down boat ticket to Nusa Penida');
+        inclusions.push(`${itinerary.client.numberOfDays} day self-drive car for sightseeing`);
       } else if (transport.type === 'self-drive-scooter') {
-        inclusions.push(`${itinerary.client.numberOfDays} days self-drive scooter for sightseeing`);
-        inclusions.push('Up and down boat ticket to Nusa Penida');
+        inclusions.push(`${itinerary.client.numberOfDays} day self-drive scooter for sightseeing`);
       }
     }
 
-    inclusions.push('Accommodation as per itinerary');
-
-    const hasMeals = itinerary.dayPlans.some(day => day.meals && day.meals.length > 0);
-    if (hasMeals) {
-      inclusions.push('Meals as mentioned in itinerary');
-    }
-
-    // Add activities
+    // Activities
     const allActivities = new Set<string>();
     itinerary.dayPlans.forEach(dayPlan => {
       if (dayPlan.activities && dayPlan.activities.length > 0) {
@@ -352,35 +341,44 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
     });
 
     if (allActivities.size > 0) {
-      allActivities.forEach(activityStr => {
-        inclusions.push(activityStr);
-      });
+      inclusions.push('Activities - ' + Array.from(allActivities).join(', '));
     }
 
-    inclusions.push('All applicable taxes');
+    // Entry tickets (cab mode only)
+    if (transport?.type === 'cab') {
+      inclusions.push('All entry tickets mentioned in itinerary');
+    }
 
+    // Accommodations
+    inclusions.push('All accommodations mentioned in itinerary');
+
+    // Boat and bike for self-drive modes
+    if (isSelfDrive) {
+      inclusions.push('Up and down boat ticket to Nusa Penida');
+      inclusions.push('Bike for Nusa Penida sightseeing');
+    }
+
+    // Exclusions - Exact format as requested
     const exclusions = [
       'International/domestic airfare',
       'Travel insurance',
       'Personal expenses and tips',
       'Visa fees and documentation',
-      'Emergency medical expenses'
+      'Emergency medical expenses',
+      'All meals and beverage'
     ];
 
     if (isSelfDrive) {
-      exclusions.push('Entry tickets and permits (to be purchased by traveler)');
-      exclusions.push('Fuel costs');
-      exclusions.push('Parking fees');
-      exclusions.push('Traffic fines and violations');
+      exclusions.splice(2, 0, 'Entry tickets');
     }
 
-    if (!hasMeals) {
-      exclusions.push('All meals and beverages');
-    } else {
-      exclusions.push('Meals not mentioned in itinerary');
+    // Add IDP note for self-drive
+    let exclusionsNote = '';
+    if (isSelfDrive) {
+      exclusionsNote = 'NOTE: IDP (International Driving Permit) compulsory';
     }
 
-    yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition);
+    yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition, exclusionsNote || undefined);
     finalizeLetterheadPDF(doc);
 
     doc.save(`${itinerary.client.name.replace(/\s+/g, '_')}_Premium_Package.pdf`);
