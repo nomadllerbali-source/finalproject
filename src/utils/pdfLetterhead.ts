@@ -199,6 +199,84 @@ export function addDayPlanBox(doc: jsPDF, dayNumber: number, content: { title: s
   return contentY + 5;
 }
 
+export function addDayPlanBoxWithDetails(
+  doc: jsPDF,
+  dayNumber: number,
+  content: { title: string; items: Array<{ name: string; description?: string }> }[],
+  yPosition: number
+): number {
+  const boxWidth = 170;
+
+  let totalHeight = 15;
+  content.forEach(section => {
+    totalHeight += 8;
+    section.items.forEach(item => {
+      totalHeight += 6;
+      if (item.description) totalHeight += 5;
+    });
+  });
+
+  yPosition = checkPageBreak(doc, yPosition, totalHeight);
+
+  doc.setFillColor(...COLORS.gold);
+  doc.circle(MARGINS.left + 5, yPosition + 5, 5, 'F');
+
+  doc.setTextColor(...COLORS.white);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(dayNumber.toString(), MARGINS.left + 5, yPosition + 7, { align: 'center' });
+
+  doc.setFillColor(...COLORS.lightGray);
+  doc.roundedRect(MARGINS.left + 12, yPosition, boxWidth - 12, 10, 2, 2, 'F');
+
+  doc.setTextColor(...COLORS.black);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`DAY ${dayNumber}`, MARGINS.left + 17, yPosition + 7);
+
+  let contentY = yPosition + 15;
+
+  content.forEach(section => {
+    contentY = checkPageBreak(doc, contentY, 10);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...COLORS.darkGold);
+    doc.text(`${section.title}:`, MARGINS.left + 5, contentY);
+    contentY += 6;
+
+    doc.setTextColor(...COLORS.black);
+
+    section.items.forEach(item => {
+      contentY = checkPageBreak(doc, contentY, item.description ? 10 : 6);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      const nameWrapped = doc.splitTextToSize(`• ${item.name}`, boxWidth - 20);
+      nameWrapped.forEach((line: string) => {
+        doc.text(line, MARGINS.left + 10, contentY);
+        contentY += 5;
+      });
+
+      if (item.description) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        const descWrapped = doc.splitTextToSize(item.description, boxWidth - 25);
+        descWrapped.forEach((line: string) => {
+          contentY = checkPageBreak(doc, contentY, 5);
+          doc.text(line, MARGINS.left + 15, contentY);
+          contentY += 4;
+        });
+        contentY += 1;
+      }
+    });
+
+    contentY += 3;
+  });
+
+  return contentY + 5;
+}
+
 export function addPricingBox(doc: jsPDF, pricing: { label: string; usd: string; idr: string }[], yPosition: number): number {
   const boxWidth = 170;
   const boxHeight = 30;

@@ -8,6 +8,7 @@ import {
   addDocumentTitle,
   addInfoBox,
   addDayPlanBox,
+  addDayPlanBoxWithDetails,
   addPricingBox,
   addInclusionsExclusions,
   finalizeLetterheadPDF,
@@ -372,14 +373,14 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
       // Day-by-day itinerary
       itinerary.dayPlans.forEach(dayPlan => {
-        const dayContent: { title: string; items: string[] }[] = [];
+        const dayContent: { title: string; items: Array<{ name: string; description?: string }> }[] = [];
 
         // Sightseeing
         const selectedSightseeing = sightseeings.filter(s => dayPlan.sightseeing.includes(s.id));
         if (selectedSightseeing.length > 0) {
           dayContent.push({
             title: 'Sightseeing',
-            items: selectedSightseeing.map(s => s.description ? `${s.name} - ${s.description}` : s.name)
+            items: selectedSightseeing.map(s => ({ name: s.name, description: s.description || undefined }))
           });
         }
 
@@ -393,7 +394,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         if (selectedActivities.length > 0) {
           dayContent.push({
             title: 'Activities',
-            items: selectedActivities.map((item: any) => `${item.activity?.name} - ${item.option?.name}`)
+            items: selectedActivities.map((item: any) => ({ name: `${item.activity?.name} - ${item.option?.name}` }))
           });
         }
 
@@ -402,7 +403,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         if (selectedTickets.length > 0) {
           dayContent.push({
             title: 'Entry Tickets',
-            items: selectedTickets.map(t => t.name)
+            items: selectedTickets.map(t => ({ name: t.name }))
           });
         }
 
@@ -415,7 +416,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         if (selectedMeals.length > 0) {
           dayContent.push({
             title: 'Meals',
-            items: selectedMeals.map((m: any) => `${m.mealType} at ${m.placeName}`)
+            items: selectedMeals.map((m: any) => ({ name: `${m.mealType} at ${m.placeName}` }))
           });
         }
 
@@ -426,12 +427,12 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
           if (hotel && roomType) {
             dayContent.push({
               title: 'Accommodation',
-              items: [`${hotel.name} - ${roomType.name}`]
+              items: [{ name: `${hotel.name} - ${roomType.name}` }]
             });
           }
         }
 
-        yPosition = addDayPlanBox(doc, dayPlan.day, dayContent, yPosition);
+        yPosition = addDayPlanBoxWithDetails(doc, dayPlan.day, dayContent, yPosition);
       });
 
       // Total pricing only
@@ -466,9 +467,8 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       });
 
       if (allActivitiesForInclusions.size > 0) {
-        inclusions.push('**Activities:**');
         allActivitiesForInclusions.forEach(activityStr => {
-          inclusions.push(`  ${activityStr}`);
+          inclusions.push(activityStr);
         });
       }
 
