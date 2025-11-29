@@ -134,6 +134,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToSection }) => {
               <Ticket className="h-4 w-4 mr-2" />
               Entry Tickets
             </button>
+            <button
+              onClick={() => onNavigateToSection('areas')}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg hover:from-teal-700 hover:to-cyan-700 transition-all duration-200 transform hover:scale-105"
+            >
+              <MapPin className="h-4 w-4 mr-2" />
+              Areas
+            </button>
           </div>
         </div>
       </div>

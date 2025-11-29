@@ -14,6 +14,7 @@ import GuestManagement from './GuestManagement';
 import SalesManagement from './SalesManagement';
 import OperationsManagement from './OperationsManagement';
 import FixedItineraryManager from './FixedItineraryManager';
+import AreaManager from './AreaManager';
 
 // Itinerary Builder (Admin version)
 import ItineraryBuilder from '../itinerary/ItineraryBuilder';
@@ -25,7 +26,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-type AdminSection = 'dashboard' | 'itinerary' | 'transportation' | 'hotels' | 'sightseeing' | 'activities' | 'meals' | 'tickets' | 'agents' | 'guests' | 'sales' | 'operations' | 'fixedItineraries';
+type AdminSection = 'dashboard' | 'itinerary' | 'transportation' | 'hotels' | 'sightseeing' | 'activities' | 'meals' | 'tickets' | 'agents' | 'guests' | 'sales' | 'operations' | 'fixedItineraries' | 'areas';
 
 const AdminApp: React.FC = () => {
   const { logout, state: authState } = useAuth();
@@ -90,6 +91,8 @@ const AdminApp: React.FC = () => {
         return <OperationsManagement />;
       case 'fixedItineraries':
         return <FixedItineraryManager />;
+      case 'areas':
+        return <AreaManager />;
       default:
         return (
           <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
