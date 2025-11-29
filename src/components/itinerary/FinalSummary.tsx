@@ -211,6 +211,9 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         text += `📍 *Sightseeing:*\n`;
         selectedSightseeing.forEach(sight => {
           text += `   • ${sight.name}\n`;
+          if (sight.description) {
+            text += `     ${sight.description}\n`;
+          }
         });
       }
 
@@ -375,7 +378,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         if (selectedSightseeing.length > 0) {
           dayContent.push({
             title: 'Sightseeing',
-            items: selectedSightseeing.map(s => s.name)
+            items: selectedSightseeing.map(s => s.description ? `${s.name} - ${s.description}` : s.name)
           });
         }
 
@@ -448,6 +451,25 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         'Professional English-speaking guide',
         'All applicable taxes'
       ];
+
+      // Add activities to inclusions
+      const allActivitiesForInclusions = new Set<string>();
+      itinerary.dayPlans.forEach(dayPlan => {
+        dayPlan.activities.forEach((a: any) => {
+          const activity = activities.find(act => act.id === a.activityId);
+          const option = activity?.options.find(opt => opt.id === a.optionId);
+          if (activity && option) {
+            allActivitiesForInclusions.add(`${activity.name} - ${option.name}`);
+          }
+        });
+      });
+
+      if (allActivitiesForInclusions.size > 0) {
+        inclusions.push('**Activities:**');
+        allActivitiesForInclusions.forEach(activityStr => {
+          inclusions.push(`  ${activityStr}`);
+        });
+      }
 
       const exclusions = [
         'International/domestic airfare',

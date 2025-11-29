@@ -233,11 +233,21 @@ export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclus
 
   inclusions.forEach(item => {
     yPosition = checkPageBreak(doc, yPosition, 6);
-    const wrappedText = doc.splitTextToSize(item, 160);
-    wrappedText.forEach((line: string) => {
-      doc.text(`• ${line}`, MARGINS.left + 5, yPosition);
+
+    // Check if item is a bold header (wrapped in **)
+    if (item.startsWith('**') && item.endsWith('**')) {
+      const headerText = item.replace(/\*\*/g, '');
+      doc.setFont('helvetica', 'bold');
+      doc.text(headerText, MARGINS.left + 5, yPosition);
+      doc.setFont('helvetica', 'normal');
       yPosition += 6;
-    });
+    } else {
+      const wrappedText = doc.splitTextToSize(item, 160);
+      wrappedText.forEach((line: string) => {
+        doc.text(`• ${line}`, MARGINS.left + 5, yPosition);
+        yPosition += 6;
+      });
+    }
   });
 
   yPosition += 5;
