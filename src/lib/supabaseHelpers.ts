@@ -94,14 +94,18 @@ export const fromDbTransportation = (row: TransportationsRow): Transportation =>
   id: row.id,
   type: row.type as any,
   vehicleName: row.vehicle_name,
-  costPerDay: row.cost_per_day
+  costPerDay: row.cost_per_day,
+  areaId: row.area_id || undefined,
+  areaName: row.area_name || undefined
 });
 
 export const toDbTransportation = (t: Transportation) => ({
   id: t.id,
   type: t.type,
   vehicle_name: t.vehicleName,
-  cost_per_day: t.costPerDay
+  cost_per_day: t.costPerDay,
+  area_id: t.areaId || null,
+  area_name: t.areaName || null
 });
 
 export const fromDbHotel = (row: HotelsRow & { room_types?: RoomTypesRow[] }): Hotel => ({
@@ -141,7 +145,9 @@ export const fromDbSightseeing = (row: SightseeingsRow): Sightseeing => ({
   name: row.name,
   description: row.description,
   transportationMode: row.transportation_mode as any,
-  vehicleCosts: row.vehicle_costs || undefined
+  vehicleCosts: row.vehicle_costs || undefined,
+  areaId: row.area_id || undefined,
+  areaName: row.area_name || undefined
 });
 
 export const toDbSightseeing = (s: Sightseeing) => ({
@@ -149,20 +155,26 @@ export const toDbSightseeing = (s: Sightseeing) => ({
   name: s.name,
   description: s.description,
   transportation_mode: s.transportationMode,
-  vehicle_costs: s.vehicleCosts || null
+  vehicle_costs: s.vehicleCosts || null,
+  area_id: s.areaId || null,
+  area_name: s.areaName || null
 });
 
 export const fromDbActivity = (row: ActivitiesRow & { activity_options?: ActivityOptionsRow[] }): Activity => ({
   id: row.id,
   name: row.name,
   location: row.location,
-  options: row.activity_options ? row.activity_options.map(fromDbActivityOption) : []
+  options: row.activity_options ? row.activity_options.map(fromDbActivityOption) : [],
+  areaId: row.area_id || undefined,
+  areaName: row.area_name || undefined
 });
 
 export const toDbActivity = (a: Activity) => ({
   id: a.id,
   name: a.name,
-  location: a.location
+  location: a.location,
+  area_id: a.areaId || null,
+  area_name: a.areaName || null
 });
 
 export const fromDbActivityOption = (row: ActivityOptionsRow): ActivityOption => ({
@@ -198,18 +210,24 @@ export const fromDbMeal = (row: MealsRow): Meal => ({
   id: row.id,
   type: row.type as any,
   place: row.place,
-  cost: row.cost
+  cost: row.cost,
+  areaId: row.area_id || undefined,
+  areaName: row.area_name || undefined
 });
 
 export const toDbMeal = (m: Meal) => ({
   id: m.id,
   type: m.type,
   place: m.place,
-  cost: m.cost
+  cost: m.cost,
+  area_id: m.areaId || null,
+  area_name: m.areaName || null
 });
 
 export const fromDbDayPlan = (row: DayPlansRow): DayPlan => ({
   day: row.day,
+  areaId: row.area_id || undefined,
+  areaName: row.area_name || undefined,
   sightseeing: row.sightseeing_ids || [],
   hotel: row.hotel_id && row.room_type_id && row.hotel_place ? {
     place: row.hotel_place,
@@ -224,6 +242,8 @@ export const fromDbDayPlan = (row: DayPlansRow): DayPlan => ({
 export const toDbDayPlan = (dp: DayPlan, itineraryId: string): DayPlansInsert => ({
   itinerary_id: itineraryId,
   day: dp.day,
+  area_id: dp.areaId || null,
+  area_name: dp.areaName || null,
   sightseeing_ids: dp.sightseeing,
   hotel_place: dp.hotel?.place || null,
   hotel_id: dp.hotel?.hotelId || null,
