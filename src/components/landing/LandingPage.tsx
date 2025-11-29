@@ -326,7 +326,7 @@ export default function LandingPage() {
               <span className={`text-xl md:text-2xl font-bold ${
                 isScrolled ? 'text-slate-900' : 'text-white'
               }`}>
-                Nomadller Solutions
+                Nomadller Solution
               </span>
             </div>
 
@@ -757,7 +757,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-bold mb-4">
-                Why Choose Nomadller Solutions?
+                Why Choose Nomadller Solution?
               </h2>
               <p className="text-lg text-white/90 max-w-2xl mx-auto">
                 Built by travel professionals, for travel professionals
@@ -926,7 +926,7 @@ export default function LandingPage() {
             <div className="md:col-span-2">
               <div className="flex items-center space-x-2 mb-4">
                 <MapPin className="w-8 h-8 text-emerald-400" />
-                <span className="text-2xl font-bold">Nomadller Solutions</span>
+                <span className="text-2xl font-bold">Nomadller Solution</span>
               </div>
               <p className="text-slate-400 mb-6">
                 Empowering travel agencies with cutting-edge technology to create unforgettable Bali experiences.
@@ -990,7 +990,7 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-slate-800 pt-8 text-center text-slate-400">
-            <p>&copy; 2024 Nomadller Solutions. All rights reserved.</p>
+            <p>&copy; 2024 Nomadller Solution. All rights reserved.</p>
           </div>
         </div>
       </section>

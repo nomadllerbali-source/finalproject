@@ -229,7 +229,7 @@ const ItineraryViewModal: React.FC<ItineraryViewModalProps> = ({ client, onClose
     itineraryText += `• Emergency medical expenses\n\n`;
 
     itineraryText += `📞 CONTACT:\n`;
-    itineraryText += `Bali CRM - Travel Agency Management\n`;
+    itineraryText += `Nomadller Solution - Travel Agency Management\n`;
     itineraryText += `Professional Travel Planning Services\n\n`;
 
     itineraryText += `Generated on: ${new Date().toLocaleDateString()}\n`;

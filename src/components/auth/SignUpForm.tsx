@@ -118,7 +118,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onBack, onSuccess }) => {
               </div>
               <div>
                 <h1 className="text-xl md:text-2xl font-bold text-white">Create Account</h1>
-                <p className="text-blue-100 mt-1 text-sm md:text-base">Join Bali CRM</p>
+                <p className="text-blue-100 mt-1 text-sm md:text-base">Join Nomadller Solution</p>
               </div>
             </div>
           </div>

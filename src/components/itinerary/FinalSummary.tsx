@@ -339,7 +339,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
-      doc.text('Bali CRM', 20, 20);
+      doc.text('Nomadller Solution', 20, 20);
       
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
@@ -472,7 +472,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text('Bali CRM | Email: info@balicrm.com | Phone: +1-234-567-8900', 20, 290);
+        doc.text('Nomadller Solution | Email: info@nomadller.com | Phone: +1-234-567-8900', 20, 290);
         doc.text(`Page ${i} of ${pageCount}`, 170, 290);
       }
       

@@ -195,7 +195,7 @@ const ViewItinerary: React.FC<ViewItineraryProps> = ({ client: salesClient, onBa
 
     itineraryText += `📞 SALES CONTACT:\n`;
     itineraryText += `${salesClient.name} Premium Travel Package\n`;
-    itineraryText += `Bali CRM - Sales Department\n`;
+    itineraryText += `Nomadller Solution - Sales Department\n`;
     itineraryText += `Professional Travel Planning Services\n\n`;
 
     itineraryText += `Generated on: ${new Date().toLocaleDateString()}\n`;

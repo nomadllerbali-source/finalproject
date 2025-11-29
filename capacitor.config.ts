@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.nomadller.travelagency',
-  appName: 'Nomadller Solutions',
+  appName: 'Nomadller Solution',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

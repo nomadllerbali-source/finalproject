@@ -132,7 +132,7 @@ const AgentRegistration: React.FC<AgentRegistrationProps> = ({ onBack, onSuccess
               </div>
               <div>
                 <h1 className="text-xl md:text-2xl font-bold text-white">Agent Registration</h1>
-                <p className="text-teal-100 mt-1 text-sm md:text-base">Join Bali CRM as a Travel Agent</p>
+                <p className="text-teal-100 mt-1 text-sm md:text-base">Join Nomadller Solution as a Travel Agent</p>
               </div>
             </div>
           </div>
