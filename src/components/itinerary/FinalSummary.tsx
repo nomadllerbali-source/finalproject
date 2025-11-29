@@ -2,6 +2,17 @@ import React from 'react';
 import { Itinerary } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { getSeasonalPrice, getVehicleCostByPax, formatCurrency, convertToIDR } from '../../utils/calculations';
+import {
+  addLetterheadHeader,
+  addPageWithLetterhead,
+  addDocumentTitle,
+  addInfoBox,
+  addDayPlanBox,
+  addPricingBox,
+  addInclusionsExclusions,
+  finalizeLetterheadPDF,
+  MARGINS
+} from '../../utils/pdfLetterhead';
 import { Copy, MessageCircle, Calendar, Users, MapPin, Building2, Camera, Ticket, Utensils, CheckCircle, Phone, Download } from 'lucide-react';
 
 interface FinalSummaryProps {
@@ -328,153 +339,175 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
   const downloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      // Import jsPDF dynamically
       const { jsPDF } = await import('jspdf');
       const doc = new jsPDF();
-      
-      // Company Header
-      doc.setFillColor(59, 130, 246); // Blue color
-      doc.rect(0, 0, 210, 30, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Nomadller Solution', 20, 20);
-      
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Professional Travel Services', 20, 26);
-      
-      // Reset text color for content
-      doc.setTextColor(0, 0, 0);
-      
-      let yPosition = 45;
-      
-      // Title
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.text('TRAVEL ITINERARY', 20, yPosition);
-      yPosition += 15;
-      
-      // Client Information
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Client Information:', 20, yPosition);
-      yPosition += 8;
-      
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Client: ${itinerary.client.name}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Contact: ${itinerary.client.countryCode} ${itinerary.client.whatsapp}`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Duration: ${itinerary.client.numberOfDays} days`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Passengers: ${itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} pax (${itinerary.client.numberOfPax.adults} adults, ${itinerary.client.numberOfPax.children} children)`, 20, yPosition);
-      yPosition += 6;
-      doc.text(`Transportation: ${itinerary.client.transportationMode}`, 20, yPosition);
-      yPosition += 10;
-      
-      if (!itinerary.client.travelDates.isFlexible) {
-        doc.text(`Travel Dates: ${new Date(itinerary.client.travelDates.startDate).toLocaleDateString()} to ${new Date(itinerary.client.travelDates.endDate).toLocaleDateString()}`, 20, yPosition);
-        yPosition += 10;
-      }
-      
+
+      // Add letterhead header
+      addLetterheadHeader(doc);
+
+      let yPosition = MARGINS.contentStart;
+
+      // Document title
+      const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      yPosition = addDocumentTitle(doc, 'TRAVEL ITINERARY', `Generated on ${today}`, yPosition);
+
+      // Client Information Box
+      const clientInfo = [
+        `Client Name: ${itinerary.client.name}`,
+        `Contact: ${itinerary.client.countryCode} ${itinerary.client.whatsapp}`,
+        `Email: ${itinerary.client.email || 'N/A'}`,
+        `Duration: ${itinerary.client.numberOfDays} days / ${itinerary.client.numberOfDays - 1} nights`,
+        `Passengers: ${itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} pax (${itinerary.client.numberOfPax.adults} adults, ${itinerary.client.numberOfPax.children} children)`,
+        `Transportation: ${itinerary.client.transportationMode}`,
+        !itinerary.client.travelDates.isFlexible ? `Travel Dates: ${new Date(itinerary.client.travelDates.startDate).toLocaleDateString()} to ${new Date(itinerary.client.travelDates.endDate).toLocaleDateString()}` : 'Travel Dates: Flexible'
+      ];
+      yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition);
+
       // Day-by-day itinerary
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Detailed Itinerary:', 20, yPosition);
-      yPosition += 10;
-      
       itinerary.dayPlans.forEach(dayPlan => {
-        if (yPosition > 250) {
-          doc.addPage();
-          yPosition = 20;
-        }
-        
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Day ${dayPlan.day}:`, 20, yPosition);
-        yPosition += 8;
-        
+        const dayContent: { title: string; items: string[] }[] = [];
+
         // Sightseeing
         const selectedSightseeing = sightseeings.filter(s => dayPlan.sightseeing.includes(s.id));
         if (selectedSightseeing.length > 0) {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Sightseeing:', 25, yPosition);
-          yPosition += 5;
-          doc.setFont('helvetica', 'normal');
-          selectedSightseeing.forEach(sight => {
-            doc.text(`• ${sight.name}`, 30, yPosition);
-            yPosition += 5;
+          dayContent.push({
+            title: '🏛️ Sightseeing',
+            items: selectedSightseeing.map(s => s.name)
           });
         }
-        
+
         // Activities
         const selectedActivities = dayPlan.activities.map((a: any) => {
           const activity = activities.find(act => act.id === a.activityId);
           const option = activity?.options.find(opt => opt.id === a.optionId);
           return { activity, option };
         }).filter((item: any) => item.activity && item.option);
-        
+
         if (selectedActivities.length > 0) {
-          doc.setFont('helvetica', 'bold');
-          doc.text('Activities:', 25, yPosition);
-          yPosition += 5;
-          doc.setFont('helvetica', 'normal');
-          selectedActivities.forEach((item: any) => {
-            doc.text(`• ${item.activity?.name} - ${item.option?.name}`, 30, yPosition);
-            yPosition += 5;
+          dayContent.push({
+            title: '🎯 Activities',
+            items: selectedActivities.map((item: any) => `${item.activity?.name} - ${item.option?.name}`)
           });
         }
-        
+
+        // Entry Tickets
+        const selectedTickets = entryTickets.filter(t => dayPlan.entryTickets.includes(t.id));
+        if (selectedTickets.length > 0) {
+          dayContent.push({
+            title: '🎫 Entry Tickets',
+            items: selectedTickets.map(t => t.name)
+          });
+        }
+
+        // Meals
+        const selectedMeals = dayPlan.meals.map((m: any) => {
+          const meal = meals.find(meal => meal.id === m.mealId);
+          return meal;
+        }).filter(Boolean);
+
+        if (selectedMeals.length > 0) {
+          dayContent.push({
+            title: '🍽️ Meals',
+            items: selectedMeals.map((m: any) => `${m.mealType} at ${m.placeName}`)
+          });
+        }
+
         // Hotel
         if (dayPlan.hotel) {
           const hotel = hotels.find(h => h.id === dayPlan.hotel!.hotelId);
           const roomType = hotel?.roomTypes.find(rt => rt.id === dayPlan.hotel!.roomTypeId);
           if (hotel && roomType) {
-            doc.setFont('helvetica', 'bold');
-            doc.text('Hotel:', 25, yPosition);
-            yPosition += 5;
-            doc.setFont('helvetica', 'normal');
-            doc.text(`• ${hotel.name} - ${roomType.name}`, 30, yPosition);
-            yPosition += 5;
+            dayContent.push({
+              title: '🏨 Accommodation',
+              items: [`${hotel.name} - ${roomType.name}`]
+            });
           }
         }
-        
-        yPosition += 5;
+
+        yPosition = addDayPlanBox(doc, dayPlan.day, dayContent, yPosition);
       });
-      
-      // Total Cost
-      if (yPosition > 230) {
-        doc.addPage();
-        yPosition = 20;
+
+      // Pricing breakdown
+      const breakdown = calculateDetailedBreakdown();
+      const totalPax = itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children;
+
+      const pricingItems: { label: string; usd: string; idr: string }[] = [];
+
+      if (breakdown.transportation > 0) {
+        pricingItems.push({
+          label: 'Transportation',
+          usd: formatCurrency(breakdown.transportation, 'USD'),
+          idr: formatCurrency(convertToIDR(breakdown.transportation, itinerary.exchangeRate), 'IDR')
+        });
       }
-      
-      doc.setFillColor(34, 197, 94); // Green background
-      doc.rect(20, yPosition - 5, 170, 25, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.text('TOTAL PACKAGE PRICE', 25, yPosition + 5);
-      doc.setFontSize(14);
-      doc.text(`${formatCurrency(itinerary.finalPrice, 'USD')} | ${formatCurrency(convertToIDR(itinerary.finalPrice, itinerary.exchangeRate), 'IDR')}`, 25, yPosition + 15);
-      
-      // Footer on every page
-      const pageCount = doc.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFillColor(59, 130, 246);
-        doc.rect(0, 280, 210, 17, 'F');
-        
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Nomadller Solution | Email: info@nomadller.com | Phone: +1-234-567-8900', 20, 290);
-        doc.text(`Page ${i} of ${pageCount}`, 170, 290);
+
+      const totalHotelCost = breakdown.hotels.reduce((sum, h) => sum + h.total, 0);
+      if (totalHotelCost > 0) {
+        pricingItems.push({
+          label: 'Hotel Accommodation',
+          usd: formatCurrency(totalHotelCost, 'USD'),
+          idr: formatCurrency(convertToIDR(totalHotelCost, itinerary.exchangeRate), 'IDR')
+        });
       }
+
+      const totalActivitiesCost = breakdown.activities.reduce((sum, a) => sum + a.totalCost, 0);
+      if (totalActivitiesCost > 0) {
+        pricingItems.push({
+          label: 'Activities & Experiences',
+          usd: formatCurrency(totalActivitiesCost, 'USD'),
+          idr: formatCurrency(convertToIDR(totalActivitiesCost, itinerary.exchangeRate), 'IDR')
+        });
+      }
+
+      const totalTicketsCost = breakdown.entryTickets.reduce((sum, t) => sum + t.totalCost, 0);
+      if (totalTicketsCost > 0) {
+        pricingItems.push({
+          label: 'Entry Tickets',
+          usd: formatCurrency(totalTicketsCost, 'USD'),
+          idr: formatCurrency(convertToIDR(totalTicketsCost, itinerary.exchangeRate), 'IDR')
+        });
+      }
+
+      const totalMealsCost = breakdown.meals.reduce((sum, m) => sum + m.totalCost, 0);
+      if (totalMealsCost > 0) {
+        pricingItems.push({
+          label: 'Meals',
+          usd: formatCurrency(totalMealsCost, 'USD'),
+          idr: formatCurrency(convertToIDR(totalMealsCost, itinerary.exchangeRate), 'IDR')
+        });
+      }
+
+      pricingItems.push({
+        label: 'TOTAL PACKAGE PRICE',
+        usd: formatCurrency(itinerary.finalPrice, 'USD'),
+        idr: formatCurrency(convertToIDR(itinerary.finalPrice, itinerary.exchangeRate), 'IDR')
+      });
+
+      yPosition = addPricingBox(doc, pricingItems, yPosition);
+
+      // Inclusions and Exclusions
+      const inclusions = [
+        'Accommodation as per itinerary',
+        'Transportation in private vehicle',
+        'All entry tickets and permits',
+        'Meals as mentioned in itinerary',
+        'Professional English-speaking guide',
+        'All applicable taxes'
+      ];
+
+      const exclusions = [
+        'International/domestic airfare',
+        'Travel insurance',
+        'Personal expenses and tips',
+        'Meals not mentioned in itinerary',
+        'Visa fees and documentation',
+        'Emergency medical expenses'
+      ];
+
+      yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition);
+
+      // Finalize with footers
+      finalizeLetterheadPDF(doc)
       
       // Generate filename with client name and date
       const today = new Date().toISOString().split('T')[0];

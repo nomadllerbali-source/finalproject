@@ -10,6 +10,17 @@ import {
 import jsPDF from 'jspdf';
 import { generateUUID } from '../../utils/uuid';
 import { createSalesClient, createBookingChecklist, createItineraryVersion } from '../../lib/salesHelpers';
+import {
+  addLetterheadHeader,
+  addPageWithLetterhead,
+  addDocumentTitle,
+  addInfoBox,
+  addDayPlanBox,
+  addPricingBox,
+  addInclusionsExclusions,
+  finalizeLetterheadPDF,
+  MARGINS
+} from '../../utils/pdfLetterhead';
 
 interface SalesFinalSummaryProps {
   itinerary: Itinerary;
@@ -216,80 +227,109 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
 
   const generatePDF = () => {
     const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-    const margin = 20;
-    let yPosition = margin;
+    addLetterheadHeader(doc);
 
-    // Header
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Premium Travel Package', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 15;
+    let yPosition = MARGINS.contentStart;
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    yPosition = addDocumentTitle(doc, 'PREMIUM TRAVEL PACKAGE', `Prepared on ${today} | Sales Department`, yPosition);
 
-    // Client details
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Client: ${itinerary.client.name}`, margin, yPosition);
-    yPosition += 8;
-    doc.text(`Duration: ${itinerary.client.numberOfDays} days`, margin, yPosition);
-    yPosition += 8;
-    doc.text(`Passengers: ${itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} pax`, margin, yPosition);
-    yPosition += 15;
+    const clientInfo = [
+      `Client Name: ${itinerary.client.name}`,
+      `Contact: ${itinerary.client.countryCode} ${itinerary.client.whatsapp}`,
+      `Email: ${itinerary.client.email || 'N/A'}`,
+      `Duration: ${itinerary.client.numberOfDays} days / ${itinerary.client.numberOfDays - 1} nights`,
+      `Passengers: ${itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} pax (${itinerary.client.numberOfPax.adults} adults, ${itinerary.client.numberOfPax.children} children)`,
+      `Transportation: ${itinerary.client.transportationMode}`,
+      !itinerary.client.travelDates.isFlexible ? `Travel Dates: ${new Date(itinerary.client.travelDates.startDate).toLocaleDateString()} to ${new Date(itinerary.client.travelDates.endDate).toLocaleDateString()}` : 'Travel Dates: Flexible'
+    ];
+    yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition);
 
-    // Itinerary details
-    doc.setFont('helvetica', 'bold');
-    doc.text('Day-by-Day Itinerary:', margin, yPosition);
-    yPosition += 10;
+    itinerary.dayPlans.forEach(dayPlan => {
+      const dayContent: { title: string; items: string[] }[] = [];
 
-    itinerary.dayPlans.forEach((dayPlan) => {
-      if (yPosition > 250) {
-        doc.addPage();
-        yPosition = margin;
+      const selectedSightseeing = sightseeings.filter(s => dayPlan.sightseeing.includes(s.id));
+      if (selectedSightseeing.length > 0) {
+        dayContent.push({
+          title: '🏛️ Sightseeing',
+          items: selectedSightseeing.map(s => s.name)
+        });
       }
 
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Day ${dayPlan.day}:`, margin, yPosition);
-      yPosition += 8;
+      const selectedActivities = dayPlan.activities.map((a: any) => {
+        const activity = activities.find(act => act.id === a.activityId);
+        const option = activity?.options.find(opt => opt.id === a.optionId);
+        return { activity, option };
+      }).filter((item: any) => item.activity && item.option);
 
-      doc.setFont('helvetica', 'normal');
-      
-      // Sightseeing
-      if (dayPlan.sightseeing.length > 0) {
-        const sightseeingNames = dayPlan.sightseeing.map(id => {
-          const sight = sightseeings.find(s => s.id === id);
-          return sight ? sight.name : 'Unknown';
-        }).join(', ');
-        doc.text(`• Sightseeing: ${sightseeingNames}`, margin + 5, yPosition);
-        yPosition += 6;
+      if (selectedActivities.length > 0) {
+        dayContent.push({
+          title: '🎯 Activities',
+          items: selectedActivities.map((item: any) => `${item.activity?.name} - ${item.option?.name}`)
+        });
       }
 
-      // Hotel
+      const selectedTickets = entryTickets.filter(t => dayPlan.entryTickets.includes(t.id));
+      if (selectedTickets.length > 0) {
+        dayContent.push({
+          title: '🎫 Entry Tickets',
+          items: selectedTickets.map(t => t.name)
+        });
+      }
+
+      const selectedMeals = dayPlan.meals.map((m: any) => {
+        const meal = meals.find(meal => meal.id === m.mealId);
+        return meal;
+      }).filter(Boolean);
+
+      if (selectedMeals.length > 0) {
+        dayContent.push({
+          title: '🍽️ Meals',
+          items: selectedMeals.map((m: any) => `${m.mealType} at ${m.placeName}`)
+        });
+      }
+
       if (dayPlan.hotel) {
         const hotel = hotels.find(h => h.id === dayPlan.hotel!.hotelId);
         const roomType = hotel?.roomTypes.find(rt => rt.id === dayPlan.hotel!.roomTypeId);
         if (hotel && roomType) {
-          doc.text(`• Hotel: ${hotel.name} - ${roomType.name}`, margin + 5, yPosition);
-          yPosition += 6;
+          dayContent.push({
+            title: '🏨 Accommodation',
+            items: [`${hotel.name} - ${roomType.name}`]
+          });
         }
       }
 
-      yPosition += 5;
+      yPosition = addDayPlanBox(doc, dayPlan.day, dayContent, yPosition);
     });
 
-    // Final pricing (sales version)
-    if (yPosition > 220) {
-      doc.addPage();
-      yPosition = margin;
-    }
+    const pricingItems = [
+      { label: 'TOTAL PACKAGE PRICE', usd: `$${itinerary.finalPrice.toFixed(2)}`, idr: `IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}` }
+    ];
 
-    doc.setFont('helvetica', 'bold');
-    doc.text('Premium Package Pricing:', margin, yPosition);
-    yPosition += 10;
+    yPosition = addPricingBox(doc, pricingItems, yPosition);
 
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Total Package Price: IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}`, margin, yPosition);
+    const inclusions = [
+      'Accommodation as per itinerary',
+      'Transportation in private vehicle',
+      'All entry tickets and permits',
+      'Meals as mentioned in itinerary',
+      'Professional English-speaking guide',
+      'All applicable taxes'
+    ];
 
-    doc.save(`${itinerary.client.name}-sales-package.pdf`);
+    const exclusions = [
+      'International/domestic airfare',
+      'Travel insurance',
+      'Personal expenses and tips',
+      'Meals not mentioned in itinerary',
+      'Visa fees and documentation',
+      'Emergency medical expenses'
+    ];
+
+    yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition);
+    finalizeLetterheadPDF(doc);
+
+    doc.save(`${itinerary.client.name.replace(/\s+/g, '_')}_Premium_Package.pdf`);
   };
 
   const renderDayPlanSummary = (dayPlan: any) => {
