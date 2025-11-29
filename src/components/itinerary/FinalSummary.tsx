@@ -444,26 +444,48 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
       yPosition = addPricingBox(doc, pricingItems, yPosition);
 
-      // Inclusions and Exclusions
-      const inclusions = [
-        'Accommodation as per itinerary',
-        'Transportation in private vehicle',
-        'All entry tickets and permits',
-        'Meals as mentioned in itinerary',
-        'Professional English-speaking guide',
-        'All applicable taxes'
-      ];
+      // Inclusions and Exclusions - Dynamic based on transportation mode
+      const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
+      const isSelfDrive = transport?.type === 'self-drive-car' || transport?.type === 'self-drive-scooter';
 
-      // Add activities to inclusions
+      const inclusions: string[] = [];
+
+      // Transportation inclusion
+      if (transport) {
+        if (transport.type === 'cab') {
+          inclusions.push('Private cab with driver for all transfers and sightseeing as per itinerary');
+          inclusions.push('Professional English-speaking driver');
+          inclusions.push('All entry tickets and permits');
+        } else if (transport.type === 'self-drive-car') {
+          inclusions.push(`${itinerary.client.numberOfDays} days self-drive car rental`);
+          inclusions.push('Vehicle insurance');
+        } else if (transport.type === 'self-drive-scooter') {
+          inclusions.push(`${itinerary.client.numberOfDays} days self-drive scooter rental`);
+          inclusions.push('Helmets and basic safety gear');
+        }
+      }
+
+      // Accommodation
+      inclusions.push('Accommodation as per itinerary');
+
+      // Meals
+      const hasMeals = itinerary.dayPlans.some(day => day.meals && day.meals.length > 0);
+      if (hasMeals) {
+        inclusions.push('Meals as mentioned in itinerary');
+      }
+
+      // Activities
       const allActivitiesForInclusions = new Set<string>();
       itinerary.dayPlans.forEach(dayPlan => {
-        dayPlan.activities.forEach((a: any) => {
-          const activity = activities.find(act => act.id === a.activityId);
-          const option = activity?.options.find(opt => opt.id === a.optionId);
-          if (activity && option) {
-            allActivitiesForInclusions.add(`${activity.name} - ${option.name}`);
-          }
-        });
+        if (dayPlan.activities && dayPlan.activities.length > 0) {
+          dayPlan.activities.forEach((a: any) => {
+            const activity = activities.find(act => act.id === a.activityId);
+            const option = activity?.options.find(opt => opt.id === a.optionId);
+            if (activity && option) {
+              allActivitiesForInclusions.add(`${activity.name} - ${option.name}`);
+            }
+          });
+        }
       });
 
       if (allActivitiesForInclusions.size > 0) {
@@ -472,14 +494,30 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         });
       }
 
+      // Common inclusions
+      inclusions.push('All applicable taxes');
+
+      // Exclusions - Dynamic based on transportation mode
       const exclusions = [
         'International/domestic airfare',
         'Travel insurance',
         'Personal expenses and tips',
-        'Meals not mentioned in itinerary',
         'Visa fees and documentation',
         'Emergency medical expenses'
       ];
+
+      if (isSelfDrive) {
+        exclusions.push('Entry tickets and permits (to be purchased by traveler)');
+        exclusions.push('Fuel costs');
+        exclusions.push('Parking fees');
+        exclusions.push('Traffic fines and violations');
+      }
+
+      if (!hasMeals) {
+        exclusions.push('All meals and beverages');
+      } else {
+        exclusions.push('Meals not mentioned in itinerary');
+      }
 
       yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition);
 
@@ -739,13 +777,23 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
               <ul className="space-y-2 text-sm">
                 {(() => {
                   const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
+                  const items = [];
+
                   if (transport) {
                     if (transport.type === 'cab') {
-                      return <li className="flex items-start"><span className="text-green-600 mr-2">✓</span>Private cab for all transfers and sightseeing as per the itinerary</li>;
-                    } else {
-                      return <li className="flex items-start"><span className="text-green-600 mr-2">✓</span>{itinerary.client.numberOfDays} days {transport.vehicleName} rental</li>;
+                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Private cab with driver for all transfers and sightseeing as per itinerary</li>);
+                      items.push(<li key="driver" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Professional English-speaking driver</li>);
+                      items.push(<li key="tickets" className="flex items-start"><span className="text-green-600 mr-2">✓</span>All entry tickets and permits</li>);
+                    } else if (transport.type === 'self-drive-car') {
+                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>{itinerary.client.numberOfDays} days self-drive car rental</li>);
+                      items.push(<li key="insurance" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Vehicle insurance</li>);
+                    } else if (transport.type === 'self-drive-scooter') {
+                      items.push(<li key="transport" className="flex items-start"><span className="text-green-600 mr-2">✓</span>{itinerary.client.numberOfDays} days self-drive scooter rental</li>);
+                      items.push(<li key="safety" className="flex items-start"><span className="text-green-600 mr-2">✓</span>Helmets and basic safety gear</li>);
                     }
                   }
+
+                  return items;
                 })()}
                 
                 {/* Hotels */}
@@ -794,8 +842,11 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                   ));
                 })()}
 
-                {/* Entry tickets */}
+                {/* Entry tickets - only for cab mode */}
                 {(() => {
+                  const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
+                  if (transport?.type !== 'cab') return null;
+
                   const allTickets = new Set();
                   itinerary.dayPlans.forEach(dayPlan => {
                     dayPlan.entryTickets.forEach(ticketId => {
@@ -813,30 +864,54 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
                 {/* Meals */}
                 {(() => {
-                  const allMeals = new Set();
-                  itinerary.dayPlans.forEach(dayPlan => {
-                    dayPlan.meals.forEach(mealId => {
-                      const meal = meals.find(m => m.id === mealId);
-                      if (meal) allMeals.add(`${meal.type.charAt(0).toUpperCase() + meal.type.slice(1)} at ${meal.place}`);
-                    });
-                  });
-                  return Array.from(allMeals).map((meal: any, index) => (
-                    <li key={index} className="flex items-start">
+                  const hasMeals = itinerary.dayPlans.some(day => day.meals && day.meals.length > 0);
+                  if (!hasMeals) return null;
+
+                  return (
+                    <li key="meals-general" className="flex items-start">
                       <span className="text-green-600 mr-2">✓</span>
-                      {meal}
+                      Meals as mentioned in itinerary
                     </li>
-                  ));
+                  );
                 })()}
+
+                {/* Taxes */}
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">✓</span>
+                  All applicable taxes
+                </li>
               </ul>
             </div>
 
             <div className="bg-red-50 rounded-xl p-4 md:p-6">
               <h4 className="font-bold text-red-900 mb-4">Package Exclusions</h4>
               <ul className="space-y-2 text-sm">
-                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Airfare</li>
-                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Visa</li>
-                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Any meal not mentioned in the itinerary</li>
-                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Anything not mentioned in inclusions</li>
+                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>International/domestic airfare</li>
+                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Travel insurance</li>
+                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Personal expenses and tips</li>
+                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Visa fees and documentation</li>
+                <li className="flex items-start"><span className="text-red-600 mr-2">✗</span>Emergency medical expenses</li>
+                {(() => {
+                  const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
+                  const isSelfDrive = transport?.type === 'self-drive-car' || transport?.type === 'self-drive-scooter';
+                  const items = [];
+
+                  if (isSelfDrive) {
+                    items.push(<li key="tickets" className="flex items-start"><span className="text-red-600 mr-2">✗</span>Entry tickets and permits (to be purchased by traveler)</li>);
+                    items.push(<li key="fuel" className="flex items-start"><span className="text-red-600 mr-2">✗</span>Fuel costs</li>);
+                    items.push(<li key="parking" className="flex items-start"><span className="text-red-600 mr-2">✗</span>Parking fees</li>);
+                    items.push(<li key="fines" className="flex items-start"><span className="text-red-600 mr-2">✗</span>Traffic fines and violations</li>);
+                  }
+
+                  const hasMeals = itinerary.dayPlans.some(day => day.meals && day.meals.length > 0);
+                  if (!hasMeals) {
+                    items.push(<li key="meals" className="flex items-start"><span className="text-red-600 mr-2">✗</span>All meals and beverages</li>);
+                  } else {
+                    items.push(<li key="meals" className="flex items-start"><span className="text-red-600 mr-2">✗</span>Meals not mentioned in itinerary</li>);
+                  }
+
+                  return items;
+                })()}
               </ul>
             </div>
           </div>
