@@ -16,6 +16,7 @@ import {
   addDocumentTitle,
   addInfoBox,
   addDayPlanBox,
+  addDayPlanBoxWithDetails,
   addPricingBox,
   addInclusionsExclusions,
   finalizeLetterheadPDF,
@@ -245,13 +246,13 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
     yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition);
 
     itinerary.dayPlans.forEach(dayPlan => {
-      const dayContent: { title: string; items: string[] }[] = [];
+      const dayContent: { title: string; items: Array<{ name: string; description?: string }> }[] = [];
 
       const selectedSightseeing = sightseeings.filter(s => dayPlan.sightseeing.includes(s.id));
       if (selectedSightseeing.length > 0) {
         dayContent.push({
           title: 'Sightseeing',
-          items: selectedSightseeing.map(s => s.name)
+          items: selectedSightseeing.map(s => ({ name: s.name, description: s.description || undefined }))
         });
       }
 
@@ -264,7 +265,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
       if (selectedActivities.length > 0) {
         dayContent.push({
           title: 'Activities',
-          items: selectedActivities.map((item: any) => `${item.activity?.name} - ${item.option?.name}`)
+          items: selectedActivities.map((item: any) => ({ name: `${item.activity?.name} - ${item.option?.name}` }))
         });
       }
 
@@ -272,7 +273,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
       if (selectedTickets.length > 0) {
         dayContent.push({
           title: 'Entry Tickets',
-          items: selectedTickets.map(t => t.name)
+          items: selectedTickets.map(t => ({ name: t.name }))
         });
       }
 
@@ -284,7 +285,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
       if (selectedMeals.length > 0) {
         dayContent.push({
           title: 'Meals',
-          items: selectedMeals.map((m: any) => `${m.mealType} at ${m.placeName}`)
+          items: selectedMeals.map((m: any) => ({ name: `${m.mealType} at ${m.placeName}` }))
         });
       }
 
@@ -294,12 +295,12 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
         if (hotel && roomType) {
           dayContent.push({
             title: 'Accommodation',
-            items: [`${hotel.name} - ${roomType.name}`]
+            items: [{ name: `${hotel.name} - ${roomType.name}` }]
           });
         }
       }
 
-      yPosition = addDayPlanBox(doc, dayPlan.day, dayContent, yPosition);
+      yPosition = addDayPlanBoxWithDetails(doc, dayPlan.day, dayContent, yPosition);
     });
 
     const pricingItems = [
@@ -308,23 +309,75 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
 
     yPosition = addPricingBox(doc, pricingItems, yPosition);
 
-    const inclusions = [
-      'Accommodation as per itinerary',
-      'Transportation in private vehicle',
-      'All entry tickets and permits',
-      'Meals as mentioned in itinerary',
-      'Professional English-speaking guide',
-      'All applicable taxes'
-    ];
+    // Dynamic inclusions/exclusions based on transport mode
+    const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
+    const isSelfDrive = transport?.type === 'self-drive-car' || transport?.type === 'self-drive-scooter';
+
+    const inclusions: string[] = [];
+
+    if (transport) {
+      if (transport.type === 'cab') {
+        inclusions.push('Private cab with driver for all transfers and sightseeing as per itinerary');
+        inclusions.push('Professional English-speaking driver');
+        inclusions.push('All entry tickets and permits');
+      } else if (transport.type === 'self-drive-car') {
+        inclusions.push(`${itinerary.client.numberOfDays} days self-drive car rental`);
+        inclusions.push('Vehicle insurance');
+      } else if (transport.type === 'self-drive-scooter') {
+        inclusions.push(`${itinerary.client.numberOfDays} days self-drive scooter rental`);
+        inclusions.push('Helmets and basic safety gear');
+      }
+    }
+
+    inclusions.push('Accommodation as per itinerary');
+
+    const hasMeals = itinerary.dayPlans.some(day => day.meals && day.meals.length > 0);
+    if (hasMeals) {
+      inclusions.push('Meals as mentioned in itinerary');
+    }
+
+    // Add activities
+    const allActivities = new Set<string>();
+    itinerary.dayPlans.forEach(dayPlan => {
+      if (dayPlan.activities && dayPlan.activities.length > 0) {
+        dayPlan.activities.forEach((a: any) => {
+          const activity = activities.find(act => act.id === a.activityId);
+          const option = activity?.options.find(opt => opt.id === a.optionId);
+          if (activity && option) {
+            allActivities.add(`${activity.name} - ${option.name}`);
+          }
+        });
+      }
+    });
+
+    if (allActivities.size > 0) {
+      allActivities.forEach(activityStr => {
+        inclusions.push(activityStr);
+      });
+    }
+
+    inclusions.push('All applicable taxes');
 
     const exclusions = [
       'International/domestic airfare',
       'Travel insurance',
       'Personal expenses and tips',
-      'Meals not mentioned in itinerary',
       'Visa fees and documentation',
       'Emergency medical expenses'
     ];
+
+    if (isSelfDrive) {
+      exclusions.push('Entry tickets and permits (to be purchased by traveler)');
+      exclusions.push('Fuel costs');
+      exclusions.push('Parking fees');
+      exclusions.push('Traffic fines and violations');
+    }
+
+    if (!hasMeals) {
+      exclusions.push('All meals and beverages');
+    } else {
+      exclusions.push('Meals not mentioned in itinerary');
+    }
 
     yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition);
     finalizeLetterheadPDF(doc);
