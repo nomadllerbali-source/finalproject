@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Client, DayPlan, Hotel, Sightseeing, Activity, EntryTicket, Meal } from '../../types';
+import { Client, DayPlan, Hotel, Sightseeing, Activity, EntryTicket, Meal, Area } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { Calendar, MapPin, Building2, Camera, Ticket, Utensils, ChevronRight, ChevronLeft, Check, Search, X } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 interface DayPlanningProps {
   client: Client;
@@ -17,7 +18,8 @@ type PlanningStep = 'sightseeing' | 'hotel' | 'activities' | 'tickets' | 'meals'
 const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAgent = false, isFixedItinerary = false, initialDayPlans }) => {
   const { state } = useData();
   const { hotels, sightseeings, activities, entryTickets, meals } = state;
-  
+
+  const [areas, setAreas] = useState<Area[]>([]);
   const [dayPlans, setDayPlans] = useState<DayPlan[]>([]);
   const [currentDay, setCurrentDay] = useState(1);
   const [currentStep, setCurrentStep] = useState<PlanningStep>('sightseeing');
@@ -29,6 +31,23 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
     tickets: '',
     meals: ''
   });
+
+  useEffect(() => {
+    fetchAreas();
+  }, []);
+
+  const fetchAreas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('areas')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      setAreas(data || []);
+    } catch (error) {
+      console.error('Error fetching areas:', error);
+    }
+  };
 
   useEffect(() => {
     if (initialDayPlans && initialDayPlans.length > 0) {
@@ -95,21 +114,28 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
   // Filter functions for search
   const getFilteredSightseeing = (dayIndex: number) => {
     const { availableSightseeing } = getAvailableItemsForDay(dayIndex);
+    const currentDayPlan = dayPlans[dayIndex];
     const searchTerm = searchTerms.sightseeing.toLowerCase();
-    return availableSightseeing.filter(sight => 
-      sight.name.toLowerCase().includes(searchTerm) ||
-      sight.description.toLowerCase().includes(searchTerm)
-    );
+
+    return availableSightseeing.filter(sight => {
+      const matchesArea = !currentDayPlan?.areaId || sight.areaId === currentDayPlan.areaId;
+      const matchesSearch = sight.name.toLowerCase().includes(searchTerm) ||
+        sight.description.toLowerCase().includes(searchTerm);
+      return matchesArea && matchesSearch;
+    });
   };
 
   const getFilteredActivities = (dayIndex: number) => {
     const { selectedActivityIds } = getAvailableItemsForDay(dayIndex);
+    const currentDayPlan = dayPlans[dayIndex];
     const searchTerm = searchTerms.activities.toLowerCase();
-    return activities.filter(activity => 
-      !selectedActivityIds.has(activity.id) &&
-      (activity.name.toLowerCase().includes(searchTerm) ||
-       activity.location.toLowerCase().includes(searchTerm))
-    );
+
+    return activities.filter(activity => {
+      const matchesArea = !currentDayPlan?.areaId || activity.areaId === currentDayPlan.areaId;
+      const matchesSearch = activity.name.toLowerCase().includes(searchTerm) ||
+        activity.location.toLowerCase().includes(searchTerm);
+      return !selectedActivityIds.has(activity.id) && matchesArea && matchesSearch;
+    });
   };
 
   const getFilteredTickets = (dayIndex: number, sightseeingIds: string[]) => {
@@ -122,12 +148,15 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
     );
   };
 
-  const getFilteredMeals = (mealType: string) => {
+  const getFilteredMeals = (mealType: string, dayIndex: number) => {
+    const currentDayPlan = dayPlans[dayIndex];
     const searchTerm = searchTerms.meals.toLowerCase();
-    return meals.filter(meal => 
-      meal.type === mealType &&
-      meal.place.toLowerCase().includes(searchTerm)
-    );
+
+    return meals.filter(meal => {
+      const matchesArea = !currentDayPlan?.areaId || meal.areaId === currentDayPlan.areaId;
+      const matchesSearch = meal.place.toLowerCase().includes(searchTerm);
+      return meal.type === mealType && matchesArea && matchesSearch;
+    });
   };
 
   const getFilteredHotels = (place: string) => {
@@ -331,28 +360,66 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
               <h4 className="font-semibold text-blue-900 mb-2">Select Sightseeing Spots</h4>
               <p className="text-blue-700 text-sm">Choose the places you want to visit on Day {currentDay}. You can select multiple locations.</p>
             </div>
-            
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search sightseeing spots..."
-                value={searchTerms.sightseeing}
-                onChange={(e) => updateSearchTerm('sightseeing', e.target.value)}
-                className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              {searchTerms.sightseeing && (
-                <button
-                  onClick={() => clearSearch('sightseeing')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+
+            {/* Area Selection */}
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 mb-4">
+              <label className="block text-sm font-medium text-teal-900 mb-2">
+                <MapPin className="h-4 w-4 inline mr-1" />
+                Select Area for Day {currentDay} *
+              </label>
+              <select
+                value={dayPlan.areaId || ''}
+                onChange={(e) => {
+                  const selectedArea = areas.find(a => a.id === e.target.value);
+                  const updatedDayPlans = [...dayPlans];
+                  updatedDayPlans[dayIndex] = {
+                    ...updatedDayPlans[dayIndex],
+                    areaId: e.target.value,
+                    areaName: selectedArea?.name || '',
+                    sightseeing: [],
+                    activities: [],
+                    meals: []
+                  };
+                  setDayPlans(updatedDayPlans);
+                }}
+                className="w-full p-3 border-2 border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+              >
+                <option value="">Choose an area first...</option>
+                {areas.map(area => (
+                  <option key={area.id} value={area.id}>{area.name}</option>
+                ))}
+              </select>
+              {!dayPlan.areaId && (
+                <p className="text-sm text-teal-700 mt-2">Please select an area to view available sightseeing spots, activities, and meals.</p>
               )}
             </div>
-            
-            <div className="space-y-3">
+
+            {dayPlan.areaId && (
+              <>
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search sightseeing spots..."
+                    value={searchTerms.sightseeing}
+                    onChange={(e) => updateSearchTerm('sightseeing', e.target.value)}
+                    className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  {searchTerms.sightseeing && (
+                    <button
+                      onClick={() => clearSearch('sightseeing')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {dayPlan.areaId && (
+              <div className="space-y-3">
               {getFilteredSightseeing(dayIndex).map(sight => (
                 <label key={sight.id} className="flex items-start space-x-3 p-4 border-2 border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
                   <input
@@ -376,18 +443,19 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                   </div>
                 </label>
               ))}
+
+              {getFilteredSightseeing(dayIndex).length === 0 && (
+                <div className="text-center py-8 text-slate-500">
+                  <MapPin className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                  <p>
+                    {searchTerms.sightseeing
+                      ? 'No sightseeing spots match your search.'
+                      : 'All available sightseeing spots for this transportation mode have been selected in previous days.'
+                    }
+                  </p>
+                </div>
+              )}
             </div>
-            
-            {getFilteredSightseeing(dayIndex).length === 0 && (
-              <div className="text-center py-8 text-slate-500">
-                <MapPin className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                <p>
-                  {searchTerms.sightseeing 
-                    ? 'No sightseeing spots match your search.' 
-                    : 'All available sightseeing spots for this transportation mode have been selected in previous days.'
-                  }
-                </p>
-              </div>
             )}
           </div>
         );
@@ -501,7 +569,18 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
               <h4 className="font-semibold text-green-900 mb-2">Add Activities & Experiences</h4>
               <p className="text-green-700 text-sm">Select activities for Day {currentDay}. These are optional but add value to the experience.</p>
             </div>
-            
+
+            {/* Area Display */}
+            {dayPlan.areaId && (
+              <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 flex items-center">
+                <MapPin className="h-5 w-5 text-teal-600 mr-2" />
+                <span className="text-sm font-medium text-teal-900">
+                  Area: {dayPlan.areaName || 'Selected Area'}
+                </span>
+                <span className="text-xs text-teal-600 ml-2">(Showing activities for this area)</span>
+              </div>
+            )}
+
             {/* Search Bar */}
             <div className="relative">
               <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -663,7 +742,18 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
               <h4 className="font-semibold text-red-900 mb-2">Choose Meals</h4>
               <p className="text-red-700 text-sm">Select meal options for Day {currentDay}. You can choose multiple meals for different times of the day.</p>
             </div>
-            
+
+            {/* Area Display */}
+            {dayPlan.areaId && (
+              <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 flex items-center">
+                <MapPin className="h-5 w-5 text-teal-600 mr-2" />
+                <span className="text-sm font-medium text-teal-900">
+                  Area: {dayPlan.areaName || 'Selected Area'}
+                </span>
+                <span className="text-xs text-teal-600 ml-2">(Showing meals for this area)</span>
+              </div>
+            )}
+
             {/* Search Bar */}
             <div className="relative">
               <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -686,8 +776,8 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
             
             <div className="space-y-6">
               {['breakfast', 'lunch', 'dinner'].map(mealType => {
-                const availableMeals = getFilteredMeals(mealType);
-                
+                const availableMeals = getFilteredMeals(mealType, dayIndex);
+
                 return (
                   <div key={mealType}>
                     <h5 className="text-base font-semibold text-slate-900 mb-3 capitalize flex items-center">
@@ -723,8 +813,8 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
               })}
               
               {/* No results message for meals */}
-              {searchTerms.meals && 
-               ['breakfast', 'lunch', 'dinner'].every(mealType => getFilteredMeals(mealType).length === 0) && (
+              {searchTerms.meals &&
+               ['breakfast', 'lunch', 'dinner'].every(mealType => getFilteredMeals(mealType, dayIndex).length === 0) && (
                 <div className="text-center py-8 text-slate-500">
                   <Utensils className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                   <p>No restaurants match your search.</p>

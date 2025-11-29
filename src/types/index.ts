@@ -128,6 +128,8 @@ export interface Meal {
 
 export interface DayPlan {
   day: number;
+  areaId?: string;
+  areaName?: string;
   sightseeing: string[];
   hotel: {
     place: string;
