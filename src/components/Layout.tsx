@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, hideHeader =
                   <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-sm sm:text-xl font-bold text-slate-900 truncate">Nomadller Solutions</h1>
+                  <h1 className="text-sm sm:text-xl font-bold text-slate-900 truncate">Bali CRM</h1>
                   <p className="text-xs text-slate-500 hidden sm:block truncate">Travel Agency Management</p>
                 </div>
               </div>

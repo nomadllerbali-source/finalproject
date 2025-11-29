@@ -86,7 +86,7 @@ const LoginForm: React.FC = () => {
                 <Users className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl md:text-2xl font-bold text-white">Nomadller Solutions</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-white">Bali CRM</h1>
                 <p className="text-blue-100 mt-1 text-sm md:text-base">Travel Agency Management</p>
               </div>
             </div>

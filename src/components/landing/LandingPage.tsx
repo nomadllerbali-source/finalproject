@@ -70,7 +70,7 @@ export default function LandingPage() {
               <span className={`text-xl md:text-2xl font-bold ${
                 isScrolled ? 'text-slate-900' : 'text-white'
               }`}>
-                Nomadller Bali
+                Bali CRM
               </span>
             </div>
 
@@ -409,7 +409,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold mb-4">
-              Why Choose Nomadller?
+              Why Choose Bali CRM?
             </h2>
             <p className="text-lg text-white/90 max-w-2xl mx-auto">
               Built by travel professionals, for travel professionals
@@ -578,7 +578,7 @@ export default function LandingPage() {
             <div className="md:col-span-2">
               <div className="flex items-center space-x-2 mb-4">
                 <MapPin className="w-8 h-8 text-emerald-400" />
-                <span className="text-2xl font-bold">Nomadller Bali</span>
+                <span className="text-2xl font-bold">Bali CRM</span>
               </div>
               <p className="text-slate-400 mb-6">
                 Empowering travel agencies with cutting-edge technology to create unforgettable Bali experiences.
@@ -627,7 +627,7 @@ export default function LandingPage() {
               <ul className="space-y-3">
                 <li className="flex items-center space-x-3">
                   <Mail className="w-5 h-5 text-emerald-400" />
-                  <span className="text-slate-400">info@nomadller.com</span>
+                  <span className="text-slate-400">info@balicrm.com</span>
                 </li>
                 <li className="flex items-center space-x-3">
                   <Phone className="w-5 h-5 text-emerald-400" />
@@ -642,7 +642,7 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-slate-800 pt-8 text-center text-slate-400">
-            <p>&copy; 2024 Nomadller Bali. All rights reserved.</p>
+            <p>&copy; 2024 Bali CRM. All rights reserved.</p>
           </div>
         </div>
       </section>

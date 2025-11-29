@@ -157,7 +157,7 @@ const FixedItineraryManager: React.FC = () => {
     completeItinerary += `${itinerary.exclusions}\n\n`;
 
     completeItinerary += `📞 CONTACT:\n`;
-    completeItinerary += `Nomadller Solutions - Travel Agency Management\n`;
+    completeItinerary += `Bali CRM - Travel Agency Management\n`;
     completeItinerary += `Professional Travel Planning Services\n\n`;
     
     completeItinerary += `Template created on: ${new Date(itinerary.createdAt).toLocaleDateString()}\n`;

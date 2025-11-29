@@ -200,7 +200,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
 
     itineraryText += `📞 SALES CONTACT:\n`;
     itineraryText += `${itinerary.client.name} Premium Travel Package\n`;
-    itineraryText += `Nomadller Solutions - Sales Department\n`;
+    itineraryText += `Bali CRM - Sales Department\n`;
     itineraryText += `Professional Travel Planning Services\n\n`;
     
     itineraryText += `Generated on: ${new Date().toLocaleDateString()}\n`;
