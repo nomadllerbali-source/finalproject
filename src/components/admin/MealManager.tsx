@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
-import { Meal } from '../../types';
-import { Utensils, Plus, Edit2, Trash2, Save, X, Search } from 'lucide-react';
+import { Meal, Area } from '../../types';
+import { Utensils, Plus, Edit2, Trash2, Save, X, Search, MapPin } from 'lucide-react';
 import Layout from '../Layout';
+import { supabase } from '../../lib/supabase';
 
 const MealManager: React.FC = () => {
   const { state, addMeal, updateMealData, deleteMealData } = useData();
   const { meals } = state;
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [filterArea, setFilterArea] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -15,22 +18,47 @@ const MealManager: React.FC = () => {
   const [newMeal, setNewMeal] = useState<Omit<Meal, 'id'>>({
     type: 'breakfast',
     place: '',
-    cost: 0
+    cost: 0,
+    areaId: '',
+    areaName: ''
   });
 
+  useEffect(() => {
+    fetchAreas();
+  }, []);
+
+  const fetchAreas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('areas')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      setAreas(data || []);
+    } catch (error) {
+      console.error('Error fetching areas:', error);
+    }
+  };
+
   const filteredMeals = meals.filter(meal => {
-    const matchesSearch = meal.place.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesArea = filterArea === 'all' || meal.areaId === filterArea;
+    const matchesSearch = meal.place.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (meal.areaName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || meal.type === filterType;
-    return matchesSearch && matchesType;
+    return matchesArea && matchesSearch && matchesType;
   });
 
   const handleAdd = async () => {
+    if (!newMeal.areaId) {
+      alert('Please select an area first');
+      return;
+    }
     const meal: Meal = {
       ...newMeal,
       id: Date.now().toString()
     };
     await addMeal(meal);
-    setNewMeal({ type: 'breakfast', place: '', cost: 0 });
+    setNewMeal({ type: 'breakfast', place: '', cost: 0, areaId: '', areaName: '' });
     setShowAddForm(false);
   };
 
@@ -91,6 +119,16 @@ const MealManager: React.FC = () => {
                   />
                 </div>
                 <select
+                  value={filterArea}
+                  onChange={(e) => setFilterArea(e.target.value)}
+                  className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">All Areas</option>
+                  {areas.map(area => (
+                    <option key={area.id} value={area.id}>{area.name}</option>
+                  ))}
+                </select>
+                <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                   className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -113,7 +151,30 @@ const MealManager: React.FC = () => {
 
           {showAddForm && (
             <div className="p-6 border-b border-slate-200 bg-slate-50">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <MapPin className="h-4 w-4 inline mr-1" />
+                    Area *
+                  </label>
+                  <select
+                    value={newMeal.areaId}
+                    onChange={(e) => {
+                      const selectedArea = areas.find(a => a.id === e.target.value);
+                      setNewMeal({
+                        ...newMeal,
+                        areaId: e.target.value,
+                        areaName: selectedArea?.name || ''
+                      });
+                    }}
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select area first...</option>
+                    {areas.map(area => (
+                      <option key={area.id} value={area.id}>{area.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Meal Type
@@ -199,6 +260,7 @@ const MealManager: React.FC = () => {
               <table className="w-full">
                 <thead className="bg-slate-50">
                   <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Area</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Meal Type</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Restaurant/Place</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Cost/Person</th>
@@ -210,6 +272,25 @@ const MealManager: React.FC = () => {
                     <tr key={meal.id} className="hover:bg-slate-50">
                       {isEditing === meal.id ? (
                         <>
+                          <td className="px-6 py-4">
+                            <select
+                              value={editForm.areaId}
+                              onChange={(e) => {
+                                const selectedArea = areas.find(a => a.id === e.target.value);
+                                setEditForm({
+                                  ...editForm,
+                                  areaId: e.target.value,
+                                  areaName: selectedArea?.name || ''
+                                });
+                              }}
+                              className="w-full p-2 border border-slate-300 rounded-lg"
+                            >
+                              <option value="">Select area...</option>
+                              {areas.map(area => (
+                                <option key={area.id} value={area.id}>{area.name}</option>
+                              ))}
+                            </select>
+                          </td>
                           <td className="px-6 py-4">
                             <select
                               value={editForm.type}
@@ -262,6 +343,12 @@ const MealManager: React.FC = () => {
                         </>
                       ) : (
                         <>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              {meal.areaName || 'No Area'}
+                            </span>
+                          </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center space-x-3">
                               <span className="text-2xl">{getMealIcon(meal.type)}</span>

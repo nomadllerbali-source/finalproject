@@ -1,15 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
-import { Hotel, RoomType, Area } from '../../types';
-import { Building2, Plus, Edit2, Trash2, Save, X, Star, Search, MapPin } from 'lucide-react';
+import { Hotel, RoomType } from '../../types';
+import { Building2, Plus, Edit2, Trash2, Save, X, Star, Search } from 'lucide-react';
 import Layout from '../Layout';
-import { supabase } from '../../lib/supabase';
 
 const HotelManager: React.FC = () => {
   const { state, addHotel, updateHotelData, deleteHotelData } = useData();
   const { hotels } = state;
-  const [areas, setAreas] = useState<Area[]>([]);
-  const [filterArea, setFilterArea] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Hotel>>({});
@@ -18,36 +15,13 @@ const HotelManager: React.FC = () => {
     name: '',
     place: '',
     starCategory: '3-star',
-    roomTypes: [],
-    areaId: '',
-    areaName: ''
+    roomTypes: []
   });
 
-  useEffect(() => {
-    fetchAreas();
-  }, []);
-
-  const fetchAreas = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('areas')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      setAreas(data || []);
-    } catch (error) {
-      console.error('Error fetching areas:', error);
-    }
-  };
-
-  const filteredHotels = hotels.filter(hotel => {
-    const matchesArea = filterArea === 'all' || hotel.areaId === filterArea;
-    const matchesSearch =
-      hotel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      hotel.place.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (hotel.areaName || '').toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesArea && matchesSearch;
-  });
+  const filteredHotels = hotels.filter(hotel =>
+    hotel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    hotel.place.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const addRoomType = (isNew: boolean = false) => {
     const newRoomType: RoomType = {
@@ -94,10 +68,6 @@ const HotelManager: React.FC = () => {
   };
 
   const handleAdd = async () => {
-    if (!newHotel.areaId) {
-      alert('Please select an area first.');
-      return;
-    }
     if (newHotel.roomTypes.length === 0) {
       alert('Please add at least one room type.');
       return;
@@ -108,7 +78,7 @@ const HotelManager: React.FC = () => {
       id: Date.now().toString()
     };
     await addHotel(hotel);
-    setNewHotel({ name: '', place: '', starCategory: '3-star', roomTypes: [], areaId: '', areaName: '' });
+    setNewHotel({ name: '', place: '', starCategory: '3-star', roomTypes: [] });
     setShowAddForm(false);
   };
 
@@ -168,30 +138,7 @@ const HotelManager: React.FC = () => {
 
           {showAddForm && (
             <div className="p-6 border-b border-slate-200 bg-slate-50">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <MapPin className="h-4 w-4 inline mr-1" />
-                    Area *
-                  </label>
-                  <select
-                    value={newHotel.areaId}
-                    onChange={(e) => {
-                      const selectedArea = areas.find(a => a.id === e.target.value);
-                      setNewHotel({
-                        ...newHotel,
-                        areaId: e.target.value,
-                        areaName: selectedArea?.name || ''
-                      });
-                    }}
-                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select area first...</option>
-                    {areas.map(area => (
-                      <option key={area.id} value={area.id}>{area.name}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Hotel Name
@@ -321,7 +268,7 @@ const HotelManager: React.FC = () => {
                 </button>
                 <button
                   onClick={handleAdd}
-                  disabled={!newHotel.areaId || !newHotel.name || !newHotel.place || newHotel.roomTypes.length === 0}
+                  disabled={!newHotel.name || !newHotel.place || newHotel.roomTypes.length === 0}
                   className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <Save className="h-4 w-4 mr-2" />
@@ -334,27 +281,15 @@ const HotelManager: React.FC = () => {
 
         {/* Hotels List */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
-              <input
-                type="text"
-                placeholder="Search hotels..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <select
-              value={filterArea}
-              onChange={(e) => setFilterArea(e.target.value)}
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Areas</option>
-              {areas.map(area => (
-                <option key={area.id} value={area.id}>{area.name}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-3">
+            <Search className="h-5 w-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search hotels..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
           </div>
         </div>
         <div className="space-y-4">
@@ -376,30 +311,7 @@ const HotelManager: React.FC = () => {
               <div key={hotel.id} className="bg-white rounded-xl shadow-sm border border-slate-200">
                 {isEditing === hotel.id ? (
                   <div className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">
-                          <MapPin className="h-4 w-4 inline mr-1" />
-                          Area *
-                        </label>
-                        <select
-                          value={editForm.areaId}
-                          onChange={(e) => {
-                            const selectedArea = areas.find(a => a.id === e.target.value);
-                            setEditForm({
-                              ...editForm,
-                              areaId: e.target.value,
-                              areaName: selectedArea?.name || ''
-                            });
-                          }}
-                          className="w-full p-3 border border-slate-300 rounded-lg"
-                        >
-                          <option value="">Select area...</option>
-                          {areas.map(area => (
-                            <option key={area.id} value={area.id}>{area.name}</option>
-                          ))}
-                        </select>
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">
                           Hotel Name
@@ -541,13 +453,7 @@ const HotelManager: React.FC = () => {
                             <Building2 className="h-6 w-6 text-blue-600" />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="text-lg font-semibold text-slate-900">{hotel.name}</h3>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
-                                <MapPin className="h-3 w-3 mr-1" />
-                                {hotel.areaName || 'No Area'}
-                              </span>
-                            </div>
+                            <h3 className="text-lg font-semibold text-slate-900">{hotel.name}</h3>
                             <div className="flex items-center space-x-3 mt-1">
                               <span className="text-slate-600">{hotel.place}</span>
                               <div className="flex items-center">

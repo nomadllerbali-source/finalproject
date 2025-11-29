@@ -74,8 +74,6 @@ export interface Hotel {
   place: string;
   starCategory: '3-star' | '4-star' | '5-star';
   roomTypes: RoomType[];
-  areaId?: string;
-  areaName?: string;
 }
 
 export interface VehicleCost {
@@ -117,8 +115,6 @@ export interface EntryTicket {
   name: string;
   cost: number;
   sightseeingId: string;
-  areaId?: string;
-  areaName?: string;
 }
 
 export interface Meal {
