@@ -52,18 +52,6 @@ export function addLetterheadHeader(doc: jsPDF): void {
   doc.setFontSize(7);
   const webLine = 'www.nomadller.in  I  nomadllercommunity@gmail.com';
   doc.text(webLine, MARGINS.left, 32);
-
-  doc.setTextColor(...COLORS.gold);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('NOMADLLER', pageWidth - MARGINS.right - 35, 25);
-  doc.setFontSize(6);
-  doc.setFont('helvetica', 'italic');
-  doc.text('TRAVEL & HOSPITALITY', pageWidth - MARGINS.right - 35, 30);
-
-  doc.setDrawColor(...COLORS.gold);
-  doc.setLineWidth(1.5);
-  doc.roundedRect(pageWidth - MARGINS.right - 38, 18, 36, 15, 2, 2, 'S');
 }
 
 export function addLetterheadFooter(config: LetterheadConfig): void {
@@ -239,16 +227,16 @@ export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclus
 
   yPosition = addSectionHeader(doc, 'INCLUSIONS', yPosition);
 
-  doc.setFontSize(9);
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLORS.black);
 
   inclusions.forEach(item => {
-    yPosition = checkPageBreak(doc, yPosition, 5);
+    yPosition = checkPageBreak(doc, yPosition, 6);
     const wrappedText = doc.splitTextToSize(item, 160);
     wrappedText.forEach((line: string) => {
-      doc.text(`✓ ${line}`, MARGINS.left + 5, yPosition);
-      yPosition += 5;
+      doc.text(`• ${line}`, MARGINS.left + 5, yPosition);
+      yPosition += 6;
     });
   });
 
@@ -257,14 +245,16 @@ export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclus
 
   yPosition = addSectionHeader(doc, 'EXCLUSIONS', yPosition);
 
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLORS.black);
 
   exclusions.forEach(item => {
-    yPosition = checkPageBreak(doc, yPosition, 5);
+    yPosition = checkPageBreak(doc, yPosition, 6);
     const wrappedText = doc.splitTextToSize(item, 160);
     wrappedText.forEach((line: string) => {
-      doc.text(`✗ ${line}`, MARGINS.left + 5, yPosition);
-      yPosition += 5;
+      doc.text(`• ${line}`, MARGINS.left + 5, yPosition);
+      yPosition += 6;
     });
   });
 
