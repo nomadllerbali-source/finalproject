@@ -36,6 +36,8 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
   const { state: authState } = useAuth();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
   const hasSavedRef = React.useRef(false);
+  const [showTemplateModal, setShowTemplateModal] = React.useState(false);
+  const [selectedTemplate, setSelectedTemplate] = React.useState<'nomadller' | 'bali-malayali'>('nomadller');
 
   // Save itinerary to database
   React.useEffect(() => {
@@ -226,9 +228,9 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
     });
   };
 
-  const generatePDF = () => {
+  const generatePDF = (template: 'nomadller' | 'bali-malayali' = 'nomadller') => {
     const doc = new jsPDF();
-    addLetterheadHeader(doc);
+    addLetterheadHeader(doc, template);
 
     let yPosition = MARGINS.contentStart;
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -243,7 +245,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
       `Transportation: ${itinerary.client.transportationMode}`,
       !itinerary.client.travelDates.isFlexible ? `Travel Dates: ${new Date(itinerary.client.travelDates.startDate).toLocaleDateString()} to ${new Date(itinerary.client.travelDates.endDate).toLocaleDateString()}` : 'Travel Dates: Flexible'
     ];
-    yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition);
+    yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition, template);
 
     itinerary.dayPlans.forEach(dayPlan => {
       const dayContent: { title: string; items: Array<{ name: string; description?: string }> }[] = [];
@@ -300,14 +302,14 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
         }
       }
 
-      yPosition = addDayPlanBoxWithDetails(doc, dayPlan.day, dayContent, yPosition);
+      yPosition = addDayPlanBoxWithDetails(doc, dayPlan.day, dayContent, yPosition, template);
     });
 
     const pricingItems = [
       { label: 'TOTAL PACKAGE PRICE', usd: `$${itinerary.finalPrice.toFixed(2)}`, idr: `IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}` }
     ];
 
-    yPosition = addPricingBox(doc, pricingItems, yPosition);
+    yPosition = addPricingBox(doc, pricingItems, yPosition, template);
 
     // Inclusions and Exclusions - Exact format as requested
     const transport = transportations.find(t =>
@@ -389,10 +391,16 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
       exclusionsNote = 'NOTE: IDP (International Driving Permit) compulsory';
     }
 
-    yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition, exclusionsNote || undefined);
+    yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition, exclusionsNote || undefined, template);
     finalizeLetterheadPDF(doc);
 
     doc.save(`${itinerary.client.name.replace(/\s+/g, '_')}_Premium_Package.pdf`);
+  };
+
+  const handleTemplateSelect = (template: 'nomadller' | 'bali-malayali') => {
+    setSelectedTemplate(template);
+    setShowTemplateModal(false);
+    generatePDF(template);
   };
 
   const renderDayPlanSummary = (dayPlan: any) => {
@@ -644,7 +652,7 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
                 </button>
               )}
               <button
-                onClick={generatePDF}
+                onClick={() => setShowTemplateModal(true)}
                 className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base"
               >
                 <Download className="mr-2 h-5 w-5" />
@@ -679,6 +687,55 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
           </div>
         </div>
       </div>
+
+      {/* Template Selection Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-800 mb-3 sm:mb-4">Select PDF Template</h3>
+            <p className="text-sm sm:text-base text-slate-600 mb-4 sm:mb-6">Choose which letterhead template to use for your PDF</p>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => handleTemplateSelect('nomadller')}
+                className="w-full p-3 sm:p-4 border-2 border-purple-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all group touch-target"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-left">
+                    <div className="font-bold text-base sm:text-lg text-slate-800 group-hover:text-purple-600">Nomadller</div>
+                    <div className="text-xs sm:text-sm text-slate-500">Kerala, India</div>
+                  </div>
+                  <div className="text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleTemplateSelect('bali-malayali')}
+                className="w-full p-3 sm:p-4 border-2 border-green-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all group touch-target"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-left">
+                    <div className="font-bold text-base sm:text-lg text-slate-800 group-hover:text-green-600">Bali Malayali</div>
+                    <div className="text-xs sm:text-sm text-slate-500">Bali, Indonesia</div>
+                  </div>
+                  <div className="text-green-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowTemplateModal(false)}
+              className="w-full mt-4 sm:mt-6 px-4 py-3 text-sm sm:text-base text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors touch-target"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
