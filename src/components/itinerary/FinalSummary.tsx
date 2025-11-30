@@ -433,7 +433,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
       const inclusions: string[] = [];
 
-      // Transportation inclusion
+      // 1. Transportation - FIRST
       if (transport) {
         if (transport.type === 'cab') {
           inclusions.push(`${itinerary.client.numberOfDays} days cab transportation`);
@@ -444,31 +444,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         }
       }
 
-      // Activities - individual listing
-      const allActivitiesForInclusions = new Set<string>();
-      itinerary.dayPlans.forEach(dayPlan => {
-        if (dayPlan.activities && dayPlan.activities.length > 0) {
-          dayPlan.activities.forEach((a: any) => {
-            const activity = activities.find(act => act.id === a.activityId);
-            const option = activity?.options.find(opt => opt.id === a.optionId);
-            if (activity && option) {
-              allActivitiesForInclusions.add(`${activity.name} - ${option.name}`);
-            }
-          });
-        }
-      });
-
-      // Add each activity as separate line
-      allActivitiesForInclusions.forEach(activityStr => {
-        inclusions.push(activityStr);
-      });
-
-      // Entry tickets (cab mode only)
-      if (transport?.type === 'cab') {
-        inclusions.push('All entry tickets mentioned in itinerary');
-      }
-
-      // Accommodations - detailed listing
+      // 2. Accommodations - SECOND (detailed listing)
       const hotelStaysForInclusions = new Map<string, { hotel: any; roomType: any; nights: number }>();
       itinerary.dayPlans.forEach(dayPlan => {
         if (dayPlan.hotel) {
@@ -489,20 +465,34 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         inclusions.push(`${nights} night${nights > 1 ? 's' : ''} stay ${hotel.name} in ${roomType.name}`);
       });
 
-      // Boat and bike for self-drive modes
+      // 3. Sightseeing tours - THIRD
+      inclusions.push('Sightseeing tours as mentioned');
+
+      // 4. Activities - FOURTH
+      inclusions.push('Activities and experiences as listed');
+
+      // 5. Professional service - FIFTH
+      inclusions.push('Professional travel planning service');
+
+      // 6. Support - SIXTH
+      inclusions.push('24/7 customer support during travel');
+
+      // Additional items for self-drive modes
       if (isSelfDrive) {
         inclusions.push('Up and down boat ticket to Nusa Penida');
         inclusions.push('Bike for Nusa Penida sightseeing');
       }
 
-      // Exclusions - Exact format as requested
+      // Exclusions - Exact WhatsApp format and order
       const exclusions = [
-        'International/domestic airfare',
+        'International/domestic flights',
         'Travel insurance',
-        'Personal expenses and tips',
+        'Personal expenses and shopping',
+        'Tips and gratuities',
+        'Any meals not mentioned in inclusions',
+        'Additional activities not listed',
         'Visa fees and documentation',
-        'Emergency medical expenses',
-        'All meals and beverage'
+        'Emergency medical expenses'
       ];
 
       if (isSelfDrive) {
