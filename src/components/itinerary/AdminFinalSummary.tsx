@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   CheckCircle, Download, ArrowLeft, RotateCcw, Calendar, Users,
   MapPin, Building2, Camera, Ticket, Utensils, DollarSign, Car,
-  Phone, Mail, Globe, TrendingUp, Copy
+  Phone, Mail, Globe, TrendingUp, Copy, MessageCircle
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { generateUUID } from '../../utils/uuid';
@@ -32,6 +32,8 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
   const { state, dispatch } = useData();
   const { state: authState } = useAuth();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
+  const [showTemplateModal, setShowTemplateModal] = React.useState(false);
+  const [pdfAction, setPdfAction] = React.useState<'download' | 'whatsapp' | null>(null);
 
   // Save itinerary to data context
   React.useEffect(() => {
@@ -85,9 +87,9 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
     dispatch({ type: 'ADD_ITINERARY', payload: itineraryWithMetadata });
   }, [itinerary, dispatch, authState.user?.id, state.clients]);
 
-  const generatePDF = () => {
+  const generatePDF = (template: 'nomadller' | 'bali-malayali' = 'nomadller') => {
     const doc = new jsPDF();
-    addLetterheadHeader(doc);
+    addLetterheadHeader(doc, template);
 
     let yPosition = MARGINS.contentStart;
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -556,6 +558,38 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
     });
   };
 
+  const handleDownloadClick = () => {
+    setPdfAction('download');
+    setShowTemplateModal(true);
+  };
+
+  const handleSendWhatsAppClick = () => {
+    setPdfAction('whatsapp');
+    setShowTemplateModal(true);
+  };
+
+  const handleTemplateSelect = (template: 'nomadller' | 'bali-malayali') => {
+    setShowTemplateModal(false);
+
+    if (pdfAction === 'download') {
+      generatePDF(template);
+    } else if (pdfAction === 'whatsapp') {
+      sendPDFWhatsApp(template);
+    }
+
+    setPdfAction(null);
+  };
+
+  const sendPDFWhatsApp = (template: 'nomadller' | 'bali-malayali' = 'nomadller') => {
+    generatePDF(template);
+
+    const message = encodeURIComponent("Here's your personalized itinerary! Please review the details and let me know if you'd like any changes. Happy to assist!");
+    const whatsappUrl = `https://wa.me/${itinerary.client.countryCode}${itinerary.client.whatsapp}?text=${message}`;
+
+    alert('PDF downloaded! Please manually attach it to WhatsApp and send the message.');
+    window.open(whatsappUrl, '_blank');
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4">
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
@@ -961,15 +995,22 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                 Back to Review
               </button>
               <button
-                onClick={generatePDF}
+                onClick={handleDownloadClick}
                 className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base"
               >
                 <Download className="mr-2 h-5 w-5" />
                 Download PDF
               </button>
               <button
-                onClick={copyItineraryToClipboard}
+                onClick={handleSendWhatsAppClick}
                 className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm md:text-base"
+              >
+                <MessageCircle className="mr-2 h-5 w-5" />
+                Send PDF via WhatsApp
+              </button>
+              <button
+                onClick={copyItineraryToClipboard}
+                className="inline-flex items-center justify-center px-4 md:px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm md:text-base"
               >
                 <Copy className="mr-2 h-5 w-5" />
                 Copy Itinerary
@@ -985,6 +1026,58 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
           </div>
         </div>
       </div>
+
+      {/* Template Selection Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-2xl font-bold text-slate-800 mb-4">Select PDF Template</h3>
+            <p className="text-slate-600 mb-6">Choose which letterhead template to use for your PDF</p>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => handleTemplateSelect('nomadller')}
+                className="w-full p-4 border-2 border-purple-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-left">
+                    <div className="font-bold text-lg text-slate-800 group-hover:text-purple-600">Nomadller</div>
+                    <div className="text-sm text-slate-500">Kerala, India</div>
+                  </div>
+                  <div className="text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <CheckCircle className="h-6 w-6" />
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleTemplateSelect('bali-malayali')}
+                className="w-full p-4 border-2 border-green-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-left">
+                    <div className="font-bold text-lg text-slate-800 group-hover:text-green-600">Bali Malayali</div>
+                    <div className="text-sm text-slate-500">Bali, Indonesia</div>
+                  </div>
+                  <div className="text-green-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <CheckCircle className="h-6 w-6" />
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowTemplateModal(false);
+                setPdfAction(null);
+              }}
+              className="w-full mt-6 px-4 py-2 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
