@@ -177,7 +177,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
     // Transportation inclusion
     if (transport) {
       if (transport.type === 'cab') {
-        inclusions.push(`All transportation by private cab (${transport.vehicleName})`);
+        inclusions.push(`${itinerary.client.numberOfDays} days cab transportation`);
       } else if (transport.type === 'self-drive-car') {
         inclusions.push(`${itinerary.client.numberOfDays} days self-drive-car transportation`);
       } else if (transport.type === 'self-drive-scooter') {
