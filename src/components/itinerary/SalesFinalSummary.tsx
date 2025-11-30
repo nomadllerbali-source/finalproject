@@ -320,13 +320,13 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
       if (transport.type === 'cab') {
         inclusions.push(`All transportation by private cab (${transport.vehicleName})`);
       } else if (transport.type === 'self-drive-car') {
-        inclusions.push(`${itinerary.client.numberOfDays} day self-drive car for sightseeing`);
+        inclusions.push(`${itinerary.client.numberOfDays} days self-drive-car transportation`);
       } else if (transport.type === 'self-drive-scooter') {
-        inclusions.push(`${itinerary.client.numberOfDays} day self-drive scooter for sightseeing`);
+        inclusions.push(`${itinerary.client.numberOfDays} days self-drive-scooter transportation`);
       }
     }
 
-    // Activities
+    // Activities - individual listing
     const allActivities = new Set<string>();
     itinerary.dayPlans.forEach(dayPlan => {
       if (dayPlan.activities && dayPlan.activities.length > 0) {
@@ -340,17 +340,36 @@ const SalesFinalSummary: React.FC<SalesFinalSummaryProps> = ({ itinerary, onBack
       }
     });
 
-    if (allActivities.size > 0) {
-      inclusions.push('Activities - ' + Array.from(allActivities).join(', '));
-    }
+    // Add each activity as separate line
+    allActivities.forEach(activityStr => {
+      inclusions.push(activityStr);
+    });
 
     // Entry tickets (cab mode only)
     if (transport?.type === 'cab') {
       inclusions.push('All entry tickets mentioned in itinerary');
     }
 
-    // Accommodations
-    inclusions.push('All accommodations mentioned in itinerary');
+    // Accommodations - detailed listing
+    const hotelStaysForInclusions = new Map<string, { hotel: any; roomType: any; nights: number }>();
+    itinerary.dayPlans.forEach(dayPlan => {
+      if (dayPlan.hotel) {
+        const hotel = hotels.find(h => h.id === dayPlan.hotel!.hotelId);
+        const roomType = hotel?.roomTypes.find(rt => rt.id === dayPlan.hotel!.roomTypeId);
+        if (hotel && roomType) {
+          const key = `${hotel.id}-${roomType.id}`;
+          if (hotelStaysForInclusions.has(key)) {
+            hotelStaysForInclusions.get(key)!.nights++;
+          } else {
+            hotelStaysForInclusions.set(key, { hotel, roomType, nights: 1 });
+          }
+        }
+      }
+    });
+
+    hotelStaysForInclusions.forEach(({ hotel, roomType, nights }) => {
+      inclusions.push(`${nights} night${nights > 1 ? 's' : ''} stay ${hotel.name} in ${roomType.name}`);
+    });
 
     // Boat and bike for self-drive modes
     if (isSelfDrive) {
