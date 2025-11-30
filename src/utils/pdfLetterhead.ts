@@ -129,13 +129,13 @@ export function addSectionHeader(doc: jsPDF, text: string, yPosition: number, co
   return yPosition + 10;
 }
 
-export function addInfoBox(doc: jsPDF, title: string, content: string[], yPosition: number): number {
+export function addInfoBox(doc: jsPDF, title: string, content: string[], yPosition: number, template: 'nomadller' | 'bali-malayali' = 'nomadller'): number {
   const boxWidth = 170;
   const lineHeight = 6;
   const padding = 5;
   const boxHeight = (content.length + 1) * lineHeight + padding * 2;
 
-  yPosition = checkPageBreak(doc, yPosition, boxHeight + 5);
+  yPosition = checkPageBreak(doc, yPosition, boxHeight + 5, template);
 
   doc.setDrawColor(...COLORS.gold);
   doc.setLineWidth(0.5);
@@ -161,7 +161,7 @@ export function addInfoBox(doc: jsPDF, title: string, content: string[], yPositi
   return yPosition + boxHeight + 8;
 }
 
-export function addDayPlanBox(doc: jsPDF, dayNumber: number, content: { title: string; items: string[] }[], yPosition: number): number {
+export function addDayPlanBox(doc: jsPDF, dayNumber: number, content: { title: string; items: string[] }[], yPosition: number, template: 'nomadller' | 'bali-malayali' = 'nomadller'): number {
   const boxWidth = 170;
 
   let totalHeight = 15;
@@ -169,7 +169,7 @@ export function addDayPlanBox(doc: jsPDF, dayNumber: number, content: { title: s
     totalHeight += 8 + (section.items.length * 5);
   });
 
-  yPosition = checkPageBreak(doc, yPosition, totalHeight);
+  yPosition = checkPageBreak(doc, yPosition, totalHeight, template);
 
   doc.setFillColor(...COLORS.gold);
   doc.circle(MARGINS.left + 5, yPosition + 5, 5, 'F');
@@ -190,7 +190,7 @@ export function addDayPlanBox(doc: jsPDF, dayNumber: number, content: { title: s
   let contentY = yPosition + 15;
 
   content.forEach(section => {
-    contentY = checkPageBreak(doc, contentY, 8 + (section.items.length * 5));
+    contentY = checkPageBreak(doc, contentY, 8 + (section.items.length * 5), template);
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
@@ -205,7 +205,7 @@ export function addDayPlanBox(doc: jsPDF, dayNumber: number, content: { title: s
     section.items.forEach(item => {
       const wrappedText = doc.splitTextToSize(item, boxWidth - 20);
       wrappedText.forEach((line: string) => {
-        contentY = checkPageBreak(doc, contentY, 5);
+        contentY = checkPageBreak(doc, contentY, 5, template);
         doc.text(`• ${line}`, MARGINS.left + 10, contentY);
         contentY += 5;
       });
@@ -221,7 +221,8 @@ export function addDayPlanBoxWithDetails(
   doc: jsPDF,
   dayNumber: number,
   content: { title: string; items: Array<{ name: string; description?: string }> }[],
-  yPosition: number
+  yPosition: number,
+  template: 'nomadller' | 'bali-malayali' = 'nomadller'
 ): number {
   const boxWidth = 170;
 
@@ -234,7 +235,7 @@ export function addDayPlanBoxWithDetails(
     });
   });
 
-  yPosition = checkPageBreak(doc, yPosition, totalHeight);
+  yPosition = checkPageBreak(doc, yPosition, totalHeight, template);
 
   doc.setFillColor(...COLORS.gold);
   doc.circle(MARGINS.left + 5, yPosition + 5, 5, 'F');
@@ -255,7 +256,7 @@ export function addDayPlanBoxWithDetails(
   let contentY = yPosition + 15;
 
   content.forEach(section => {
-    contentY = checkPageBreak(doc, contentY, 10);
+    contentY = checkPageBreak(doc, contentY, 10, template);
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
@@ -266,7 +267,7 @@ export function addDayPlanBoxWithDetails(
     doc.setTextColor(...COLORS.black);
 
     section.items.forEach(item => {
-      contentY = checkPageBreak(doc, contentY, item.description ? 10 : 6);
+      contentY = checkPageBreak(doc, contentY, item.description ? 10 : 6, template);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
@@ -281,7 +282,7 @@ export function addDayPlanBoxWithDetails(
         doc.setFontSize(8);
         const descWrapped = doc.splitTextToSize(item.description, boxWidth - 25);
         descWrapped.forEach((line: string) => {
-          contentY = checkPageBreak(doc, contentY, 5);
+          contentY = checkPageBreak(doc, contentY, 5, template);
           doc.text(line, MARGINS.left + 15, contentY);
           contentY += 4;
         });
@@ -295,11 +296,11 @@ export function addDayPlanBoxWithDetails(
   return contentY + 5;
 }
 
-export function addPricingBox(doc: jsPDF, pricing: { label: string; usd: string; idr: string }[], yPosition: number): number {
+export function addPricingBox(doc: jsPDF, pricing: { label: string; usd: string; idr: string }[], yPosition: number, template: 'nomadller' | 'bali-malayali' = 'nomadller'): number {
   const boxWidth = 170;
   const boxHeight = 30;
 
-  yPosition = checkPageBreak(doc, yPosition, boxHeight);
+  yPosition = checkPageBreak(doc, yPosition, boxHeight, template);
 
   doc.setFillColor(...COLORS.darkGold);
   doc.roundedRect(MARGINS.left, yPosition, boxWidth, boxHeight, 3, 3, 'F');
@@ -318,8 +319,8 @@ export function addPricingBox(doc: jsPDF, pricing: { label: string; usd: string;
   return yPosition + boxHeight + 10;
 }
 
-export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclusions: string[], yPosition: number, note?: string): number {
-  yPosition = checkPageBreak(doc, yPosition, 40);
+export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclusions: string[], yPosition: number, note?: string, template: 'nomadller' | 'bali-malayali' = 'nomadller'): number {
+  yPosition = checkPageBreak(doc, yPosition, 40, template);
 
   yPosition = addSectionHeader(doc, 'INCLUSIONS', yPosition);
 
@@ -328,7 +329,7 @@ export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclus
   doc.setTextColor(...COLORS.black);
 
   inclusions.forEach(item => {
-    yPosition = checkPageBreak(doc, yPosition, 6);
+    yPosition = checkPageBreak(doc, yPosition, 6, template);
 
     // Check if item is a bold header (wrapped in **)
     if (item.startsWith('**') && item.endsWith('**')) {
@@ -347,7 +348,7 @@ export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclus
   });
 
   yPosition += 5;
-  yPosition = checkPageBreak(doc, yPosition, 40);
+  yPosition = checkPageBreak(doc, yPosition, 40, template);
 
   yPosition = addSectionHeader(doc, 'EXCLUSIONS', yPosition);
 
@@ -356,7 +357,7 @@ export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclus
   doc.setTextColor(...COLORS.black);
 
   exclusions.forEach(item => {
-    yPosition = checkPageBreak(doc, yPosition, 6);
+    yPosition = checkPageBreak(doc, yPosition, 6, template);
     const wrappedText = doc.splitTextToSize(item, 160);
     wrappedText.forEach((line: string) => {
       doc.text(`• ${line}`, MARGINS.left + 5, yPosition);
@@ -367,7 +368,7 @@ export function addInclusionsExclusions(doc: jsPDF, inclusions: string[], exclus
   // Add note if provided
   if (note) {
     yPosition += 5;
-    yPosition = checkPageBreak(doc, yPosition, 10);
+    yPosition = checkPageBreak(doc, yPosition, 10, template);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(200, 0, 0);

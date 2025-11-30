@@ -354,7 +354,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         `Transportation: ${itinerary.client.transportationMode}`,
         !itinerary.client.travelDates.isFlexible ? `Travel Dates: ${new Date(itinerary.client.travelDates.startDate).toLocaleDateString()} to ${new Date(itinerary.client.travelDates.endDate).toLocaleDateString()}` : 'Travel Dates: Flexible'
       ];
-      yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition);
+      yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition, template);
 
       // Day-by-day itinerary
       itinerary.dayPlans.forEach(dayPlan => {
@@ -417,7 +417,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
           }
         }
 
-        yPosition = addDayPlanBoxWithDetails(doc, dayPlan.day, dayContent, yPosition);
+        yPosition = addDayPlanBoxWithDetails(doc, dayPlan.day, dayContent, yPosition, template);
       });
 
       // Total pricing only
@@ -427,7 +427,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         idr: formatCurrency(convertToIDR(itinerary.finalPrice, itinerary.exchangeRate), 'IDR')
       }];
 
-      yPosition = addPricingBox(doc, pricingItems, yPosition);
+      yPosition = addPricingBox(doc, pricingItems, yPosition, template);
 
       // Inclusions and Exclusions - Exact format as requested
       const transport = transportations.find(t =>
@@ -509,7 +509,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         exclusionsNote = 'NOTE: IDP (International Driving Permit) compulsory';
       }
 
-      yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition, exclusionsNote || undefined);
+      yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition, exclusionsNote || undefined, template);
 
       // Finalize with footers
       console.log('Finalizing PDF with footers...');
@@ -596,7 +596,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         `Transportation: ${itinerary.client.transportationMode}`,
         !itinerary.client.travelDates.isFlexible ? `Travel Dates: ${new Date(itinerary.client.travelDates.startDate).toLocaleDateString()} to ${new Date(itinerary.client.travelDates.endDate).toLocaleDateString()}` : 'Travel Dates: Flexible'
       ];
-      yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition);
+      yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition, template);
 
       // Day-by-day itinerary (same as download)
       itinerary.dayPlans.forEach(dayPlan => {
@@ -634,7 +634,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
           }
         }
 
-        yPosition = addDayPlanBoxWithDetails(doc, dayPlan.day, dayContent, yPosition);
+        yPosition = addDayPlanBoxWithDetails(doc, dayPlan.day, dayContent, yPosition, template);
       });
 
       // Pricing
@@ -643,7 +643,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         usd: formatCurrency(itinerary.finalPrice, 'USD'),
         idr: formatCurrency(convertToIDR(itinerary.finalPrice, itinerary.exchangeRate), 'IDR')
       }];
-      yPosition = addPricingBox(doc, pricingItems, yPosition);
+      yPosition = addPricingBox(doc, pricingItems, yPosition, template);
 
       // Inclusions and Exclusions
       const transport = transportations.find(t =>
@@ -713,7 +713,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         exclusionsNote = 'Note: For self-drive bookings, an International Driving Permit (IDP) is mandatory.';
       }
 
-      addInclusionsExclusions(doc, inclusions, exclusions, yPosition, exclusionsNote);
+      addInclusionsExclusions(doc, inclusions, exclusions, yPosition, exclusionsNote, template);
 
       // Instead of saving, open WhatsApp with message
       const message = encodeURIComponent("Here's your personalized itinerary! Please review the details and let me know if you'd like any changes. Happy to assist! 🌴");

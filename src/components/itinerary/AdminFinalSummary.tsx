@@ -104,7 +104,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
       `Transportation: ${itinerary.client.transportationMode}`,
       !itinerary.client.travelDates.isFlexible ? `Travel Dates: ${new Date(itinerary.client.travelDates.startDate).toLocaleDateString()} to ${new Date(itinerary.client.travelDates.endDate).toLocaleDateString()}` : 'Travel Dates: Flexible'
     ];
-    yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition);
+    yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition, template);
 
     itinerary.dayPlans.forEach(dayPlan => {
       const dayContent: { title: string; items: Array<{ name: string; description?: string }> }[] = [];
@@ -161,14 +161,14 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
         }
       }
 
-      yPosition = addDayPlanBoxWithDetails(doc, dayPlan.day, dayContent, yPosition);
+      yPosition = addDayPlanBoxWithDetails(doc, dayPlan.day, dayContent, yPosition, template);
     });
 
     const pricingItems = [
       { label: 'TOTAL PACKAGE PRICE', usd: `$${itinerary.finalPrice.toFixed(2)}`, idr: `IDR ${(itinerary.finalPrice * itinerary.exchangeRate).toLocaleString('en-IN')}` }
     ];
 
-    yPosition = addPricingBox(doc, pricingItems, yPosition);
+    yPosition = addPricingBox(doc, pricingItems, yPosition, template);
 
     // Inclusions and Exclusions - Exact format as requested
     const transport = transportations.find(t =>
@@ -250,7 +250,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
       exclusionsNote = 'NOTE: IDP (International Driving Permit) compulsory';
     }
 
-    yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition, exclusionsNote || undefined);
+    yPosition = addInclusionsExclusions(doc, inclusions, exclusions, yPosition, exclusionsNote || undefined, template);
     finalizeLetterheadPDF(doc);
 
     doc.save(`${itinerary.client.name.replace(/\s+/g, '_')}_Confirmed_Itinerary.pdf`);
