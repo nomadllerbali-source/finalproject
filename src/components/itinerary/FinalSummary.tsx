@@ -428,7 +428,9 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       yPosition = addPricingBox(doc, pricingItems, yPosition);
 
       // Inclusions and Exclusions - Exact format as requested
-      const transport = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
+      const transport = transportations.find(t =>
+        t.vehicleName === itinerary.client.transportationMode || t.type === itinerary.client.transportationMode
+      );
       const isSelfDrive = transport?.type === 'self-drive-car' || transport?.type === 'self-drive-scooter';
 
       const inclusions: string[] = [];
