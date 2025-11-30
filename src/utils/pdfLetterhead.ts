@@ -25,7 +25,7 @@ export const MARGINS = {
   contentStart: 50
 } as const;
 
-export function addLetterheadHeader(doc: jsPDF): void {
+export function addLetterheadHeader(doc: jsPDF, template: 'nomadller' | 'bali-malayali' = 'nomadller'): void {
   const pageWidth = doc.internal.pageSize.getWidth();
 
   doc.setFillColor(...COLORS.lightGray);
@@ -38,20 +38,38 @@ export function addLetterheadHeader(doc: jsPDF): void {
   doc.setTextColor(...COLORS.black);
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('NOMADLLER PVT LTD', MARGINS.left, 15);
 
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  const addressLine1 = '1st floor, Shabana Building, Puzhakkarapadam Road, Vennala High School Road, Vennala, Ernakulam, Kerala | GST IN: 32AAICN3551E1ZS';
-  doc.text(addressLine1, MARGINS.left, 22);
+  if (template === 'bali-malayali') {
+    doc.text('BALI MALAYALI', MARGINS.left, 15);
 
-  doc.setFontSize(7);
-  const contactLine = 'PH : +91 8129165766  |  +91 8590766166  |  +91 8501918751';
-  doc.text(contactLine, MARGINS.left, 27);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    const addressLine1 = 'Jl. Beringin, Dalung, Kuta Utara, Badung Regency, Bali 80361, Indonesia';
+    doc.text(addressLine1, MARGINS.left, 22);
 
-  doc.setFontSize(7);
-  const webLine = 'www.nomadller.in  I  nomadllercommunity@gmail.com';
-  doc.text(webLine, MARGINS.left, 32);
+    doc.setFontSize(7);
+    const contactLine = 'PH : +91 8129165766  |  +91 8590766166  |  +91 8501918751';
+    doc.text(contactLine, MARGINS.left, 27);
+
+    doc.setFontSize(7);
+    const webLine = 'www.nomadller.in  I  nomadllercommunity@gmail.com';
+    doc.text(webLine, MARGINS.left, 32);
+  } else {
+    doc.text('NOMADLLER PVT LTD', MARGINS.left, 15);
+
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    const addressLine1 = '1st floor, Shabana Building, Puzhakkarapadam Road, Vennala High School Road, Vennala, Ernakulam, Kerala | GST IN: 32AAICN3551E1ZS';
+    doc.text(addressLine1, MARGINS.left, 22);
+
+    doc.setFontSize(7);
+    const contactLine = 'PH : +91 8129165766  |  +91 8590766166  |  +91 8501918751';
+    doc.text(contactLine, MARGINS.left, 27);
+
+    doc.setFontSize(7);
+    const webLine = 'www.nomadller.in  I  nomadllercommunity@gmail.com';
+    doc.text(webLine, MARGINS.left, 32);
+  }
 }
 
 export function addLetterheadFooter(config: LetterheadConfig): void {
@@ -81,16 +99,16 @@ export function addLetterheadFooter(config: LetterheadConfig): void {
   doc.text(`Page ${pageNumber} of ${totalPages}`, pageWidth - MARGINS.right, pageHeight - 5, { align: 'right' });
 }
 
-export function addPageWithLetterhead(doc: jsPDF): void {
+export function addPageWithLetterhead(doc: jsPDF, template: 'nomadller' | 'bali-malayali' = 'nomadller'): void {
   doc.addPage();
-  addLetterheadHeader(doc);
+  addLetterheadHeader(doc, template);
 }
 
-export function checkPageBreak(doc: jsPDF, yPosition: number, requiredSpace: number = 40): number {
+export function checkPageBreak(doc: jsPDF, yPosition: number, requiredSpace: number = 40, template: 'nomadller' | 'bali-malayali' = 'nomadller'): number {
   const pageHeight = doc.internal.pageSize.getHeight();
 
   if (yPosition + requiredSpace > pageHeight - 35) {
-    addPageWithLetterhead(doc);
+    addPageWithLetterhead(doc, template);
     return MARGINS.contentStart;
   }
 

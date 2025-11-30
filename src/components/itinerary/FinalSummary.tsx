@@ -26,7 +26,9 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
   const { state, dispatch } = useData();
   const { hotels, sightseeings, activities, entryTickets, meals, transportations } = state;
   const [isGeneratingPDF, setIsGeneratingPDF] = React.useState(false);
-  
+  const [showTemplateModal, setShowTemplateModal] = React.useState(false);
+  const [pdfAction, setPdfAction] = React.useState<'download' | 'whatsapp' | null>(null);
+
   React.useEffect(() => {
     dispatch({ type: 'ADD_ITINERARY', payload: itinerary });
   }, [itinerary, dispatch]);
@@ -324,7 +326,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
     return text;
   };
 
-  const downloadPDF = async () => {
+  const downloadPDF = async (template: 'nomadller' | 'bali-malayali' = 'nomadller') => {
     setIsGeneratingPDF(true);
     try {
       console.log('Starting PDF generation...');
@@ -332,8 +334,8 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       const doc = new jsPDF();
       console.log('jsPDF loaded');
 
-      // Add letterhead header
-      addLetterheadHeader(doc);
+      // Add letterhead header with selected template
+      addLetterheadHeader(doc, template);
       console.log('Letterhead header added');
 
       let yPosition = MARGINS.contentStart;
@@ -542,6 +544,195 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
     const encodedText = encodeURIComponent(text);
     const whatsappUrl = `https://wa.me/${itinerary.client.countryCode}${itinerary.client.whatsapp}?text=${encodedText}`;
     window.open(whatsappUrl, '_blank');
+  };
+
+  const handleDownloadClick = () => {
+    setPdfAction('download');
+    setShowTemplateModal(true);
+  };
+
+  const handleSendWhatsAppClick = () => {
+    setPdfAction('whatsapp');
+    setShowTemplateModal(true);
+  };
+
+  const handleTemplateSelect = async (template: 'nomadller' | 'bali-malayali') => {
+    setShowTemplateModal(false);
+
+    if (pdfAction === 'download') {
+      await downloadPDF(template);
+    } else if (pdfAction === 'whatsapp') {
+      await sendPDFWhatsApp(template);
+    }
+
+    setPdfAction(null);
+  };
+
+  const sendPDFWhatsApp = async (template: 'nomadller' | 'bali-malayali' = 'nomadller') => {
+    setIsGeneratingPDF(true);
+    try {
+      console.log('Generating PDF for WhatsApp...');
+
+      // Generate PDF in memory (same as downloadPDF but return blob)
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+
+      // Add letterhead header with selected template
+      addLetterheadHeader(doc, template);
+
+      let yPosition = MARGINS.contentStart;
+
+      // Document title
+      const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      yPosition = addDocumentTitle(doc, 'CONFIRMED TRAVEL ITINERARY', `Generated on ${today}`, yPosition);
+
+      // Client Information Box
+      const clientInfo = [
+        `Client Name: ${itinerary.client.name}`,
+        `Contact: ${itinerary.client.countryCode} ${itinerary.client.whatsapp}`,
+        `Email: ${itinerary.client.email || 'N/A'}`,
+        `Duration: ${itinerary.client.numberOfDays} days / ${itinerary.client.numberOfDays - 1} nights`,
+        `Passengers: ${itinerary.client.numberOfPax.adults + itinerary.client.numberOfPax.children} pax (${itinerary.client.numberOfPax.adults} adults, ${itinerary.client.numberOfPax.children} children)`,
+        `Transportation: ${itinerary.client.transportationMode}`,
+        !itinerary.client.travelDates.isFlexible ? `Travel Dates: ${new Date(itinerary.client.travelDates.startDate).toLocaleDateString()} to ${new Date(itinerary.client.travelDates.endDate).toLocaleDateString()}` : 'Travel Dates: Flexible'
+      ];
+      yPosition = addInfoBox(doc, 'CLIENT INFORMATION', clientInfo, yPosition);
+
+      // Day-by-day itinerary (same as download)
+      itinerary.dayPlans.forEach(dayPlan => {
+        const dayContent: { title: string; items: Array<{ name: string; description?: string }> }[] = [];
+
+        const selectedSightseeing = sightseeings.filter(s => dayPlan.sightseeing.includes(s.id));
+        if (selectedSightseeing.length > 0) {
+          dayContent.push({
+            title: 'Sightseeing',
+            items: selectedSightseeing.map(s => ({ name: s.name, description: s.description || undefined }))
+          });
+        }
+
+        const selectedActivities = dayPlan.activities.map((a: any) => {
+          const activity = activities.find(act => act.id === a.activityId);
+          const option = activity?.options.find(opt => opt.id === a.optionId);
+          return { activity, option };
+        }).filter((item: any) => item.activity && item.option);
+
+        if (selectedActivities.length > 0) {
+          dayContent.push({
+            title: 'Activities',
+            items: selectedActivities.map((item: any) => ({ name: `${item.activity?.name} - ${item.option?.name}` }))
+          });
+        }
+
+        if (dayPlan.hotel) {
+          const hotel = hotels.find(h => h.id === dayPlan.hotel!.hotelId);
+          const roomType = hotel?.roomTypes.find(rt => rt.id === dayPlan.hotel!.roomTypeId);
+          if (hotel && roomType) {
+            dayContent.push({
+              title: 'Accommodation',
+              items: [{ name: `${hotel.name} - ${roomType.name}` }]
+            });
+          }
+        }
+
+        yPosition = addDayPlanBoxWithDetails(doc, dayPlan.day, dayContent, yPosition);
+      });
+
+      // Pricing
+      const pricingItems = [{
+        label: 'TOTAL PACKAGE PRICE',
+        usd: formatCurrency(itinerary.finalPrice, 'USD'),
+        idr: formatCurrency(convertToIDR(itinerary.finalPrice, itinerary.exchangeRate), 'IDR')
+      }];
+      yPosition = addPricingBox(doc, pricingItems, yPosition);
+
+      // Inclusions and Exclusions
+      const transport = transportations.find(t =>
+        t.vehicleName === itinerary.client.transportationMode || t.type === itinerary.client.transportationMode
+      );
+      const isSelfDrive = transport?.type === 'self-drive-car' || transport?.type === 'self-drive-scooter';
+
+      const inclusions: string[] = [];
+
+      if (transport) {
+        if (transport.type === 'cab') {
+          inclusions.push(`${itinerary.client.numberOfDays} days cab transportation`);
+        } else if (transport.type === 'self-drive-car') {
+          inclusions.push(`${itinerary.client.numberOfDays} days self-drive-car transportation`);
+        } else if (transport.type === 'self-drive-scooter') {
+          inclusions.push(`${itinerary.client.numberOfDays} days self-drive-scooter transportation`);
+        }
+      }
+
+      const hotelStaysForInclusions = new Map<string, { hotel: any; roomType: any; nights: number }>();
+      itinerary.dayPlans.forEach(dayPlan => {
+        if (dayPlan.hotel) {
+          const hotel = hotels.find(h => h.id === dayPlan.hotel!.hotelId);
+          const roomType = hotel?.roomTypes.find(rt => rt.id === dayPlan.hotel!.roomTypeId);
+          if (hotel && roomType) {
+            const key = `${hotel.id}-${roomType.id}`;
+            if (hotelStaysForInclusions.has(key)) {
+              hotelStaysForInclusions.get(key)!.nights++;
+            } else {
+              hotelStaysForInclusions.set(key, { hotel, roomType, nights: 1 });
+            }
+          }
+        }
+      });
+
+      hotelStaysForInclusions.forEach(({ hotel, roomType, nights }) => {
+        inclusions.push(`${nights} night${nights > 1 ? 's' : ''} stay ${hotel.name} in ${roomType.name}`);
+      });
+
+      inclusions.push('Sightseeing tours as mentioned');
+      inclusions.push('Activities and experiences as listed');
+      inclusions.push('Professional travel planning service');
+      inclusions.push('24/7 customer support during travel');
+
+      if (isSelfDrive) {
+        inclusions.push('Up and down boat ticket to Nusa Penida');
+        inclusions.push('Bike for Nusa Penida sightseeing');
+      }
+
+      const exclusions = [
+        'International/domestic flights',
+        'Travel insurance',
+        'Personal expenses and shopping',
+        'Tips and gratuities',
+        'Any meals not mentioned in inclusions',
+        'Additional activities not listed',
+        'Visa fees and documentation',
+        'Emergency medical expenses'
+      ];
+
+      if (isSelfDrive) {
+        exclusions.splice(2, 0, 'Entry tickets');
+      }
+
+      let exclusionsNote = '';
+      if (isSelfDrive) {
+        exclusionsNote = 'Note: For self-drive bookings, an International Driving Permit (IDP) is mandatory.';
+      }
+
+      addInclusionsExclusions(doc, inclusions, exclusions, yPosition, exclusionsNote);
+
+      // Instead of saving, open WhatsApp with message
+      const message = encodeURIComponent("Here's your personalized itinerary! Please review the details and let me know if you'd like any changes. Happy to assist! 🌴");
+      const whatsappUrl = `https://wa.me/${itinerary.client.countryCode}${itinerary.client.whatsapp}?text=${message}`;
+
+      // Note: Browser can't attach PDF directly to WhatsApp
+      // So we download PDF and show instructions
+      const filename = `${itinerary.client.name.replace(/[^a-z0-9]/gi, '_')}_Confirmed_Itinerary.pdf`;
+      doc.save(filename);
+
+      alert('PDF downloaded! Please manually attach it to WhatsApp and send the message.');
+      window.open(whatsappUrl, '_blank');
+
+    } catch (error) {
+      console.error('Error sending PDF:', error);
+      alert(`Failed to prepare PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   const renderDayPlanSummary = (dayPlan: any) => {
@@ -1127,7 +1318,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center mb-4 md:mb-6">
             <button
-              onClick={downloadPDF}
+              onClick={handleDownloadClick}
               disabled={isGeneratingPDF}
               className="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
@@ -1135,18 +1326,26 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
               {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
             </button>
             <button
+              onClick={handleSendWhatsAppClick}
+              disabled={isGeneratingPDF}
+              className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <MessageCircle className="h-5 w-5 mr-2" />
+              Send PDF via WhatsApp
+            </button>
+            <button
               onClick={copyToClipboard}
               className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Copy className="h-5 w-5 mr-2" />
-              Copy Itinerary for WhatsApp
+              Copy Itinerary Text
             </button>
             <button
               onClick={openWhatsApp}
-              className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+              className="inline-flex items-center justify-center px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors"
             >
               <MessageCircle className="h-5 w-5 mr-2" />
-              Send via WhatsApp
+              Send Text via WhatsApp
             </button>
           </div>
 
@@ -1167,6 +1366,58 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
           </div>
         </div>
       </div>
+
+      {/* Template Selection Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-2xl font-bold text-slate-800 mb-4">Select PDF Template</h3>
+            <p className="text-slate-600 mb-6">Choose which letterhead template to use for your PDF</p>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => handleTemplateSelect('nomadller')}
+                className="w-full p-4 border-2 border-purple-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-left">
+                    <div className="font-bold text-lg text-slate-800 group-hover:text-purple-600">Nomadller</div>
+                    <div className="text-sm text-slate-500">Kerala, India</div>
+                  </div>
+                  <div className="text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <CheckCircle className="h-6 w-6" />
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleTemplateSelect('bali-malayali')}
+                className="w-full p-4 border-2 border-green-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-left">
+                    <div className="font-bold text-lg text-slate-800 group-hover:text-green-600">Bali Malayali</div>
+                    <div className="text-sm text-slate-500">Bali, Indonesia</div>
+                  </div>
+                  <div className="text-green-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <CheckCircle className="h-6 w-6" />
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowTemplateModal(false);
+                setPdfAction(null);
+              }}
+              className="w-full mt-6 px-4 py-2 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
