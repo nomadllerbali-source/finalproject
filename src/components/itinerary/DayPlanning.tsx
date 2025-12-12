@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Client, DayPlan, Hotel, Sightseeing, Activity, EntryTicket, Meal, Area } from '../../types';
 import { useData } from '../../contexts/DataContext';
-import { Calendar, MapPin, Building2, Camera, Ticket, Utensils, ChevronRight, ChevronLeft, Check, Search, X } from 'lucide-react';
+import { Calendar, MapPin, Building2, Camera, Ticket, Utensils, ChevronRight, ChevronLeft, Check, Search, X, Copy } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface DayPlanningProps {
@@ -24,6 +24,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
   const [currentDay, setCurrentDay] = useState(1);
   const [currentStep, setCurrentStep] = useState<PlanningStep>('sightseeing');
   const [completedDays, setCompletedDays] = useState<number[]>([]);
+  const [sameAsYesterday, setSameAsYesterday] = useState<Record<number, boolean>>({});
   const [searchTerms, setSearchTerms] = useState<Record<PlanningStep, string>>({
     sightseeing: '',
     hotel: '',
@@ -186,6 +187,23 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
     const updatedPlans = [...dayPlans];
     updatedPlans[dayIndex] = { ...updatedPlans[dayIndex], [field]: value };
     setDayPlans(updatedPlans);
+  };
+
+  const handleSameAsYesterday = (dayIndex: number, checked: boolean) => {
+    setSameAsYesterday(prev => ({ ...prev, [dayIndex]: checked }));
+
+    if (checked && dayIndex > 0) {
+      const previousDayHotel = dayPlans[dayIndex - 1]?.hotel;
+      if (previousDayHotel) {
+        updateDayPlan(dayIndex, 'hotel', {
+          place: previousDayHotel.place,
+          hotelId: previousDayHotel.hotelId,
+          roomTypeId: previousDayHotel.roomTypeId
+        });
+      }
+    } else if (!checked) {
+      updateDayPlan(dayIndex, 'hotel', null);
+    }
   };
 
   const getHotelsForPlace = (place: string) => {
@@ -493,13 +511,80 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
         );
 
       case 'hotel':
+        const previousDayHotel = dayIndex > 0 ? dayPlans[dayIndex - 1]?.hotel : null;
+        const canUseSameAsYesterday = dayIndex > 0 && previousDayHotel !== null;
+        const isSameAsYesterdayChecked = sameAsYesterday[dayIndex] || false;
+
         return (
           <div className="space-y-4">
             <div className="bg-purple-50 rounded-lg p-4 mb-4">
               <h4 className="font-semibold text-purple-900 mb-2">Choose Hotel Accommodation</h4>
               <p className="text-purple-700 text-sm">Select where you want to stay on Day {currentDay}. You can skip this if no accommodation is needed.</p>
             </div>
-            
+
+            {/* Same as Yesterday Option */}
+            {dayIndex > 0 && (
+              <div className="bg-gradient-to-r from-blue-50 to-teal-50 border-2 border-blue-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id={`same-as-yesterday-${dayIndex}`}
+                    checked={isSameAsYesterdayChecked}
+                    disabled={!canUseSameAsYesterday}
+                    onChange={(e) => handleSameAsYesterday(dayIndex, e.target.checked)}
+                    className="mt-1 h-5 w-5 text-blue-600 focus:ring-blue-500 border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <div className="flex-1">
+                    <label
+                      htmlFor={`same-as-yesterday-${dayIndex}`}
+                      className={`font-semibold text-slate-900 flex items-center cursor-pointer ${!canUseSameAsYesterday ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Copy className="h-4 w-4 mr-2 text-blue-600" />
+                      Same hotel as Day {dayIndex}
+                    </label>
+                    {canUseSameAsYesterday ? (
+                      <div className="mt-2 bg-white rounded-lg p-3 border border-blue-200">
+                        <p className="text-sm text-slate-600 mb-2">Previous day's hotel:</p>
+                        <div className="space-y-1">
+                          <div className="text-sm">
+                            <span className="font-medium text-slate-700">Place:</span>{' '}
+                            <span className="text-slate-900">{previousDayHotel.place}</span>
+                          </div>
+                          {previousDayHotel.hotelId && (
+                            <div className="text-sm">
+                              <span className="font-medium text-slate-700">Hotel:</span>{' '}
+                              <span className="text-slate-900">
+                                {hotels.find(h => h.id === previousDayHotel.hotelId)?.name || 'Unknown'}
+                              </span>
+                            </div>
+                          )}
+                          {previousDayHotel.roomTypeId && previousDayHotel.hotelId && (
+                            <div className="text-sm">
+                              <span className="font-medium text-slate-700">Room Type:</span>{' '}
+                              <span className="text-slate-900">
+                                {hotels.find(h => h.id === previousDayHotel.hotelId)
+                                  ?.roomTypes.find(rt => rt.id === previousDayHotel.roomTypeId)?.name || 'Unknown'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {isSameAsYesterdayChecked && (
+                          <p className="text-xs text-green-600 mt-2 flex items-center">
+                            <Check className="h-3 w-3 mr-1" />
+                            Hotel automatically copied from Day {dayIndex}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500 mt-1">
+                        No hotel was selected on Day {dayIndex}. Please choose a hotel manually.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -507,6 +592,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                 </label>
                 <select
                   value={dayPlan.hotel?.place || ''}
+                  disabled={isSameAsYesterdayChecked}
                   onChange={(e) => {
                     const place = e.target.value;
                     if (place) {
@@ -515,13 +601,21 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                       updateDayPlan(dayIndex, 'hotel', null);
                     }
                   }}
-                  className="w-full p-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className={`w-full p-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
+                    isSameAsYesterdayChecked ? 'bg-slate-100 cursor-not-allowed opacity-60' : ''
+                  }`}
                 >
                   <option value="">No hotel needed</option>
                   {uniquePlaces.map(place => (
                     <option key={place} value={place}>{place}</option>
                   ))}
                 </select>
+                {isSameAsYesterdayChecked && (
+                  <p className="text-xs text-blue-600 mt-1 flex items-center">
+                    <Copy className="h-3 w-3 mr-1" />
+                    Uncheck "Same hotel as Day {dayIndex}" to change this selection
+                  </p>
+                )}
               </div>
 
               {dayPlan.hotel?.place && (
@@ -529,7 +623,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Hotel Name
                   </label>
-                  {dayPlan.hotel.place && (
+                  {dayPlan.hotel.place && !isSameAsYesterdayChecked && (
                     <div className="relative mb-2">
                       <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                       <input
@@ -551,6 +645,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                   )}
                   <select
                     value={dayPlan.hotel.hotelId}
+                    disabled={isSameAsYesterdayChecked}
                     onChange={(e) => {
                       updateDayPlan(dayIndex, 'hotel', {
                         ...dayPlan.hotel!,
@@ -558,13 +653,21 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                         roomTypeId: ''
                       });
                     }}
-                    className="w-full p-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className={`w-full p-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
+                      isSameAsYesterdayChecked ? 'bg-slate-100 cursor-not-allowed opacity-60' : ''
+                    }`}
                   >
                     <option value="">Select hotel</option>
                     {getFilteredHotels(dayPlan.hotel.place).map(hotel => (
                       <option key={hotel.id} value={hotel.id}>{hotel.name}</option>
                     ))}
                   </select>
+                  {isSameAsYesterdayChecked && (
+                    <p className="text-xs text-blue-600 mt-1 flex items-center">
+                      <Copy className="h-3 w-3 mr-1" />
+                      Uncheck "Same hotel as Day {dayIndex}" to change this selection
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -575,19 +678,28 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                   </label>
                   <select
                     value={dayPlan.hotel.roomTypeId}
+                    disabled={isSameAsYesterdayChecked}
                     onChange={(e) => {
                       updateDayPlan(dayIndex, 'hotel', {
                         ...dayPlan.hotel!,
                         roomTypeId: e.target.value
                       });
                     }}
-                    className="w-full p-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className={`w-full p-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
+                      isSameAsYesterdayChecked ? 'bg-slate-100 cursor-not-allowed opacity-60' : ''
+                    }`}
                   >
                     <option value="">Select room type</option>
                     {getRoomTypesForHotel(dayPlan.hotel.hotelId).map(roomType => (
                       <option key={roomType.id} value={roomType.id}>{roomType.name}</option>
                     ))}
                   </select>
+                  {isSameAsYesterdayChecked && (
+                    <p className="text-xs text-blue-600 mt-1 flex items-center">
+                      <Copy className="h-3 w-3 mr-1" />
+                      Uncheck "Same hotel as Day {dayIndex}" to change this selection
+                    </p>
+                  )}
                 </div>
               )}
             </div>
