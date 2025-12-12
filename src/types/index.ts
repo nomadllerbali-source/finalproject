@@ -56,6 +56,8 @@ export interface Transportation {
   type: 'cab' | 'self-drive-car' | 'self-drive-scooter';
   vehicleName: string;
   costPerDay: number;
+  minOccupancy: number;
+  maxOccupancy: number;
   areaId?: string;
   areaName?: string;
 }

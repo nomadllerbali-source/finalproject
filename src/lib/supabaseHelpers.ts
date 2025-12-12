@@ -95,6 +95,8 @@ export const fromDbTransportation = (row: TransportationsRow): Transportation =>
   type: row.type as any,
   vehicleName: row.vehicle_name,
   costPerDay: row.cost_per_day,
+  minOccupancy: row.min_occupancy || 1,
+  maxOccupancy: row.max_occupancy || 1,
   areaId: row.area_id || undefined,
   areaName: row.area_name || undefined
 });
@@ -104,6 +106,8 @@ export const toDbTransportation = (t: Transportation) => ({
   type: t.type,
   vehicle_name: t.vehicleName,
   cost_per_day: t.costPerDay,
+  min_occupancy: t.minOccupancy,
+  max_occupancy: t.maxOccupancy,
   area_id: t.areaId || null,
   area_name: t.areaName || null
 });

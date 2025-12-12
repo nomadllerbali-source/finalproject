@@ -18,6 +18,8 @@ const TransportationManager: React.FC = () => {
     type: 'cab',
     vehicleName: '',
     costPerDay: 0,
+    minOccupancy: 1,
+    maxOccupancy: 1,
     areaId: '',
     areaName: ''
   });
@@ -52,12 +54,20 @@ const TransportationManager: React.FC = () => {
       alert('Please select an area first');
       return;
     }
+    if (newTransportation.maxOccupancy < newTransportation.minOccupancy) {
+      alert('Maximum occupancy must be greater than or equal to minimum occupancy');
+      return;
+    }
+    if (newTransportation.minOccupancy < 1) {
+      alert('Minimum occupancy must be at least 1');
+      return;
+    }
     const transportation: Transportation = {
       ...newTransportation,
       id: Date.now().toString()
     };
     await addTransportation(transportation);
-    setNewTransportation({ type: 'cab', vehicleName: '', costPerDay: 0, areaId: '', areaName: '' });
+    setNewTransportation({ type: 'cab', vehicleName: '', costPerDay: 0, minOccupancy: 1, maxOccupancy: 1, areaId: '', areaName: '' });
     setShowAddForm(false);
   };
 
@@ -109,7 +119,7 @@ const TransportationManager: React.FC = () => {
 
           {showAddForm && (
             <div className="p-3 sm:p-6 border-b border-slate-200 bg-slate-50">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     <MapPin className="h-4 w-4 inline mr-1" />
@@ -165,6 +175,49 @@ const TransportationManager: React.FC = () => {
                     className="w-full p-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Minimum Occupancy (Pax) *
+                  </label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="1"
+                    value={newTransportation.minOccupancy}
+                    onChange={(e) => setNewTransportation({
+                      ...newTransportation,
+                      minOccupancy: parseInt(e.target.value) || 1
+                    })}
+                    placeholder="e.g., 1"
+                    className="w-full p-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Minimum passengers for this vehicle
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Maximum Occupancy (Pax) *
+                  </label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={newTransportation.minOccupancy}
+                    value={newTransportation.maxOccupancy}
+                    onChange={(e) => setNewTransportation({
+                      ...newTransportation,
+                      maxOccupancy: parseInt(e.target.value) || 1
+                    })}
+                    placeholder="e.g., 6"
+                    className="w-full p-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Maximum passengers for this vehicle
+                  </p>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     Cost per Day (Rp)
@@ -186,6 +239,16 @@ const TransportationManager: React.FC = () => {
                   )}
                 </div>
               </div>
+
+              {newTransportation.minOccupancy && newTransportation.maxOccupancy && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Occupancy Range:</strong> {newTransportation.minOccupancy}-{newTransportation.maxOccupancy} passengers
+                    {newTransportation.vehicleName && ` (${newTransportation.vehicleName})`}
+                  </p>
+                </div>
+              )}
+
               <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 mt-4">
                 <button
                   onClick={() => setShowAddForm(false)}
@@ -248,6 +311,7 @@ const TransportationManager: React.FC = () => {
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Area</th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Vehicle</th>
+                    <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Occupancy</th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Cost/Day</th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -300,6 +364,35 @@ const TransportationManager: React.FC = () => {
                               })}
                               className="w-full p-2 text-base border border-slate-300 rounded-lg touch-target"
                             />
+                          </td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <div className="flex gap-2 items-center">
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                min="1"
+                                value={editForm.minOccupancy || 1}
+                                onChange={(e) => setEditForm({
+                                  ...editForm,
+                                  minOccupancy: parseInt(e.target.value) || 1
+                                })}
+                                placeholder="Min"
+                                className="w-16 p-2 text-base border border-slate-300 rounded-lg touch-target"
+                              />
+                              <span className="text-slate-500">-</span>
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                min={editForm.minOccupancy || 1}
+                                value={editForm.maxOccupancy || 1}
+                                onChange={(e) => setEditForm({
+                                  ...editForm,
+                                  maxOccupancy: parseInt(e.target.value) || 1
+                                })}
+                                placeholder="Max"
+                                className="w-16 p-2 text-base border border-slate-300 rounded-lg touch-target"
+                              />
+                            </div>
                           </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <input
@@ -355,6 +448,11 @@ const TransportationManager: React.FC = () => {
                           </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-sm sm:text-base text-slate-900">
                             <div className="truncate max-w-[150px] sm:max-w-none">{transport.vehicleName}</div>
+                          </td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-slate-900 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {transport.minOccupancy || 1}-{transport.maxOccupancy || 1} pax
+                            </span>
                           </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-slate-900 font-semibold whitespace-nowrap">
                             Rp {transport.costPerDay.toLocaleString('id-ID')}

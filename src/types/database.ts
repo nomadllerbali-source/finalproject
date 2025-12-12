@@ -154,6 +154,10 @@ export interface Database {
           type: string;
           vehicle_name: string;
           cost_per_day: number;
+          min_occupancy: number;
+          max_occupancy: number;
+          area_id: string | null;
+          area_name: string | null;
           created_at: string;
         };
         Insert: {
@@ -161,6 +165,10 @@ export interface Database {
           type: string;
           vehicle_name: string;
           cost_per_day: number;
+          min_occupancy?: number;
+          max_occupancy?: number;
+          area_id?: string | null;
+          area_name?: string | null;
           created_at?: string;
         };
         Update: {
@@ -168,6 +176,10 @@ export interface Database {
           type?: string;
           vehicle_name?: string;
           cost_per_day?: number;
+          min_occupancy?: number;
+          max_occupancy?: number;
+          area_id?: string | null;
+          area_name?: string | null;
           created_at?: string;
         };
       };
