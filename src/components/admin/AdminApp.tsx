@@ -127,14 +127,14 @@ const AdminApp: React.FC = () => {
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-6 border-b border-slate-200">
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-2 rounded-lg">
+          <div className="flex items-center justify-between p-6 border-b border-slate-200 h-20">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-2 rounded-lg flex-shrink-0">
                 <Users className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-slate-900">Nomadller Solution</h1>
-                <p className="text-xs text-slate-500">Admin Panel</p>
+                <h1 className="text-lg font-bold text-slate-900 leading-tight">Nomadller Solution</h1>
+                <p className="text-xs text-slate-500 leading-tight mt-0.5">Admin Panel</p>
               </div>
             </div>
             <button
@@ -204,28 +204,26 @@ const AdminApp: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Mobile Header */}
-          <div className="lg:hidden bg-white shadow-sm border-b border-slate-200 px-4 py-3">
-            <div className="flex items-center justify-between">
+          <div className="lg:hidden bg-white shadow-sm border-b border-slate-200 px-4 py-4">
+            <div className="flex items-center justify-between h-10">
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="p-2 text-slate-500 hover:text-slate-700"
+                className="p-2 text-slate-500 hover:text-slate-700 -ml-2"
               >
                 <Menu className="h-6 w-6" />
               </button>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-2">
                 <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-2 rounded-lg">
-                  <Users className="h-5 w-5 text-white" />
+                  <Users className="h-6 w-6 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-lg font-bold text-slate-900">Admin Panel</h1>
-                </div>
+                <h1 className="text-lg font-bold text-slate-900">Admin Panel</h1>
               </div>
               <button
                 onClick={logout}
-                className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors -mr-2"
                 title="Logout"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-5 w-5" />
               </button>
             </div>
           </div>
