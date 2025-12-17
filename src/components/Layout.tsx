@@ -14,14 +14,14 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, hideHeader =
       {!hideHeader && (
         <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
           <div className="w-full mx-auto px-3 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-14 sm:h-16 overflow-hidden">
-              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+            <div className="flex items-center h-14 sm:h-16">
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 <div className="bg-blue-600 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
                   <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-sm sm:text-xl font-bold text-slate-900 truncate">Nomadller Solution</h1>
-                  <p className="text-xs text-slate-500 hidden sm:block truncate">Travel Agency Management</p>
+                <div className="flex flex-col justify-center">
+                  <h1 className="text-sm sm:text-xl font-bold text-slate-900 leading-tight">Nomadller Solution</h1>
+                  <p className="text-xs text-slate-500 hidden sm:block leading-tight">Travel Agency Management</p>
                 </div>
               </div>
             </div>
