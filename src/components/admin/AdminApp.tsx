@@ -127,11 +127,11 @@ const AdminApp: React.FC = () => {
     <DataProvider>
       <div className="flex h-screen bg-slate-50">
         {/* Sidebar */}
-        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static ${
+        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static flex flex-col ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-6 border-b border-slate-200 h-20">
+          <div className="flex items-center justify-between p-6 border-b border-slate-200 h-20 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-2 rounded-lg flex-shrink-0">
                 <Users className="h-6 w-6 text-white" />
@@ -150,7 +150,7 @@ const AdminApp: React.FC = () => {
           </div>
 
           {/* User Info & Logout */}
-          <div className="px-4 py-3 border-b border-slate-200">
+          <div className="px-4 py-3 border-b border-slate-200 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-medium text-slate-900">
@@ -169,7 +169,7 @@ const AdminApp: React.FC = () => {
           </div>
 
           {/* Navigation */}
-          <nav className="p-4 space-y-2">
+          <nav className="p-4 space-y-2 overflow-y-auto flex-1">
             {navigation.map((item) => (
               <button
                 key={item.id}
