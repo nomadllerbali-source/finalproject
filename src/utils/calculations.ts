@@ -29,10 +29,9 @@ export const getVehicleCostByPax = (
   if (!sightseeing.vehicleCosts) return 0;
 
   if (totalPax <= 6) return sightseeing.vehicleCosts.avanza;
-  if (totalPax <= 12) return sightseeing.vehicleCosts.hiace;
-  if (totalPax <= 27) return sightseeing.vehicleCosts.miniBus;
-  if (totalPax <= 32) return sightseeing.vehicleCosts.bus32;
-  return sightseeing.vehicleCosts.bus39;
+  if (totalPax <= 14) return sightseeing.vehicleCosts.hiace;
+  if (totalPax <= 20) return sightseeing.vehicleCosts.elfGiga;
+  return sightseeing.vehicleCosts.bus;
 };
 
 export const calculateItineraryCost = (

@@ -201,112 +201,112 @@ const demoSightseeings: Sightseeing[] = [
     name: 'Tanah Lot Temple',
     description: 'Iconic sea temple perched on a rock formation',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 45, hiace: 65, miniBus: 85, bus32: 120, bus39: 140 }
+    vehicleCosts: { avanza: 45, hiace: 65, elfGiga: 85, bus: 140 }
   },
   {
     id: '2',
     name: 'Uluwatu Temple',
     description: 'Clifftop temple with stunning sunset views',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 50, hiace: 70, miniBus: 90, bus32: 125, bus39: 145 }
+    vehicleCosts: { avanza: 50, hiace: 70, elfGiga: 90, bus: 145 }
   },
   {
     id: '3',
     name: 'Besakih Temple',
     description: 'Mother temple of Bali with panoramic mountain views',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 80, hiace: 110, miniBus: 140, bus32: 180, bus39: 210 }
+    vehicleCosts: { avanza: 80, hiace: 110, elfGiga: 140, bus: 210 }
   },
   {
     id: '4',
     name: 'Jatiluwih Rice Terraces',
     description: 'UNESCO World Heritage rice terraces',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 70, hiace: 95, miniBus: 125, bus32: 160, bus39: 185 }
+    vehicleCosts: { avanza: 70, hiace: 95, elfGiga: 125, bus: 185 }
   },
   {
     id: '5',
     name: 'Nusa Penida Day Trip',
     description: 'Island adventure with pristine beaches and cliffs',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 120, hiace: 150, miniBus: 180, bus32: 220, bus39: 250 }
+    vehicleCosts: { avanza: 120, hiace: 150, elfGiga: 180, bus: 250 }
   },
   {
     id: '6',
     name: 'Lovina Dolphin Watching',
     description: 'Early morning dolphin watching tour',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 90, hiace: 120, miniBus: 150, bus32: 190, bus39: 220 }
+    vehicleCosts: { avanza: 90, hiace: 120, elfGiga: 150, bus: 220 }
   },
   {
     id: '7',
     name: 'Banyumala Twin Waterfalls',
     description: 'Hidden twin waterfalls with crystal clear pools',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 60, hiace: 85, miniBus: 110, bus32: 145, bus39: 170 }
+    vehicleCosts: { avanza: 60, hiace: 85, elfGiga: 110, bus: 170 }
   },
   {
     id: '8',
     name: 'Tegallalang Rice Terraces',
     description: 'Famous Instagram-worthy rice terraces with swing',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 35, hiace: 50, miniBus: 70, bus32: 95, bus39: 115 }
+    vehicleCosts: { avanza: 35, hiace: 50, elfGiga: 70, bus: 115 }
   },
   {
     id: '9',
     name: 'Tirta Empul Temple',
     description: 'Holy spring water temple for purification rituals',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 55, hiace: 75, miniBus: 95, bus32: 125, bus39: 145 }
+    vehicleCosts: { avanza: 55, hiace: 75, elfGiga: 95, bus: 145 }
   },
   {
     id: '10',
     name: 'Goa Gajah Elephant Cave',
     description: 'Ancient archaeological site with intricate stone carvings',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 40, hiace: 60, miniBus: 80, bus32: 105, bus39: 125 }
+    vehicleCosts: { avanza: 40, hiace: 60, elfGiga: 80, bus: 125 }
   },
   {
     id: '11',
     name: 'Gunung Kawi Temple',
     description: 'Ancient rock-cut temple complex in lush valley',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 50, hiace: 70, miniBus: 90, bus32: 120, bus39: 140 }
+    vehicleCosts: { avanza: 50, hiace: 70, elfGiga: 90, bus: 140 }
   },
   {
     id: '12',
     name: 'Batukaru Temple',
     description: 'Peaceful mountain temple surrounded by forest',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 75, hiace: 100, miniBus: 130, bus32: 165, bus39: 190 }
+    vehicleCosts: { avanza: 75, hiace: 100, elfGiga: 130, bus: 190 }
   },
   {
     id: '13',
     name: 'Jembrana Beach Drive',
     description: 'Scenic coastal drive with black sand beaches',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 85, hiace: 115, miniBus: 145, bus32: 185, bus39: 215 }
+    vehicleCosts: { avanza: 85, hiace: 115, elfGiga: 145, bus: 215 }
   },
   {
     id: '14',
     name: 'Bangli Traditional Villages',
     description: 'Cultural village tour with traditional crafts',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 65, hiace: 90, miniBus: 115, bus32: 150, bus39: 175 }
+    vehicleCosts: { avanza: 65, hiace: 90, elfGiga: 115, bus: 175 }
   },
   {
     id: '15',
     name: 'Klungkung Royal Palace',
     description: 'Historical palace with traditional Balinese architecture',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 55, hiace: 75, miniBus: 95, bus32: 125, bus39: 145 }
+    vehicleCosts: { avanza: 55, hiace: 75, elfGiga: 95, bus: 145 }
   },
   {
     id: '16',
     name: 'Buleleng Waterfall Circuit',
     description: 'Multiple waterfalls tour in northern Bali',
     transportationMode: 'cab',
-    vehicleCosts: { avanza: 95, hiace: 125, miniBus: 155, bus32: 195, bus39: 225 }
+    vehicleCosts: { avanza: 95, hiace: 125, elfGiga: 155, bus: 225 }
   },
   // Self-drive car versions
   {

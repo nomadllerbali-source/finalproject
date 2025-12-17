@@ -81,9 +81,8 @@ export interface Hotel {
 export interface VehicleCost {
   avanza: number;
   hiace: number;
-  miniBus: number;
-  bus32: number;
-  bus39: number;
+  elfGiga: number;
+  bus: number;
 }
 
 export interface Sightseeing {

@@ -22,9 +22,8 @@ const SightseeingManager: React.FC = () => {
     vehicleCosts: {
       avanza: 0,
       hiace: 0,
-      miniBus: 0,
-      bus32: 0,
-      bus39: 0
+      elfGiga: 0,
+      bus: 0
     },
     areaId: '',
     areaName: ''
@@ -82,7 +81,7 @@ const SightseeingManager: React.FC = () => {
       displayName: '',
       description: '',
       transportationMode: 'cab',
-      vehicleCosts: { avanza: 0, hiace: 0, miniBus: 0, bus32: 0, bus39: 0 },
+      vehicleCosts: { avanza: 0, hiace: 0, elfGiga: 0, bus: 0 },
       areaId: '',
       areaName: ''
     });
@@ -132,11 +131,10 @@ const SightseeingManager: React.FC = () => {
     if (!vehicleCosts) return null;
 
     const vehicles = [
-      { key: 'avanza' as keyof VehicleCost, name: 'Avanza', pax: '2-6 pax' },
-      { key: 'hiace' as keyof VehicleCost, name: 'Hiace', pax: '6-12 pax' },
-      { key: 'miniBus' as keyof VehicleCost, name: 'Mini Bus', pax: '12-27 pax' },
-      { key: 'bus32' as keyof VehicleCost, name: 'Bus 32', pax: '27-32 pax' },
-      { key: 'bus39' as keyof VehicleCost, name: 'Bus 39', pax: '32-39 pax' }
+      { key: 'avanza' as keyof VehicleCost, name: 'Avanza', pax: '1-6 pax' },
+      { key: 'hiace' as keyof VehicleCost, name: 'Hiace', pax: '6-14 pax' },
+      { key: 'elfGiga' as keyof VehicleCost, name: 'ELF Giga', pax: '14-20 pax' },
+      { key: 'bus' as keyof VehicleCost, name: 'Bus', pax: '20-45 pax' }
     ];
 
     return (
@@ -505,26 +503,22 @@ const SightseeingManager: React.FC = () => {
                           <Car className="h-4 w-4 mr-2 text-blue-600" />
                           Vehicle Costs
                         </h4>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
                           <div className="bg-slate-50 p-3 rounded-lg">
-                            <div className="text-sm font-medium text-slate-700">Avanza (2-6 pax)</div>
+                            <div className="text-sm font-medium text-slate-700">Avanza (1-6 pax)</div>
                             <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.avanza.toLocaleString('id-ID')}</div>
                           </div>
                           <div className="bg-slate-50 p-3 rounded-lg">
-                            <div className="text-sm font-medium text-slate-700">Hiace (6-12 pax)</div>
+                            <div className="text-sm font-medium text-slate-700">Hiace (6-14 pax)</div>
                             <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.hiace.toLocaleString('id-ID')}</div>
                           </div>
                           <div className="bg-slate-50 p-3 rounded-lg">
-                            <div className="text-sm font-medium text-slate-700">Mini Bus (12-27 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.miniBus.toLocaleString('id-ID')}</div>
+                            <div className="text-sm font-medium text-slate-700">ELF Giga (14-20 pax)</div>
+                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.elfGiga.toLocaleString('id-ID')}</div>
                           </div>
                           <div className="bg-slate-50 p-3 rounded-lg">
-                            <div className="text-sm font-medium text-slate-700">Bus 32 (27-32 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.bus32.toLocaleString('id-ID')}</div>
-                          </div>
-                          <div className="bg-slate-50 p-3 rounded-lg">
-                            <div className="text-sm font-medium text-slate-700">Bus 39 (32-39 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.bus39.toLocaleString('id-ID')}</div>
+                            <div className="text-sm font-medium text-slate-700">Bus (20-45 pax)</div>
+                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.bus.toLocaleString('id-ID')}</div>
                           </div>
                         </div>
                       </div>

@@ -348,11 +348,10 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
           if (sightseeing && sightseeing.vehicleCosts) {
             let vehicleCost = 0;
             if (totalPax <= 6) vehicleCost = sightseeing.vehicleCosts.avanza;
-            else if (totalPax <= 12) vehicleCost = sightseeing.vehicleCosts.hiace;
-            else if (totalPax <= 27) vehicleCost = sightseeing.vehicleCosts.miniBus;
-            else if (totalPax <= 32) vehicleCost = sightseeing.vehicleCosts.bus32;
-            else vehicleCost = sightseeing.vehicleCosts.bus39;
-            
+            else if (totalPax <= 14) vehicleCost = sightseeing.vehicleCosts.hiace;
+            else if (totalPax <= 20) vehicleCost = sightseeing.vehicleCosts.elfGiga;
+            else vehicleCost = sightseeing.vehicleCosts.bus;
+
             sightseeingCost += vehicleCost;
             daySightseeingCost += vehicleCost;
           }
