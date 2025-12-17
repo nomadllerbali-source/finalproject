@@ -213,7 +213,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
       if (selectedSightseeing.length > 0) {
         text += `📍 *Sightseeing:*\n`;
         selectedSightseeing.forEach(sight => {
-          text += `\n*${sight.name}*\n`;
+          text += `\n*${sight.displayName || sight.name}*\n`;
           if (sight.description) {
             text += `${sight.description}\n`;
           }
@@ -863,7 +863,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                           <div className="space-y-3">
                             {summary.sightseeing.map((sight: any) => (
                               <div key={sight.id} className="ml-2">
-                                <div className="font-bold text-slate-900 text-base">{sight.name}</div>
+                                <div className="font-bold text-slate-900 text-base">{sight.displayName || sight.name}</div>
                                 <div className="text-slate-600 text-sm mt-1">{sight.description}</div>
                               </div>
                             ))}
@@ -1184,7 +1184,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                     {costBreakdown.sightseeing.map((sight, index) => (
                       <div key={index} className="flex justify-between items-center">
                         <div className="text-slate-700 flex-1 mr-4">
-                          <div className="font-medium">{sight.name}</div>
+                          <div className="font-medium">{sight.displayName || sight.name}</div>
                           <div className="text-sm text-slate-500">
                             Vehicle cost for {totalPax} passengers × {sight.days} day{sight.days > 1 ? 's' : ''}
                           </div>

@@ -458,7 +458,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
       if (summary.sightseeing.length > 0) {
         itineraryText += `📍 SIGHTSEEING:\n`;
         summary.sightseeing.forEach(sight => {
-          itineraryText += `   • ${sight.name}\n`;
+          itineraryText += `   • ${sight.displayName || sight.name}\n`;
         });
       }
       
@@ -692,7 +692,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
                             </h5>
                             <ul className="text-xs md:text-sm text-slate-700 space-y-1 ml-6">
                               {summary.sightseeing.map((sight: any) => (
-                                <li key={sight.id}>• {sight.name}</li>
+                                <li key={sight.id}>• {sight.displayName || sight.name}</li>
                               ))}
                             </ul>
                           </div>

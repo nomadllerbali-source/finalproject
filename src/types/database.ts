@@ -239,25 +239,34 @@ export interface Database {
         Row: {
           id: string;
           name: string;
+          display_name: string | null;
           description: string;
           transportation_mode: string;
           vehicle_costs: any | null;
+          area_id: string | null;
+          area_name: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           name: string;
+          display_name?: string | null;
           description: string;
           transportation_mode: string;
           vehicle_costs?: any | null;
+          area_id?: string | null;
+          area_name?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           name?: string;
+          display_name?: string | null;
           description?: string;
           transportation_mode?: string;
           vehicle_costs?: any | null;
+          area_id?: string | null;
+          area_name?: string | null;
           created_at?: string;
         };
       };

@@ -89,6 +89,7 @@ export interface VehicleCost {
 export interface Sightseeing {
   id: string;
   name: string;
+  displayName?: string;
   description: string;
   transportationMode: 'cab' | 'self-drive-car' | 'self-drive-scooter';
   vehicleCosts?: VehicleCost;

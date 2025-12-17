@@ -147,6 +147,7 @@ export const toDbRoomType = (rt: RoomType, hotelId: string) => ({
 export const fromDbSightseeing = (row: SightseeingsRow): Sightseeing => ({
   id: row.id,
   name: row.name,
+  displayName: row.display_name || undefined,
   description: row.description,
   transportationMode: row.transportation_mode as any,
   vehicleCosts: row.vehicle_costs || undefined,
@@ -157,6 +158,7 @@ export const fromDbSightseeing = (row: SightseeingsRow): Sightseeing => ({
 export const toDbSightseeing = (s: Sightseeing) => ({
   id: s.id,
   name: s.name,
+  display_name: s.displayName || null,
   description: s.description,
   transportation_mode: s.transportationMode,
   vehicle_costs: s.vehicleCosts || null,

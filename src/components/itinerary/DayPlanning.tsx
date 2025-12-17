@@ -443,7 +443,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                     return (
                       <div key={sId} className="flex items-center justify-between bg-white p-2 rounded">
                         <div className="flex-1">
-                          <span className="font-medium text-green-900">{sight.name}</span>
+                          <span className="font-medium text-green-900">{sight.displayName || sight.name}</span>
                           <span className="text-sm text-green-600 ml-2">({sight.areaName})</span>
                         </div>
                         <button
@@ -474,7 +474,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                     className="mt-1 h-5 w-5 text-blue-600 focus:ring-blue-500 border-slate-300"
                   />
                   <div className="flex-1">
-                    <div className="font-semibold text-slate-900">{sight.name}</div>
+                    <div className="font-semibold text-slate-900">{sight.displayName || sight.name}</div>
                     <div className="text-sm text-slate-600 mt-1">{sight.description}</div>
                     <div className="flex items-center gap-3 mt-2">
                       <div className="text-xs text-teal-600 font-medium flex items-center">

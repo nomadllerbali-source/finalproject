@@ -16,6 +16,7 @@ const SightseeingManager: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newSightseeing, setNewSightseeing] = useState<Omit<Sightseeing, 'id'>>({
     name: '',
+    displayName: '',
     description: '',
     transportationMode: 'cab',
     vehicleCosts: {
@@ -78,6 +79,7 @@ const SightseeingManager: React.FC = () => {
 
     setNewSightseeing({
       name: '',
+      displayName: '',
       description: '',
       transportationMode: 'cab',
       vehicleCosts: { avanza: 0, hiace: 0, miniBus: 0, bus32: 0, bus39: 0 },
@@ -215,13 +217,13 @@ const SightseeingManager: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Sightseeing Name
+                    Sightseeing Name (Internal)
                   </label>
                   <input
                     type="text"
                     value={newSightseeing.name}
                     onChange={(e) => setNewSightseeing({ ...newSightseeing, name: e.target.value })}
-                    placeholder="Enter sightseeing spot name"
+                    placeholder="Enter internal reference name"
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -246,7 +248,22 @@ const SightseeingManager: React.FC = () => {
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Display Name (Shown in Itinerary) *
+                  <span className="text-xs text-slate-500 block mt-1">This will appear as a bold heading in the day-by-day itinerary</span>
+                </label>
+                <input
+                  type="text"
+                  value={newSightseeing.displayName}
+                  onChange={(e) => setNewSightseeing({ ...newSightseeing, displayName: e.target.value })}
+                  placeholder="Enter the name to display in itinerary (e.g., 'Ubud Rice Terraces Visit')"
+                  className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Description
+                  <span className="text-xs text-slate-500 block mt-1">Details shown below the display name in the itinerary</span>
                 </label>
                 <textarea
                   value={newSightseeing.description}
@@ -357,7 +374,7 @@ const SightseeingManager: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">
-                          Sightseeing Name
+                          Sightseeing Name (Internal)
                         </label>
                         <input
                           type="text"
@@ -387,7 +404,22 @@ const SightseeingManager: React.FC = () => {
 
                     <div className="mb-6">
                       <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Display Name (Shown in Itinerary) *
+                        <span className="text-xs text-slate-500 block mt-1">This will appear as a bold heading in the day-by-day itinerary</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.displayName || ''}
+                        onChange={(e) => setEditForm({ ...editForm, displayName: e.target.value })}
+                        placeholder="Enter the name to display in itinerary"
+                        className="w-full p-3 border border-slate-300 rounded-lg"
+                      />
+                    </div>
+
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
                         Description
+                        <span className="text-xs text-slate-500 block mt-1">Details shown below the display name in the itinerary</span>
                       </label>
                       <textarea
                         value={editForm.description || ''}

@@ -137,7 +137,7 @@ const ReviewCosting: React.FC<ReviewCostingProps> = ({ client, dayPlans, onNext,
                           </h5>
                           <ul className="text-xs md:text-sm text-slate-700 space-y-1 ml-6">
                             {summary.sightseeing.map(sight => (
-                              <li key={sight.id}>• {sight.name}</li>
+                              <li key={sight.id}>• {sight.displayName || sight.name}</li>
                             ))}
                           </ul>
                         </div>
