@@ -34,7 +34,9 @@ import {
   Palmtree,
   Camera,
   Tag,
-  Package
+  Package,
+  User,
+  LogOut
 } from 'lucide-react';
 
 interface Package {
@@ -309,16 +311,31 @@ export default function LandingPage() {
   const [showPackageModal, setShowPackageModal] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollY, setScrollY] = useState(0);
+  const [showLoginTypeModal, setShowLoginTypeModal] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [guestProfile, setGuestProfile] = useState<any>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
   const packagesRef = useRef<HTMLDivElement>(null);
   const destinationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (authState.isAuthenticated) {
-      navigate('/app');
-    }
-  }, [authState.isAuthenticated, navigate]);
+    const checkUserRole = async () => {
+      if (authState.isAuthenticated && authState.user) {
+        if (authState.user.role === 'guest') {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authState.user.id)
+            .single();
+          setGuestProfile(data);
+        } else {
+          navigate('/app');
+        }
+      }
+    };
+    checkUserRole();
+  }, [authState.isAuthenticated, authState.user, navigate]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -402,6 +419,13 @@ export default function LandingPage() {
       element.scrollIntoView({ behavior: 'smooth' });
       setIsMobileMenuOpen(false);
     }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setGuestProfile(null);
+    setShowProfileMenu(false);
+    window.location.reload();
   };
 
   const openDestinationModal = (destination: Destination) => {
@@ -587,13 +611,47 @@ export default function LandingPage() {
                 Contact
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-400 group-hover:w-full transition-all duration-300" />
               </button>
-              <button
-                onClick={() => navigate('/app')}
-                className="px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:shadow-lg hover:shadow-emerald-500/50 hover:scale-105 relative overflow-hidden group"
-              >
-                <span className="relative z-10">Login</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </button>
+              {guestProfile ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center space-x-2 px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:shadow-lg hover:shadow-emerald-500/50"
+                  >
+                    <User className="w-5 h-5" />
+                    <span>{guestProfile.full_name || 'Guest'}</span>
+                    <ChevronRight className={`w-4 h-4 transition-transform ${showProfileMenu ? 'rotate-90' : ''}`} />
+                  </button>
+                  {showProfileMenu && (
+                    <div className="absolute right-0 mt-2 w-56 glass-morphism rounded-2xl shadow-2xl border border-white/10 overflow-hidden z-50">
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          navigate('/guest-dashboard');
+                        }}
+                        className="w-full px-4 py-3 text-left text-white hover:bg-emerald-500/20 transition-all flex items-center space-x-2"
+                      >
+                        <Package className="w-4 h-4" />
+                        <span>My Bookings</span>
+                      </button>
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full px-4 py-3 text-left text-white hover:bg-red-500/20 transition-all flex items-center space-x-2 border-t border-white/10"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowLoginTypeModal(true)}
+                  className="px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:shadow-lg hover:shadow-emerald-500/50 hover:scale-105 relative overflow-hidden group"
+                >
+                  <span className="relative z-10">Login</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </button>
+              )}
             </div>
 
             <button
@@ -636,12 +694,35 @@ export default function LandingPage() {
               >
                 Contact
               </button>
-              <button
-                onClick={() => navigate('/app')}
-                className="block w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg hover:shadow-emerald-500/50 transition-all duration-300"
-              >
-                Login
-              </button>
+              {guestProfile ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      navigate('/guest-dashboard');
+                    }}
+                    className="block w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg hover:shadow-emerald-500/50 transition-all duration-300"
+                  >
+                    My Bookings
+                  </button>
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg hover:shadow-red-500/50 transition-all duration-300"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setShowLoginTypeModal(true);
+                  }}
+                  className="block w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg hover:shadow-emerald-500/50 transition-all duration-300"
+                >
+                  Login
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -687,10 +768,10 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8">
               <button
-                onClick={() => navigate('/app')}
+                onClick={() => guestProfile ? navigate('/guest-dashboard') : setShowLoginTypeModal(true)}
                 className="group relative px-10 py-5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl font-bold text-lg shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 hover:scale-105 flex items-center space-x-3 overflow-hidden"
               >
-                <span className="relative z-10">Get Started</span>
+                <span className="relative z-10">{guestProfile ? 'View My Bookings' : 'Get Started'}</span>
                 <ArrowRight className="w-6 h-6 relative z-10 group-hover:translate-x-2 transition-transform" />
                 <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
@@ -845,10 +926,10 @@ export default function LandingPage() {
                     Valid until: {new Date(promo.valid_until).toLocaleDateString()}
                   </p>
                   <button
-                    onClick={() => navigate('/app')}
+                    onClick={() => guestProfile ? navigate('/guest-dashboard') : setShowLoginTypeModal(true)}
                     className="w-full px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-400 text-slate-900 rounded-xl font-bold hover:shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
                   >
-                    <span>Book Now</span>
+                    <span>{guestProfile ? 'View Bookings' : 'Book Now'}</span>
                     <ArrowRight className="w-5 h-5" />
                   </button>
                 </div>
@@ -1548,6 +1629,68 @@ export default function LandingPage() {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Login Type Selection Modal */}
+      {showLoginTypeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-md glass-morphism rounded-3xl p-8 border border-emerald-400/30 shadow-2xl">
+            <button
+              onClick={() => setShowLoginTypeModal(false)}
+              className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full glass-morphism hover:bg-red-500/20 transition-all border border-white/10"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full mb-4">
+                <Users className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-white mb-2">Choose Login Type</h2>
+              <p className="text-slate-300">Select how you want to access the platform</p>
+            </div>
+
+            <div className="space-y-4">
+              <button
+                onClick={() => {
+                  setShowLoginTypeModal(false);
+                  navigate('/app');
+                }}
+                className="w-full group glass-morphism p-6 rounded-2xl border border-emerald-400/30 hover:border-emerald-400/60 transition-all hover:scale-105 text-left"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
+                    <Shield className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-white mb-1">Admin / Staff</h3>
+                    <p className="text-sm text-slate-300">Access management dashboard</p>
+                  </div>
+                  <ChevronRight className="w-6 h-6 text-emerald-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowLoginTypeModal(false);
+                  navigate('/guest-auth');
+                }}
+                className="w-full group glass-morphism p-6 rounded-2xl border border-teal-400/30 hover:border-teal-400/60 transition-all hover:scale-105 text-left"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                    <Users className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-white mb-1">Guest / Customer</h3>
+                    <p className="text-sm text-slate-300">View your bookings & itineraries</p>
+                  </div>
+                  <ChevronRight className="w-6 h-6 text-teal-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </button>
             </div>
           </div>
         </div>
