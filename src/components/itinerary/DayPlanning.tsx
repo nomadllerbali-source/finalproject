@@ -353,10 +353,10 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
   };
 
   const handleSubmit = () => {
-    // Ensure all days have at least sightseeing selected
+    // Ensure all days have a sightseeing selected
     const allDaysValid = dayPlans.every(dayPlan => dayPlan.sightseeing.length > 0);
     if (!allDaysValid) {
-      alert('Please select at least one sightseeing spot for each day before proceeding to review.');
+      alert('Please select a sightseeing spot for each day before proceeding to review.');
       return;
     }
     onNext(dayPlans);
@@ -434,7 +434,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h4 className="font-semibold text-green-900 mb-2 flex items-center">
                   <Check className="h-5 w-5 mr-2" />
-                  Selected Sightseeing ({dayPlan.sightseeing.length})
+                  Selected Sightseeing
                 </h4>
                 <div className="space-y-2">
                   {dayPlan.sightseeing.map(sId => {
@@ -448,8 +448,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                         </div>
                         <button
                           onClick={() => {
-                            const updated = dayPlan.sightseeing.filter(id => id !== sId);
-                            updateDayPlan(dayIndex, 'sightseeing', updated);
+                            updateDayPlan(dayIndex, 'sightseeing', []);
                           }}
                           className="text-red-600 hover:text-red-800"
                         >
@@ -466,16 +465,13 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
               {getFilteredSightseeing(dayIndex).map(sight => (
                 <label key={sight.id} className="flex items-start space-x-3 p-4 border-2 border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
                   <input
-                    type="checkbox"
+                    type="radio"
+                    name={`sightseeing-day-${dayIndex}`}
                     checked={dayPlan.sightseeing.includes(sight.id)}
-                    onChange={(e) => {
-                      const current = dayPlan.sightseeing;
-                      const updated = e.target.checked
-                        ? [...current, sight.id]
-                        : current.filter(id => id !== sight.id);
-                      updateDayPlan(dayIndex, 'sightseeing', updated);
+                    onChange={() => {
+                      updateDayPlan(dayIndex, 'sightseeing', [sight.id]);
                     }}
-                    className="mt-1 h-5 w-5 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                    className="mt-1 h-5 w-5 text-blue-600 focus:ring-blue-500 border-slate-300"
                   />
                   <div className="flex-1">
                     <div className="font-semibold text-slate-900">{sight.name}</div>
