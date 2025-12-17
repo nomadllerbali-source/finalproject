@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import {
   Menu,
   X,
@@ -31,8 +32,33 @@ import {
   Home,
   Mountain,
   Palmtree,
-  Camera
+  Camera,
+  Tag,
+  Package
 } from 'lucide-react';
+
+interface Package {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  price_from: number;
+  image_url: string;
+  highlights: string[];
+  inclusions: string;
+  exclusions: string;
+  is_featured: boolean;
+}
+
+interface Promotion {
+  id: string;
+  title: string;
+  description: string;
+  image_url: string;
+  discount_percentage: number;
+  valid_from: string;
+  valid_until: string;
+}
 
 interface Destination {
   id: string;
@@ -277,6 +303,10 @@ export default function LandingPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [showDestinationModal, setShowDestinationModal] = useState(false);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
+  const [showPackageModal, setShowPackageModal] = useState(false);
 
   useEffect(() => {
     if (authState.isAuthenticated) {
@@ -292,6 +322,44 @@ export default function LandingPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    loadPackages();
+    loadPromotions();
+  }, []);
+
+  const loadPackages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('packages')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setPackages(data || []);
+    } catch (error) {
+      console.error('Error loading packages:', error);
+    }
+  };
+
+  const loadPromotions = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('promotions')
+        .select('*')
+        .eq('is_active', true)
+        .lte('valid_from', today)
+        .gte('valid_until', today)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setPromotions(data || []);
+    } catch (error) {
+      console.error('Error loading promotions:', error);
+    }
+  };
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -311,6 +379,18 @@ export default function LandingPage() {
     setShowDestinationModal(false);
     document.body.style.overflow = 'unset';
     setTimeout(() => setSelectedDestination(null), 300);
+  };
+
+  const openPackageModal = (pkg: Package) => {
+    setSelectedPackage(pkg);
+    setShowPackageModal(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closePackageModal = () => {
+    setShowPackageModal(false);
+    document.body.style.overflow = 'unset';
+    setTimeout(() => setSelectedPackage(null), 300);
   };
 
   return (
@@ -542,6 +622,134 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Promotions Banner */}
+      {promotions.length > 0 && (
+        <section className="py-12 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIgb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-20"></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Tag className="w-8 h-8 text-white animate-bounce" />
+              <h2 className="text-3xl md:text-4xl font-bold text-white">Special Offers</h2>
+              <Tag className="w-8 h-8 text-white animate-bounce" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {promotions.map((promo) => (
+                <div key={promo.id} className="bg-white rounded-xl p-6 shadow-2xl transform hover:scale-105 transition-all">
+                  {promo.image_url && (
+                    <img
+                      src={promo.image_url}
+                      alt={promo.title}
+                      className="w-full h-40 object-cover rounded-lg mb-4"
+                    />
+                  )}
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xl font-bold text-slate-900">{promo.title}</h3>
+                    <span className="px-3 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-lg font-bold rounded-full">
+                      {promo.discount_percentage}% OFF
+                    </span>
+                  </div>
+                  <p className="text-slate-600 mb-3">{promo.description}</p>
+                  <p className="text-sm text-slate-500">
+                    Valid until: {new Date(promo.valid_until).toLocaleDateString()}
+                  </p>
+                  <button
+                    onClick={() => navigate('/app')}
+                    className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg font-semibold hover:from-orange-700 hover:to-red-700 transition-all"
+                  >
+                    Book Now
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Packages Section */}
+      {packages.length > 0 && (
+        <section id="packages" className="py-20 bg-gradient-to-b from-white to-slate-50 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center space-x-2 bg-purple-100 px-4 py-2 rounded-full text-purple-700 mb-4">
+                <Package className="w-5 h-5" />
+                <span className="text-sm font-medium">Curated Travel Packages</span>
+              </div>
+              <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
+                Our Best Travel Packages
+              </h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                Handpicked packages designed to give you the best Bali experience
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+              {packages.map((pkg) => (
+                <div
+                  key={pkg.id}
+                  className="group bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:-translate-y-2"
+                  onClick={() => openPackageModal(pkg)}
+                >
+                  {pkg.image_url && (
+                    <div className="relative h-56 overflow-hidden">
+                      <img
+                        src={pkg.image_url}
+                        alt={pkg.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                      {pkg.is_featured && (
+                        <div className="absolute top-4 right-4 px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-sm font-bold flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-current" />
+                          Featured
+                        </div>
+                      )}
+                      <div className="absolute bottom-4 left-4 text-white">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="w-4 h-4" />
+                          {pkg.duration}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="p-6">
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2 group-hover:text-purple-600 transition-colors">
+                      {pkg.title}
+                    </h3>
+                    <p className="text-slate-600 mb-4 line-clamp-2">{pkg.description}</p>
+
+                    {pkg.highlights && pkg.highlights.length > 0 && (
+                      <div className="mb-4 space-y-1">
+                        {pkg.highlights.slice(0, 3).map((highlight, index) => (
+                          <div key={index} className="flex items-center gap-2 text-sm text-slate-600">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            <span>{highlight}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                      <div>
+                        <div className="text-sm text-slate-500">Starting from</div>
+                        <div className="text-2xl font-bold text-purple-600">${pkg.price_from}</div>
+                      </div>
+                      <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2">
+                        View Details
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Destinations Section - Enhanced with Detailed Info */}
       <section id="destinations" className="py-20 bg-white relative overflow-hidden">
@@ -994,6 +1202,114 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Package Detail Modal */}
+      {showPackageModal && selectedPackage && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div
+              className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75"
+              onClick={closePackageModal}
+            ></div>
+
+            <div className="relative inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-2xl">
+              <button
+                onClick={closePackageModal}
+                className="absolute top-4 right-4 p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              {selectedPackage.image_url && (
+                <img
+                  src={selectedPackage.image_url}
+                  alt={selectedPackage.title}
+                  className="w-full h-64 object-cover rounded-xl mb-6"
+                />
+              )}
+
+              <div className="mb-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h2 className="text-3xl font-bold text-slate-900 mb-2">{selectedPackage.title}</h2>
+                    <div className="flex items-center gap-4 text-slate-600">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-5 h-5" />
+                        <span>{selectedPackage.duration}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-5 h-5" />
+                        <span className="text-2xl font-bold text-purple-600">${selectedPackage.price_from}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {selectedPackage.is_featured && (
+                    <div className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-bold flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-current" />
+                      Featured
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-slate-700 text-lg mb-6">{selectedPackage.description}</p>
+
+                {selectedPackage.highlights && selectedPackage.highlights.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">Highlights</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {selectedPackage.highlights.map((highlight, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                          <span className="text-slate-700">{highlight}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedPackage.inclusions && (
+                  <div className="mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
+                      <CheckCircle2 className="w-6 h-6 text-green-600" />
+                      Inclusions
+                    </h3>
+                    <p className="text-slate-700 whitespace-pre-line">{selectedPackage.inclusions}</p>
+                  </div>
+                )}
+
+                {selectedPackage.exclusions && (
+                  <div className="mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
+                      <X className="w-6 h-6 text-red-600" />
+                      Exclusions
+                    </h3>
+                    <p className="text-slate-700 whitespace-pre-line">{selectedPackage.exclusions}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    closePackageModal();
+                    navigate('/app');
+                  }}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Book This Package</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={closePackageModal}
+                  className="px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

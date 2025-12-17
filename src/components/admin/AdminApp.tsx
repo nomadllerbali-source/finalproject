@@ -15,18 +15,19 @@ import SalesManagement from './SalesManagement';
 import OperationsManagement from './OperationsManagement';
 import FixedItineraryManager from './FixedItineraryManager';
 import AreaManager from './AreaManager';
+import WebsiteManager from './WebsiteManager';
 
 // Itinerary Builder (Admin version)
 import ItineraryBuilder from '../itinerary/ItineraryBuilder';
 
 // Navigation
-import { 
-  Home, Settings, Building2, Car, MapPin, Camera, Ticket, Utensils, 
-  Plus, Menu, X, Users, LogOut, UserCheck, TrendingUp, FileText
+import {
+  Home, Settings, Building2, Car, MapPin, Camera, Ticket, Utensils,
+  Plus, Menu, X, Users, LogOut, UserCheck, TrendingUp, FileText, Globe
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-type AdminSection = 'dashboard' | 'itinerary' | 'transportation' | 'hotels' | 'sightseeing' | 'activities' | 'meals' | 'tickets' | 'agents' | 'guests' | 'sales' | 'operations' | 'fixedItineraries' | 'areas';
+type AdminSection = 'dashboard' | 'itinerary' | 'transportation' | 'hotels' | 'sightseeing' | 'activities' | 'meals' | 'tickets' | 'agents' | 'guests' | 'sales' | 'operations' | 'fixedItineraries' | 'areas' | 'website';
 
 const AdminApp: React.FC = () => {
   const { logout, state: authState } = useAuth();
@@ -62,7 +63,8 @@ const AdminApp: React.FC = () => {
     { id: 'agents', name: 'Agent Management', icon: UserCheck, description: 'Manage travel agents' },
     { id: 'sales', name: 'Sales Management', icon: TrendingUp, description: 'Manage sales team & performance' },
     { id: 'operations', name: 'Operations Management', icon: Settings, description: 'Manage operations team & bookings' },
-    { id: 'fixedItineraries', name: 'Fixed Itineraries', icon: FileText, description: 'Manage itinerary templates' }
+    { id: 'fixedItineraries', name: 'Fixed Itineraries', icon: FileText, description: 'Manage itinerary templates' },
+    { id: 'website', name: 'Website Manager', icon: Globe, description: 'Manage landing page content' }
   ];
 
   const renderContent = () => {
@@ -93,6 +95,8 @@ const AdminApp: React.FC = () => {
         return <FixedItineraryManager />;
       case 'areas':
         return <AreaManager />;
+      case 'website':
+        return <WebsiteManager />;
       default:
         return (
           <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
