@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LandingPage from './components/landing/LandingPage';
 import LoginForm from './components/auth/LoginForm';
+import GuestAuth from './components/guest/GuestAuth';
+import GuestDashboard from './components/guest/GuestDashboard';
 
 // Separate Apps
 import AdminApp from './components/admin/AdminApp';
@@ -39,6 +41,8 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/app" element={<ProtectedAppRoute />} />
+        <Route path="/guest-auth" element={<GuestAuth />} />
+        <Route path="/guest-dashboard" element={<GuestDashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
