@@ -554,8 +554,13 @@ export const insertSightseeing = async (s: Sightseeing) => {
   if (!supabase) return null;
   const dbData = toDbSightseeing(s);
   const { id, ...insertData } = dbData;
+  console.log('DEBUG insertSightseeing - Data being inserted:', insertData);
   const { data, error } = await supabase.from('sightseeings').insert(insertData).select().single();
-  if (error) throw error;
+  if (error) {
+    console.error('DEBUG insertSightseeing - Error:', error);
+    throw error;
+  }
+  console.log('DEBUG insertSightseeing - Data returned from DB:', data);
   return fromDbSightseeing(data);
 };
 
