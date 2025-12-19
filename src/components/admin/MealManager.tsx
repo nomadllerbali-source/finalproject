@@ -4,6 +4,7 @@ import { Meal, Area } from '../../types';
 import { Utensils, Plus, Edit2, Trash2, Save, X, Search, MapPin } from 'lucide-react';
 import Layout from '../Layout';
 import { supabase } from '../../lib/supabase';
+import { handleDecimalInput, decimalInputProps } from '../../utils/inputHelpers';
 
 const MealManager: React.FC = () => {
   const { state, addMeal, updateMealData, deleteMealData } = useData();
@@ -209,9 +210,13 @@ const MealManager: React.FC = () => {
                     Cost per Person (Rp)
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     value={newMeal.cost}
-                    onChange={(e) => setNewMeal({ ...newMeal, cost: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const decimalValue = handleDecimalInput(e.target.value);
+                      setNewMeal({ ...newMeal, cost: parseFloat(decimalValue) || 0 });
+                    }}
+                    {...decimalInputProps}
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -315,9 +320,13 @@ const MealManager: React.FC = () => {
                           </td>
                           <td className="px-6 py-4">
                             <input
-                              type="number"
+                              type="text"
                               value={editForm.cost || 0}
-                              onChange={(e) => setEditForm({ ...editForm, cost: parseFloat(e.target.value) || 0 })}
+                              onChange={(e) => {
+                                const decimalValue = handleDecimalInput(e.target.value);
+                                setEditForm({ ...editForm, cost: parseFloat(decimalValue) || 0 });
+                              }}
+                              {...decimalInputProps}
                               className="w-full p-2 border border-slate-300 rounded-lg"
                             />
                           </td>

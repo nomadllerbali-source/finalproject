@@ -3,6 +3,7 @@ import { useData } from '../../contexts/DataContext';
 import { EntryTicket } from '../../types';
 import { Ticket, Plus, Edit2, Trash2, Save, X, Search, MapPin } from 'lucide-react';
 import Layout from '../Layout';
+import { handleNumericInput, numericInputProps } from '../../utils/inputHelpers';
 
 const EntryTicketManager: React.FC = () => {
   const { state, addEntryTicket, updateEntryTicketData, deleteEntryTicketData } = useData();
@@ -141,16 +142,18 @@ const EntryTicketManager: React.FC = () => {
                     Cost for Adults (Rp)
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     value={newTicket.adultCost}
                     onChange={(e) => {
-                      const value = parseFloat(e.target.value) || 0;
+                      const numericValue = handleNumericInput(e.target.value);
+                      const value = parseInt(numericValue) || 0;
                       setNewTicket({
                         ...newTicket,
                         adultCost: value,
                         childCost: childSameAsAdult ? value : newTicket.childCost
                       });
                     }}
+                    {...numericInputProps}
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -175,10 +178,14 @@ const EntryTicketManager: React.FC = () => {
                     </label>
                   </div>
                   <input
-                    type="number"
+                    type="text"
                     value={newTicket.childCost}
-                    onChange={(e) => setNewTicket({ ...newTicket, childCost: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const numericValue = handleNumericInput(e.target.value);
+                      setNewTicket({ ...newTicket, childCost: parseInt(numericValue) || 0 });
+                    }}
                     disabled={childSameAsAdult}
+                    {...numericInputProps}
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
                   />
                 </div>
@@ -272,16 +279,18 @@ const EntryTicketManager: React.FC = () => {
                                 <div>
                                   <label className="block text-sm font-medium text-slate-700 mb-1">Cost for Adults (Rp)</label>
                                   <input
-                                    type="number"
+                                    type="text"
                                     value={editForm.adultCost || 0}
                                     onChange={(e) => {
-                                      const value = parseFloat(e.target.value) || 0;
+                                      const numericValue = handleNumericInput(e.target.value);
+                                      const value = parseInt(numericValue) || 0;
                                       setEditForm({
                                         ...editForm,
                                         adultCost: value,
                                         childCost: editChildSameAsAdult ? value : editForm.childCost
                                       });
                                     }}
+                                    {...numericInputProps}
                                     className="w-full p-2 border border-slate-300 rounded-lg"
                                   />
                                 </div>
@@ -304,10 +313,14 @@ const EntryTicketManager: React.FC = () => {
                                     </label>
                                   </div>
                                   <input
-                                    type="number"
+                                    type="text"
                                     value={editForm.childCost || 0}
-                                    onChange={(e) => setEditForm({ ...editForm, childCost: parseFloat(e.target.value) || 0 })}
+                                    onChange={(e) => {
+                                      const numericValue = handleNumericInput(e.target.value);
+                                      setEditForm({ ...editForm, childCost: parseInt(numericValue) || 0 });
+                                    }}
                                     disabled={editChildSameAsAdult}
+                                    {...numericInputProps}
                                     className="w-full p-2 border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:cursor-not-allowed"
                                   />
                                 </div>

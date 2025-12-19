@@ -3,6 +3,7 @@ import { useData } from '../../contexts/DataContext';
 import { Transportation } from '../../types';
 import { Car, Truck, Bike, Plus, Edit2, Trash2, Save, X, Search } from 'lucide-react';
 import Layout from '../Layout';
+import { handleNumericInput, handleDecimalInput, numericInputProps, decimalInputProps } from '../../utils/inputHelpers';
 
 const TransportationManager: React.FC = () => {
   const { state, addTransportation, updateTransportationData, deleteTransportationData } = useData();
@@ -133,14 +134,16 @@ const TransportationManager: React.FC = () => {
                     Minimum Occupancy (Pax) *
                   </label>
                   <input
-                    type="number"
-                    inputMode="numeric"
-                    min="1"
+                    type="text"
                     value={newTransportation.minOccupancy}
-                    onChange={(e) => setNewTransportation({
-                      ...newTransportation,
-                      minOccupancy: parseInt(e.target.value) || 1
-                    })}
+                    onChange={(e) => {
+                      const numericValue = handleNumericInput(e.target.value);
+                      setNewTransportation({
+                        ...newTransportation,
+                        minOccupancy: parseInt(numericValue) || 1
+                      });
+                    }}
+                    {...numericInputProps}
                     placeholder="e.g., 1"
                     className="w-full p-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
                   />
@@ -153,14 +156,16 @@ const TransportationManager: React.FC = () => {
                     Maximum Occupancy (Pax) *
                   </label>
                   <input
-                    type="number"
-                    inputMode="numeric"
-                    min={newTransportation.minOccupancy}
+                    type="text"
                     value={newTransportation.maxOccupancy}
-                    onChange={(e) => setNewTransportation({
-                      ...newTransportation,
-                      maxOccupancy: parseInt(e.target.value) || 1
-                    })}
+                    onChange={(e) => {
+                      const numericValue = handleNumericInput(e.target.value);
+                      setNewTransportation({
+                        ...newTransportation,
+                        maxOccupancy: parseInt(numericValue) || 1
+                      });
+                    }}
+                    {...numericInputProps}
                     placeholder="e.g., 6"
                     className="w-full p-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
                   />
@@ -173,13 +178,16 @@ const TransportationManager: React.FC = () => {
                     Cost per Day (Rp)
                   </label>
                   <input
-                    type="number"
-                    inputMode="decimal"
+                    type="text"
                     value={newTransportation.costPerDay}
-                    onChange={(e) => setNewTransportation({
-                      ...newTransportation,
-                      costPerDay: parseFloat(e.target.value) || 0
-                    })}
+                    onChange={(e) => {
+                      const decimalValue = handleDecimalInput(e.target.value);
+                      setNewTransportation({
+                        ...newTransportation,
+                        costPerDay: parseFloat(decimalValue) || 0
+                      });
+                    }}
+                    {...decimalInputProps}
                     className="w-full p-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
                   />
                   {newTransportation.type === 'cab' && (
@@ -286,27 +294,31 @@ const TransportationManager: React.FC = () => {
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <div className="flex gap-2 items-center">
                               <input
-                                type="number"
-                                inputMode="numeric"
-                                min="1"
+                                type="text"
                                 value={editForm.minOccupancy || 1}
-                                onChange={(e) => setEditForm({
-                                  ...editForm,
-                                  minOccupancy: parseInt(e.target.value) || 1
-                                })}
+                                onChange={(e) => {
+                                  const numericValue = handleNumericInput(e.target.value);
+                                  setEditForm({
+                                    ...editForm,
+                                    minOccupancy: parseInt(numericValue) || 1
+                                  });
+                                }}
+                                {...numericInputProps}
                                 placeholder="Min"
                                 className="w-16 p-2 text-base border border-slate-300 rounded-lg touch-target"
                               />
                               <span className="text-slate-500">-</span>
                               <input
-                                type="number"
-                                inputMode="numeric"
-                                min={editForm.minOccupancy || 1}
+                                type="text"
                                 value={editForm.maxOccupancy || 1}
-                                onChange={(e) => setEditForm({
-                                  ...editForm,
-                                  maxOccupancy: parseInt(e.target.value) || 1
-                                })}
+                                onChange={(e) => {
+                                  const numericValue = handleNumericInput(e.target.value);
+                                  setEditForm({
+                                    ...editForm,
+                                    maxOccupancy: parseInt(numericValue) || 1
+                                  });
+                                }}
+                                {...numericInputProps}
                                 placeholder="Max"
                                 className="w-16 p-2 text-base border border-slate-300 rounded-lg touch-target"
                               />
@@ -314,13 +326,16 @@ const TransportationManager: React.FC = () => {
                           </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <input
-                              type="number"
-                              inputMode="decimal"
+                              type="text"
                               value={editForm.costPerDay || 0}
-                              onChange={(e) => setEditForm({
-                                ...editForm,
-                                costPerDay: parseFloat(e.target.value) || 0
-                              })}
+                              onChange={(e) => {
+                                const decimalValue = handleDecimalInput(e.target.value);
+                                setEditForm({
+                                  ...editForm,
+                                  costPerDay: parseFloat(decimalValue) || 0
+                                });
+                              }}
+                              {...decimalInputProps}
                               className="w-full p-2 text-base border border-slate-300 rounded-lg touch-target"
                             />
                           </td>
