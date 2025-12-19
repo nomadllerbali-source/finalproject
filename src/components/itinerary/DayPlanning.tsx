@@ -189,6 +189,25 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
     setDayPlans(updatedPlans);
   };
 
+  const handleSightseeingSelection = (dayIndex: number, sightseeingId: string) => {
+    const selectedSightseeing = sightseeings.find(s => s.id === sightseeingId);
+    const updatedPlans = [...dayPlans];
+
+    updatedPlans[dayIndex] = {
+      ...updatedPlans[dayIndex],
+      sightseeing: [sightseeingId]
+    };
+
+    if (selectedSightseeing?.entryTicketIds && selectedSightseeing.entryTicketIds.length > 0) {
+      const currentTickets = updatedPlans[dayIndex].entryTickets || [];
+      const sightseeingTickets = selectedSightseeing.entryTicketIds;
+      const mergedTickets = Array.from(new Set([...currentTickets, ...sightseeingTickets]));
+      updatedPlans[dayIndex].entryTickets = mergedTickets;
+    }
+
+    setDayPlans(updatedPlans);
+  };
+
   const handleSameAsYesterday = (dayIndex: number, checked: boolean) => {
     setSameAsYesterday(prev => ({ ...prev, [dayIndex]: checked }));
 
@@ -469,7 +488,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                     name={`sightseeing-day-${dayIndex}`}
                     checked={dayPlan.sightseeing.includes(sight.id)}
                     onChange={() => {
-                      updateDayPlan(dayIndex, 'sightseeing', [sight.id]);
+                      handleSightseeingSelection(dayIndex, sight.id);
                     }}
                     className="mt-1 h-5 w-5 text-blue-600 focus:ring-blue-500 border-slate-300"
                   />
@@ -484,6 +503,12 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                       <div className="text-xs text-blue-600 capitalize">
                         {sight.transportationMode.replace('-', ' ')}
                       </div>
+                      {sight.entryTicketIds && sight.entryTicketIds.length > 0 && (
+                        <div className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full flex items-center">
+                          <Ticket className="h-3 w-3 mr-1" />
+                          {sight.entryTicketIds.length} tickets included
+                        </div>
+                      )}
                     </div>
                   </div>
                 </label>
@@ -802,13 +827,47 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
         );
 
       case 'tickets':
+        const selectedSightseeingForTickets = dayPlan.sightseeing.length > 0
+          ? sightseeings.find(s => s.id === dayPlan.sightseeing[0])
+          : null;
+        const autoIncludedTicketIds = selectedSightseeingForTickets?.entryTicketIds || [];
+
         return (
           <div className="space-y-4">
             <div className="bg-orange-50 rounded-lg p-4 mb-4">
               <h4 className="font-semibold text-orange-900 mb-2">Select Entry Tickets</h4>
               <p className="text-orange-700 text-sm">Choose entry tickets for the sightseeing spots selected for Day {currentDay}.</p>
             </div>
-            
+
+            {autoIncludedTicketIds.length > 0 && (
+              <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                <h5 className="font-semibold text-teal-900 mb-2 flex items-center">
+                  <Check className="h-5 w-5 mr-2" />
+                  Tickets Included with Sightseeing
+                </h5>
+                <p className="text-sm text-teal-700 mb-3">
+                  The following tickets are automatically included with "{selectedSightseeingForTickets?.displayName || selectedSightseeingForTickets?.name}":
+                </p>
+                <div className="space-y-2">
+                  {autoIncludedTicketIds.map(ticketId => {
+                    const ticket = entryTickets.find(t => t.id === ticketId);
+                    if (!ticket) return null;
+                    return (
+                      <div key={ticketId} className="bg-white border border-teal-200 p-3 rounded-lg flex items-center">
+                        <Ticket className="h-4 w-4 text-teal-600 mr-2 flex-shrink-0" />
+                        <div className="flex-1">
+                          <div className="font-medium text-teal-900">{ticket.name}</div>
+                          <div className="text-sm text-teal-700">
+                            Adult: Rp {ticket.adultCost.toLocaleString('id-ID')} | Child: Rp {ticket.childCost.toLocaleString('id-ID')}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Search Bar */}
             <div className="relative">
               <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -828,44 +887,61 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                 </button>
               )}
             </div>
-            
+
             <div className="space-y-3">
-              {getFilteredTickets(dayIndex, dayPlan.sightseeing).map(ticket => (
-                <label key={ticket.id} className="flex items-center space-x-3 p-4 border-2 border-slate-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 cursor-pointer transition-all">
-                  <input
-                    type="checkbox"
-                    checked={dayPlan.entryTickets.includes(ticket.id)}
-                    onChange={(e) => {
-                      const current = dayPlan.entryTickets;
-                      const updated = e.target.checked
-                        ? [...current, ticket.id]
-                        : current.filter(id => id !== ticket.id);
-                      updateDayPlan(dayIndex, 'entryTickets', updated);
-                    }}
-                    className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-slate-300 rounded"
-                  />
-                  <div className="flex-1">
-                    <div className="font-semibold text-slate-900">{ticket.name}</div>
-                    {!isAgent && !isFixedItinerary && (
-                      <div className="text-sm text-slate-600">${ticket.cost} per person</div>
-                    )}
-                  </div>
-                </label>
-              ))}
+              {getFilteredTickets(dayIndex, dayPlan.sightseeing).map(ticket => {
+                const isAutoIncluded = autoIncludedTicketIds.includes(ticket.id);
+                return (
+                  <label
+                    key={ticket.id}
+                    className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      isAutoIncluded
+                        ? 'border-teal-300 bg-teal-50'
+                        : 'border-slate-200 hover:bg-orange-50 hover:border-orange-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={dayPlan.entryTickets.includes(ticket.id)}
+                      onChange={(e) => {
+                        const current = dayPlan.entryTickets;
+                        const updated = e.target.checked
+                          ? [...current, ticket.id]
+                          : current.filter(id => id !== ticket.id);
+                        updateDayPlan(dayIndex, 'entryTickets', updated);
+                      }}
+                      className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-slate-300 rounded"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold text-slate-900">{ticket.name}</div>
+                        {isAutoIncluded && (
+                          <span className="text-xs bg-teal-600 text-white px-2 py-0.5 rounded-full">
+                            Auto-included
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-slate-600 mt-1">
+                        Adult: Rp {ticket.adultCost.toLocaleString('id-ID')} | Child: Rp {ticket.childCost.toLocaleString('id-ID')}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
-            
+
             {getFilteredTickets(dayIndex, dayPlan.sightseeing).length === 0 && dayPlan.sightseeing.length > 0 && (
               <div className="text-center py-8 text-slate-500">
                 <Ticket className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                 <p>
-                  {searchTerms.tickets 
-                    ? 'No entry tickets match your search.' 
+                  {searchTerms.tickets
+                    ? 'No entry tickets match your search.'
                     : 'All available entry tickets for selected sightseeing spots have been used in previous days.'
                   }
                 </p>
               </div>
             )}
-            
+
             {dayPlan.sightseeing.length === 0 && (
               <div className="text-center py-8 text-slate-500">
                 <Ticket className="h-8 w-8 mx-auto mb-2 text-slate-400" />

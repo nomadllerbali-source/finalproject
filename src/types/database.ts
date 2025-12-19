@@ -243,6 +243,7 @@ export interface Database {
           description: string;
           transportation_mode: string;
           vehicle_costs: any | null;
+          entry_ticket_ids: string[] | null;
           area_id: string | null;
           area_name: string | null;
           created_at: string;
@@ -254,6 +255,7 @@ export interface Database {
           description: string;
           transportation_mode: string;
           vehicle_costs?: any | null;
+          entry_ticket_ids?: string[] | null;
           area_id?: string | null;
           area_name?: string | null;
           created_at?: string;
@@ -265,6 +267,7 @@ export interface Database {
           description?: string;
           transportation_mode?: string;
           vehicle_costs?: any | null;
+          entry_ticket_ids?: string[] | null;
           area_id?: string | null;
           area_name?: string | null;
           created_at?: string;

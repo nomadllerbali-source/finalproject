@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { Sightseeing, VehicleCost, Area } from '../../types';
-import { MapPin, Plus, Edit2, Trash2, Save, X, Search, Car } from 'lucide-react';
+import { MapPin, Plus, Edit2, Trash2, Save, X, Search, Car, Ticket } from 'lucide-react';
 import Layout from '../Layout';
 import { supabase } from '../../lib/supabase';
 
 const SightseeingManager: React.FC = () => {
   const { state, addSightseeing, updateSightseeingData, deleteSightseeingData } = useData();
-  const { sightseeings, transportations } = state;
+  const { sightseeings, transportations, entryTickets } = state;
   const [areas, setAreas] = useState<Area[]>([]);
   const [filterArea, setFilterArea] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,6 +20,7 @@ const SightseeingManager: React.FC = () => {
     description: '',
     transportationMode: 'cab',
     vehicleCosts: {},
+    entryTicketIds: [],
     areaId: '',
     areaName: ''
   });
@@ -75,9 +76,11 @@ const SightseeingManager: React.FC = () => {
       const sightseeing: Sightseeing = {
         id: `${Date.now()}-${mode}`,
         name: newSightseeing.name,
+        displayName: newSightseeing.displayName,
         description: newSightseeing.description,
         transportationMode: mode as 'cab' | 'self-drive-car' | 'self-drive-scooter',
         vehicleCosts: mode === 'cab' ? newSightseeing.vehicleCosts : undefined,
+        entryTicketIds: mode === 'cab' ? newSightseeing.entryTicketIds : undefined,
         areaId: newSightseeing.areaId,
         areaName: newSightseeing.areaName
       };
@@ -95,6 +98,7 @@ const SightseeingManager: React.FC = () => {
       description: '',
       transportationMode: 'cab',
       vehicleCosts: initialCosts,
+      entryTicketIds: [],
       areaId: '',
       areaName: ''
     });
@@ -154,6 +158,33 @@ const SightseeingManager: React.FC = () => {
     }
   };
 
+  const getFilteredEntryTickets = (areaId?: string) => {
+    if (!areaId) return [];
+    return entryTickets.filter(ticket => ticket.areaId === areaId);
+  };
+
+  const toggleEntryTicket = (ticketId: string, isNew: boolean = false) => {
+    if (isNew) {
+      const currentIds = newSightseeing.entryTicketIds || [];
+      const updatedIds = currentIds.includes(ticketId)
+        ? currentIds.filter(id => id !== ticketId)
+        : [...currentIds, ticketId];
+      setNewSightseeing({
+        ...newSightseeing,
+        entryTicketIds: updatedIds
+      });
+    } else {
+      const currentIds = editForm.entryTicketIds || [];
+      const updatedIds = currentIds.includes(ticketId)
+        ? currentIds.filter(id => id !== ticketId)
+        : [...currentIds, ticketId];
+      setEditForm({
+        ...editForm,
+        entryTicketIds: updatedIds
+      });
+    }
+  };
+
   const renderVehicleCostInputs = (vehicleCosts: VehicleCost | undefined, isNew: boolean = false) => {
     if (!vehicleCosts) return null;
 
@@ -184,6 +215,58 @@ const SightseeingManager: React.FC = () => {
               className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderEntryTicketSelection = (areaId: string | undefined, selectedTicketIds: string[] | undefined, isNew: boolean = false) => {
+    if (!areaId) {
+      return (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="text-amber-800 text-sm">
+            Please select an area first to see available entry tickets.
+          </p>
+        </div>
+      );
+    }
+
+    const availableTickets = getFilteredEntryTickets(areaId);
+
+    if (availableTickets.length === 0) {
+      return (
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+          <p className="text-slate-600 text-sm">
+            No entry tickets available for this area. Add entry tickets in the Entry Ticket Manager first.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-slate-600">
+          Select entry tickets that are included with this sightseeing tour:
+        </p>
+        {availableTickets.map(ticket => (
+          <label
+            key={ticket.id}
+            className="flex items-start space-x-3 p-3 border-2 border-slate-200 rounded-lg hover:bg-teal-50 hover:border-teal-300 cursor-pointer transition-all"
+          >
+            <input
+              type="checkbox"
+              checked={selectedTicketIds?.includes(ticket.id) || false}
+              onChange={() => toggleEntryTicket(ticket.id, isNew)}
+              className="mt-1 h-5 w-5 text-teal-600 focus:ring-teal-500 border-slate-300 rounded"
+            />
+            <div className="flex-1">
+              <div className="font-semibold text-slate-900">{ticket.name}</div>
+              <div className="text-sm text-slate-600 mt-1">
+                Adult: Rp {ticket.adultCost.toLocaleString('id-ID')} |
+                Child: Rp {ticket.childCost.toLocaleString('id-ID')}
+              </div>
+            </div>
+          </label>
         ))}
       </div>
     );
@@ -305,13 +388,26 @@ const SightseeingManager: React.FC = () => {
               </div>
 
               {newSightseeing.transportationMode === 'cab' && (
-                <div className="mb-6">
-                  <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
-                    <Car className="h-4 w-4 mr-2 text-blue-600" />
-                    Vehicle Costs (for Cab mode)
-                  </h4>
-                  {renderVehicleCostInputs(newSightseeing.vehicleCosts, true)}
-                </div>
+                <>
+                  <div className="mb-6">
+                    <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
+                      <Car className="h-4 w-4 mr-2 text-blue-600" />
+                      Vehicle Costs (for Cab mode)
+                    </h4>
+                    {renderVehicleCostInputs(newSightseeing.vehicleCosts, true)}
+                  </div>
+
+                  <div className="mb-6">
+                    <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
+                      <Ticket className="h-4 w-4 mr-2 text-teal-600" />
+                      Entry Tickets (Optional - for Cab mode only)
+                    </h4>
+                    <p className="text-sm text-slate-600 mb-3">
+                      Select entry tickets that should be automatically included when this sightseeing is selected in an itinerary.
+                    </p>
+                    {renderEntryTicketSelection(newSightseeing.areaId, newSightseeing.entryTicketIds, true)}
+                  </div>
+                </>
               )}
 
               <div className="flex justify-end space-x-3">
@@ -460,13 +556,26 @@ const SightseeingManager: React.FC = () => {
                     </div>
 
                     {editForm.transportationMode === 'cab' && (
-                      <div className="mb-6">
-                        <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
-                          <Car className="h-4 w-4 mr-2 text-blue-600" />
-                          Vehicle Costs (for Cab mode)
-                        </h4>
-                        {renderVehicleCostInputs(editForm.vehicleCosts)}
-                      </div>
+                      <>
+                        <div className="mb-6">
+                          <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
+                            <Car className="h-4 w-4 mr-2 text-blue-600" />
+                            Vehicle Costs (for Cab mode)
+                          </h4>
+                          {renderVehicleCostInputs(editForm.vehicleCosts)}
+                        </div>
+
+                        <div className="mb-6">
+                          <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
+                            <Ticket className="h-4 w-4 mr-2 text-teal-600" />
+                            Entry Tickets (Optional - for Cab mode only)
+                          </h4>
+                          <p className="text-sm text-slate-600 mb-3">
+                            Select entry tickets that should be automatically included when this sightseeing is selected in an itinerary.
+                          </p>
+                          {renderEntryTicketSelection(editForm.areaId, editForm.entryTicketIds, false)}
+                        </div>
+                      </>
                     )}
 
                     <div className="flex justify-end space-x-3">
@@ -530,7 +639,7 @@ const SightseeingManager: React.FC = () => {
                     </div>
 
                     {sight.transportationMode === 'cab' && sight.vehicleCosts && (
-                      <div className="p-6">
+                      <div className="p-6 border-b border-slate-200">
                         <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
                           <Car className="h-4 w-4 mr-2 text-blue-600" />
                           Vehicle Costs
@@ -545,6 +654,29 @@ const SightseeingManager: React.FC = () => {
                                   {vehicle && ` (${vehicle.minOccupancy}-${vehicle.maxOccupancy} pax)`}
                                 </div>
                                 <div className="text-lg font-bold text-slate-900">Rp {cost.toLocaleString('id-ID')}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {sight.transportationMode === 'cab' && sight.entryTicketIds && sight.entryTicketIds.length > 0 && (
+                      <div className="p-6">
+                        <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
+                          <Ticket className="h-4 w-4 mr-2 text-teal-600" />
+                          Included Entry Tickets ({sight.entryTicketIds.length})
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {sight.entryTicketIds.map(ticketId => {
+                            const ticket = entryTickets.find(t => t.id === ticketId);
+                            if (!ticket) return null;
+                            return (
+                              <div key={ticketId} className="bg-teal-50 border border-teal-200 p-3 rounded-lg">
+                                <div className="font-medium text-teal-900">{ticket.name}</div>
+                                <div className="text-sm text-teal-700 mt-1">
+                                  Adult: Rp {ticket.adultCost.toLocaleString('id-ID')} |
+                                  Child: Rp {ticket.childCost.toLocaleString('id-ID')}
+                                </div>
                               </div>
                             );
                           })}

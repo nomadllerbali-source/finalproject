@@ -152,6 +152,7 @@ export const fromDbSightseeing = (row: SightseeingsRow): Sightseeing => ({
   description: row.description,
   transportationMode: row.transportation_mode as any,
   vehicleCosts: row.vehicle_costs || undefined,
+  entryTicketIds: row.entry_ticket_ids || undefined,
   areaId: row.area_id || undefined,
   areaName: row.area_name || undefined
 });
@@ -163,6 +164,7 @@ export const toDbSightseeing = (s: Sightseeing) => ({
   description: s.description,
   transportation_mode: s.transportationMode,
   vehicle_costs: s.vehicleCosts || null,
+  entry_ticket_ids: s.entryTicketIds || null,
   area_id: s.areaId || null,
   area_name: s.areaName || null
 });

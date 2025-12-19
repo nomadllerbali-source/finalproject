@@ -89,6 +89,7 @@ export interface Sightseeing {
   description: string;
   transportationMode: 'cab' | 'self-drive-car' | 'self-drive-scooter';
   vehicleCosts?: VehicleCost;
+  entryTicketIds?: string[];
   areaId?: string;
   areaName?: string;
 }
