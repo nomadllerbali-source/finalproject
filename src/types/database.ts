@@ -368,6 +368,29 @@ export interface Database {
           created_at?: string;
         };
       };
+      areas: {
+        Row: {
+          id: string;
+          name: string;
+          description: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       itineraries: {
         Row: {
           id: string;

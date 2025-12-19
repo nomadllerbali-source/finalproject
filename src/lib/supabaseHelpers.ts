@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import {
   Client, Transportation, Hotel, RoomType, Sightseeing, Activity, ActivityOption,
-  EntryTicket, Meal, Itinerary, DayPlan, FixedItinerary, FollowUpRecord
+  EntryTicket, Meal, Itinerary, DayPlan, FixedItinerary, FollowUpRecord, Area
 } from '../types';
 import { Database } from '../types/database';
 
@@ -27,6 +27,7 @@ type ActivitiesRow = Database['public']['Tables']['activities']['Row'];
 type ActivityOptionsRow = Database['public']['Tables']['activity_options']['Row'];
 type EntryTicketsRow = Database['public']['Tables']['entry_tickets']['Row'];
 type MealsRow = Database['public']['Tables']['meals']['Row'];
+type AreasRow = Database['public']['Tables']['areas']['Row'];
 type ItinerariesRow = Database['public']['Tables']['itineraries']['Row'];
 type ItinerariesInsert = Database['public']['Tables']['itineraries']['Insert'];
 type DayPlansRow = Database['public']['Tables']['day_plans']['Row'];
@@ -234,6 +235,14 @@ export const toDbMeal = (m: Meal) => ({
   area_name: m.areaName || null
 });
 
+export const fromDbArea = (row: AreasRow): Area => ({
+  id: row.id,
+  name: row.name,
+  description: row.description,
+  created_at: row.created_at,
+  updated_at: row.updated_at
+});
+
 export const fromDbDayPlan = (row: DayPlansRow): DayPlan => ({
   day: row.day,
   areaId: row.area_id || undefined,
@@ -371,6 +380,7 @@ export const fetchAllData = async () => {
         { data: activitiesData, error: activitiesError },
         { data: entryTicketsData, error: entryTicketsError },
         { data: mealsData, error: mealsError },
+        { data: areasData, error: areasError },
         { data: itinerariesData, error: itinerariesError },
         { data: fixedItinerariesData, error: fixedItinerariesError }
       ] = await Promise.all([
@@ -381,6 +391,7 @@ export const fetchAllData = async () => {
         supabase.from('activities').select('*, activity_options(*)'),
         supabase.from('entry_tickets').select('*'),
         supabase.from('meals').select('*'),
+        supabase.from('areas').select('*'),
         supabase.from('itineraries').select('*, clients(*), day_plans(*)'),
         supabase.from('fixed_itineraries').select('*')
       ]);
@@ -392,6 +403,7 @@ export const fetchAllData = async () => {
       if (activitiesError) throw activitiesError;
       if (entryTicketsError) throw entryTicketsError;
       if (mealsError) throw mealsError;
+      if (areasError) throw areasError;
       if (itinerariesError) throw itinerariesError;
       if (fixedItinerariesError) throw fixedItinerariesError;
 
@@ -404,6 +416,7 @@ export const fetchAllData = async () => {
         activities: activitiesData?.map(fromDbActivity) || [],
         entryTickets: entryTicketsData?.map(fromDbEntryTicket) || [],
         meals: mealsData?.map(fromDbMeal) || [],
+        areas: areasData?.map(fromDbArea) || [],
         itineraries: itinerariesData?.map(fromDbItinerary) || [],
         fixedItineraries: fixedItinerariesData?.map(fromDbFixedItinerary) || []
       };
