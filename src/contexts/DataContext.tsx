@@ -541,26 +541,7 @@ const demoActivities: Activity[] = [
   }
 ];
 
-const demoEntryTickets: EntryTicket[] = [
-  { id: '1', name: 'Tanah Lot Temple Entry', cost: 5, sightseeingId: '1' },
-  { id: '2', name: 'Uluwatu Temple Entry', cost: 6, sightseeingId: '2' },
-  { id: '3', name: 'Kecak Fire Dance Show', cost: 15, sightseeingId: '2' },
-  { id: '4', name: 'Besakih Temple Entry', cost: 8, sightseeingId: '3' },
-  { id: '5', name: 'Jatiluwih Rice Terraces Entry', cost: 4, sightseeingId: '4' },
-  { id: '6', name: 'Nusa Penida Fast Boat', cost: 35, sightseeingId: '5' },
-  { id: '7', name: 'Kelingking Beach Access', cost: 3, sightseeingId: '5' },
-  { id: '8', name: 'Dolphin Watching Boat', cost: 25, sightseeingId: '6' },
-  { id: '9', name: 'Banyumala Waterfall Entry', cost: 6, sightseeingId: '7' },
-  { id: '10', name: 'Tegallalang Rice Terraces Entry', cost: 5, sightseeingId: '8' },
-  { id: '11', name: 'Bali Swing Experience', cost: 20, sightseeingId: '8' },
-  { id: '12', name: 'Tirta Empul Temple Entry', cost: 8, sightseeingId: '9' },
-  { id: '13', name: 'Holy Water Blessing Ceremony', cost: 15, sightseeingId: '9' },
-  { id: '14', name: 'Goa Gajah Elephant Cave Entry', cost: 7, sightseeingId: '10' },
-  { id: '15', name: 'Gunung Kawi Temple Entry', cost: 9, sightseeingId: '11' },
-  { id: '16', name: 'Batukaru Temple Entry', cost: 6, sightseeingId: '12' },
-  { id: '17', name: 'Klungkung Palace Entry', cost: 8, sightseeingId: '15' },
-  { id: '18', name: 'Traditional Art Gallery', cost: 5, sightseeingId: '15' }
-];
+const demoEntryTickets: EntryTicket[] = [];
 
 const demoMeals: Meal[] = [
   { id: '1', type: 'breakfast', place: 'Hotel Restaurant', cost: 12 },

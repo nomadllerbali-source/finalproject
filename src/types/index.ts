@@ -112,8 +112,10 @@ export interface Activity {
 export interface EntryTicket {
   id: string;
   name: string;
-  cost: number;
-  sightseeingId: string;
+  adultCost: number;
+  childCost: number;
+  areaId?: string;
+  areaName?: string;
 }
 
 export interface Meal {

@@ -6,76 +6,65 @@ import Layout from '../Layout';
 
 const EntryTicketManager: React.FC = () => {
   const { state, addEntryTicket, updateEntryTicketData, deleteEntryTicketData } = useData();
-  const { entryTickets, sightseeings, areas = [] } = state;
+  const { entryTickets, areas = [] } = state;
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<EntryTicket>>({});
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedArea, setSelectedArea] = useState('');
-  const [editSelectedArea, setEditSelectedArea] = useState('');
+  const [childSameAsAdult, setChildSameAsAdult] = useState(false);
+  const [editChildSameAsAdult, setEditChildSameAsAdult] = useState(false);
   const [newTicket, setNewTicket] = useState<Omit<EntryTicket, 'id'>>({
     name: '',
-    cost: 0,
-    sightseeingId: ''
+    adultCost: 0,
+    childCost: 0,
+    areaId: '',
+    areaName: ''
   });
 
-  const filteredTickets = entryTickets.filter(ticket =>
-    ticket.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    getSightseeingName(ticket.sightseeingId).toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTickets = entryTickets.filter(ticket => {
+    const matchesSearch = ticket.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (ticket.areaName || '').toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
 
-  function formatTransportationMode(mode: string): string {
-    const modeLabels: Record<string, string> = {
-      'cab': 'Cab',
-      'self-drive-car': 'Self-Drive Car',
-      'self-drive-scooter': 'Self-Drive Scooter'
-    };
-    return modeLabels[mode] || mode;
-  }
-
-  function getSightseeingName(sightseeingId: string): string {
-    const sightseeing = sightseeings.find(s => s.id === sightseeingId);
-    if (!sightseeing) return 'Unknown Location';
-    const modeName = formatTransportationMode(sightseeing.transportationMode);
-    return `${sightseeing.name} (${modeName})`;
-  }
-
-  function getFilteredSightseeing() {
-    if (!selectedArea) return sightseeings;
-    return sightseeings.filter(s => s.areaId === selectedArea);
-  }
-
-  function getFilteredSightseeingForEdit() {
-    if (!editSelectedArea) return sightseeings;
-    return sightseeings.filter(s => s.areaId === editSelectedArea);
+  function getAreaName(areaId?: string): string {
+    if (!areaId) return 'All Areas';
+    const area = areas.find(a => a.id === areaId);
+    return area?.name || 'Unknown Area';
   }
 
   const handleAdd = async () => {
+    const selectedArea = areas.find(a => a.id === newTicket.areaId);
     const ticket: EntryTicket = {
       ...newTicket,
-      id: Date.now().toString()
+      id: Date.now().toString(),
+      areaName: selectedArea?.name || '',
+      childCost: childSameAsAdult ? newTicket.adultCost : newTicket.childCost
     };
     await addEntryTicket(ticket);
-    setNewTicket({ name: '', cost: 0, sightseeingId: '' });
-    setSelectedArea('');
+    setNewTicket({ name: '', adultCost: 0, childCost: 0, areaId: '', areaName: '' });
+    setChildSameAsAdult(false);
     setShowAddForm(false);
   };
 
   const handleEdit = (ticket: EntryTicket) => {
     setIsEditing(ticket.id);
     setEditForm(ticket);
-    const sightseeing = sightseeings.find(s => s.id === ticket.sightseeingId);
-    if (sightseeing) {
-      setEditSelectedArea(sightseeing.areaId || '');
-    }
+    setEditChildSameAsAdult(ticket.adultCost === ticket.childCost);
   };
 
   const handleSave = async () => {
     if (isEditing && editForm.id) {
-      await updateEntryTicketData(editForm as EntryTicket);
+      const selectedArea = areas.find(a => a.id === editForm.areaId);
+      const updatedTicket = {
+        ...editForm,
+        areaName: selectedArea?.name || editForm.areaName || '',
+        childCost: editChildSameAsAdult ? editForm.adultCost || 0 : editForm.childCost || 0
+      };
+      await updateEntryTicketData(updatedTicket as EntryTicket);
       setIsEditing(null);
       setEditForm({});
-      setEditSelectedArea('');
+      setEditChildSameAsAdult(false);
     }
   };
 
@@ -117,39 +106,19 @@ const EntryTicketManager: React.FC = () => {
 
           {showAddForm && (
             <div className="p-6 border-b border-slate-200 bg-slate-50">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Area
                   </label>
                   <select
-                    value={selectedArea}
-                    onChange={(e) => {
-                      setSelectedArea(e.target.value);
-                      setNewTicket({ ...newTicket, sightseeingId: '' });
-                    }}
+                    value={newTicket.areaId}
+                    onChange={(e) => setNewTicket({ ...newTicket, areaId: e.target.value })}
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">All Areas</option>
                     {areas.map(area => (
                       <option key={area.id} value={area.id}>{area.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Sightseeing Location
-                  </label>
-                  <select
-                    value={newTicket.sightseeingId}
-                    onChange={(e) => setNewTicket({ ...newTicket, sightseeingId: e.target.value })}
-                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select location</option>
-                    {getFilteredSightseeing().map(sight => (
-                      <option key={sight.id} value={sight.id}>
-                        {sight.name} ({formatTransportationMode(sight.transportationMode)})
-                      </option>
                     ))}
                   </select>
                 </div>
@@ -166,16 +135,51 @@ const EntryTicketManager: React.FC = () => {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-1 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Cost per Person (Rp)
+                    Cost for Adults (Rp)
                   </label>
                   <input
                     type="number"
-                    value={newTicket.cost}
-                    onChange={(e) => setNewTicket({ ...newTicket, cost: parseFloat(e.target.value) || 0 })}
+                    value={newTicket.adultCost}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0;
+                      setNewTicket({
+                        ...newTicket,
+                        adultCost: value,
+                        childCost: childSameAsAdult ? value : newTicket.childCost
+                      });
+                    }}
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-slate-700">
+                      Cost for Child (Rp)
+                    </label>
+                    <label className="flex items-center space-x-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={childSameAsAdult}
+                        onChange={(e) => {
+                          setChildSameAsAdult(e.target.checked);
+                          if (e.target.checked) {
+                            setNewTicket({ ...newTicket, childCost: newTicket.adultCost });
+                          }
+                        }}
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-slate-600">Same as Adults</span>
+                    </label>
+                  </div>
+                  <input
+                    type="number"
+                    value={newTicket.childCost}
+                    onChange={(e) => setNewTicket({ ...newTicket, childCost: parseFloat(e.target.value) || 0 })}
+                    disabled={childSameAsAdult}
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -183,7 +187,7 @@ const EntryTicketManager: React.FC = () => {
                 <button
                   onClick={() => {
                     setShowAddForm(false);
-                    setSelectedArea('');
+                    setChildSameAsAdult(false);
                   }}
                   className="px-4 py-2 text-slate-600 hover:text-slate-800 transition-colors"
                 >
@@ -191,7 +195,7 @@ const EntryTicketManager: React.FC = () => {
                 </button>
                 <button
                   onClick={handleAdd}
-                  disabled={!newTicket.name || !newTicket.sightseeingId}
+                  disabled={!newTicket.name}
                   className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <Save className="h-4 w-4 mr-2" />
@@ -227,8 +231,9 @@ const EntryTicketManager: React.FC = () => {
                 <thead className="bg-slate-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Ticket Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Location</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Cost/Person</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Area</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Adult Cost</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Child Cost</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
                   </tr>
                 </thead>
@@ -237,37 +242,19 @@ const EntryTicketManager: React.FC = () => {
                     <tr key={ticket.id} className="hover:bg-slate-50">
                       {isEditing === ticket.id ? (
                         <>
-                          <td colSpan={4} className="px-6 py-4">
+                          <td colSpan={5} className="px-6 py-4">
                             <div className="space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                   <label className="block text-sm font-medium text-slate-700 mb-1">Area</label>
                                   <select
-                                    value={editSelectedArea}
-                                    onChange={(e) => {
-                                      setEditSelectedArea(e.target.value);
-                                      setEditForm({ ...editForm, sightseeingId: '' });
-                                    }}
+                                    value={editForm.areaId || ''}
+                                    onChange={(e) => setEditForm({ ...editForm, areaId: e.target.value })}
                                     className="w-full p-2 border border-slate-300 rounded-lg"
                                   >
                                     <option value="">All Areas</option>
                                     {areas.map(area => (
                                       <option key={area.id} value={area.id}>{area.name}</option>
-                                    ))}
-                                  </select>
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-slate-700 mb-1">Sightseeing Location</label>
-                                  <select
-                                    value={editForm.sightseeingId || ''}
-                                    onChange={(e) => setEditForm({ ...editForm, sightseeingId: e.target.value })}
-                                    className="w-full p-2 border border-slate-300 rounded-lg"
-                                  >
-                                    <option value="">Select location</option>
-                                    {getFilteredSightseeingForEdit().map(sight => (
-                                      <option key={sight.id} value={sight.id}>
-                                        {sight.name} ({formatTransportationMode(sight.transportationMode)})
-                                      </option>
                                     ))}
                                   </select>
                                 </div>
@@ -281,14 +268,49 @@ const EntryTicketManager: React.FC = () => {
                                   />
                                 </div>
                               </div>
-                              <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Cost per Person (Rp)</label>
-                                <input
-                                  type="number"
-                                  value={editForm.cost || 0}
-                                  onChange={(e) => setEditForm({ ...editForm, cost: parseFloat(e.target.value) || 0 })}
-                                  className="w-full p-2 border border-slate-300 rounded-lg"
-                                />
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-slate-700 mb-1">Cost for Adults (Rp)</label>
+                                  <input
+                                    type="number"
+                                    value={editForm.adultCost || 0}
+                                    onChange={(e) => {
+                                      const value = parseFloat(e.target.value) || 0;
+                                      setEditForm({
+                                        ...editForm,
+                                        adultCost: value,
+                                        childCost: editChildSameAsAdult ? value : editForm.childCost
+                                      });
+                                    }}
+                                    className="w-full p-2 border border-slate-300 rounded-lg"
+                                  />
+                                </div>
+                                <div>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-sm font-medium text-slate-700">Cost for Child (Rp)</label>
+                                    <label className="flex items-center space-x-2 text-sm">
+                                      <input
+                                        type="checkbox"
+                                        checked={editChildSameAsAdult}
+                                        onChange={(e) => {
+                                          setEditChildSameAsAdult(e.target.checked);
+                                          if (e.target.checked) {
+                                            setEditForm({ ...editForm, childCost: editForm.adultCost });
+                                          }
+                                        }}
+                                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                      />
+                                      <span className="text-slate-600">Same as Adults</span>
+                                    </label>
+                                  </div>
+                                  <input
+                                    type="number"
+                                    value={editForm.childCost || 0}
+                                    onChange={(e) => setEditForm({ ...editForm, childCost: parseFloat(e.target.value) || 0 })}
+                                    disabled={editChildSameAsAdult}
+                                    className="w-full p-2 border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:cursor-not-allowed"
+                                  />
+                                </div>
                               </div>
                               <div className="flex justify-end space-x-2">
                                 <button
@@ -301,7 +323,7 @@ const EntryTicketManager: React.FC = () => {
                                   onClick={() => {
                                     setIsEditing(null);
                                     setEditForm({});
-                                    setEditSelectedArea('');
+                                    setEditChildSameAsAdult(false);
                                   }}
                                   className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors text-sm"
                                 >
@@ -324,11 +346,17 @@ const EntryTicketManager: React.FC = () => {
                           <td className="px-6 py-4">
                             <div className="flex items-center space-x-2">
                               <MapPin className="h-4 w-4 text-slate-400" />
-                              <span className="text-slate-900">{getSightseeingName(ticket.sightseeingId)}</span>
+                              <span className="text-slate-900">{getAreaName(ticket.areaId)}</span>
                             </div>
                           </td>
                           <td className="px-6 py-4 font-medium text-slate-900">
-                            Rp {ticket.cost.toLocaleString('id-ID')}
+                            Rp {ticket.adultCost.toLocaleString('id-ID')}
+                          </td>
+                          <td className="px-6 py-4 font-medium text-slate-900">
+                            Rp {ticket.childCost.toLocaleString('id-ID')}
+                            {ticket.adultCost === ticket.childCost && (
+                              <span className="ml-2 text-xs text-slate-500">(Same as adults)</span>
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex space-x-2">

@@ -201,15 +201,19 @@ export const toDbActivityOption = (ao: ActivityOption, activityId: string) => ({
 export const fromDbEntryTicket = (row: EntryTicketsRow): EntryTicket => ({
   id: row.id,
   name: row.name,
-  cost: row.cost,
-  sightseeingId: row.sightseeing_id
+  adultCost: row.adult_cost,
+  childCost: row.child_cost,
+  areaId: row.area_id || undefined,
+  areaName: row.area_name || undefined
 });
 
 export const toDbEntryTicket = (et: EntryTicket) => ({
   id: et.id,
   name: et.name,
-  cost: et.cost,
-  sightseeing_id: et.sightseeingId
+  adult_cost: et.adultCost,
+  child_cost: et.childCost,
+  area_id: et.areaId || null,
+  area_name: et.areaName || null
 });
 
 export const fromDbMeal = (row: MealsRow): Meal => ({

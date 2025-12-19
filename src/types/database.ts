@@ -320,22 +320,28 @@ export interface Database {
         Row: {
           id: string;
           name: string;
-          cost: number;
-          sightseeing_id: string;
+          adult_cost: number;
+          child_cost: number;
+          area_id: string | null;
+          area_name: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           name: string;
-          cost: number;
-          sightseeing_id: string;
+          adult_cost: number;
+          child_cost: number;
+          area_id?: string | null;
+          area_name?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           name?: string;
-          cost?: number;
-          sightseeing_id?: string;
+          adult_cost?: number;
+          child_cost?: number;
+          area_id?: string | null;
+          area_name?: string | null;
           created_at?: string;
         };
       };
