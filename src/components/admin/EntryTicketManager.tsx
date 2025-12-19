@@ -6,11 +6,13 @@ import Layout from '../Layout';
 
 const EntryTicketManager: React.FC = () => {
   const { state, addEntryTicket, updateEntryTicketData, deleteEntryTicketData } = useData();
-  const { entryTickets, sightseeings } = state;
+  const { entryTickets, sightseeings, areas } = state;
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<EntryTicket>>({});
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedArea, setSelectedArea] = useState('');
+  const [editSelectedArea, setEditSelectedArea] = useState('');
   const [newTicket, setNewTicket] = useState<Omit<EntryTicket, 'id'>>({
     name: '',
     cost: 0,
@@ -38,6 +40,16 @@ const EntryTicketManager: React.FC = () => {
     return `${sightseeing.name} (${modeName})`;
   }
 
+  function getFilteredSightseeing() {
+    if (!selectedArea) return sightseeings;
+    return sightseeings.filter(s => s.areaId === selectedArea);
+  }
+
+  function getFilteredSightseeingForEdit() {
+    if (!editSelectedArea) return sightseeings;
+    return sightseeings.filter(s => s.areaId === editSelectedArea);
+  }
+
   const handleAdd = async () => {
     const ticket: EntryTicket = {
       ...newTicket,
@@ -45,12 +57,17 @@ const EntryTicketManager: React.FC = () => {
     };
     await addEntryTicket(ticket);
     setNewTicket({ name: '', cost: 0, sightseeingId: '' });
+    setSelectedArea('');
     setShowAddForm(false);
   };
 
   const handleEdit = (ticket: EntryTicket) => {
     setIsEditing(ticket.id);
     setEditForm(ticket);
+    const sightseeing = sightseeings.find(s => s.id === ticket.sightseeingId);
+    if (sightseeing) {
+      setEditSelectedArea(sightseeing.areaId || '');
+    }
   };
 
   const handleSave = async () => {
@@ -58,6 +75,7 @@ const EntryTicketManager: React.FC = () => {
       await updateEntryTicketData(editForm as EntryTicket);
       setIsEditing(null);
       setEditForm({});
+      setEditSelectedArea('');
     }
   };
 
@@ -102,26 +120,21 @@ const EntryTicketManager: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Ticket Name
+                    Area
                   </label>
-                  <input
-                    type="text"
-                    value={newTicket.name}
-                    onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
-                    placeholder="e.g., Temple Entry, Museum Pass"
+                  <select
+                    value={selectedArea}
+                    onChange={(e) => {
+                      setSelectedArea(e.target.value);
+                      setNewTicket({ ...newTicket, sightseeingId: '' });
+                    }}
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Cost per Person (Rp)
-                  </label>
-                  <input
-                    type="number"
-                    value={newTicket.cost}
-                    onChange={(e) => setNewTicket({ ...newTicket, cost: parseFloat(e.target.value) || 0 })}
-                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  >
+                    <option value="">All Areas</option>
+                    {areas.map(area => (
+                      <option key={area.id} value={area.id}>{area.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -133,17 +146,45 @@ const EntryTicketManager: React.FC = () => {
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select location</option>
-                    {sightseeings.map(sight => (
+                    {getFilteredSightseeing().map(sight => (
                       <option key={sight.id} value={sight.id}>
                         {sight.name} ({formatTransportationMode(sight.transportationMode)})
                       </option>
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Ticket Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newTicket.name}
+                    onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
+                    placeholder="e.g., Temple Entry, Museum Pass"
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Cost per Person (Rp)
+                  </label>
+                  <input
+                    type="number"
+                    value={newTicket.cost}
+                    onChange={(e) => setNewTicket({ ...newTicket, cost: parseFloat(e.target.value) || 0 })}
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
               </div>
               <div className="flex justify-end space-x-3 mt-4">
                 <button
-                  onClick={() => setShowAddForm(false)}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setSelectedArea('');
+                  }}
                   className="px-4 py-2 text-slate-600 hover:text-slate-800 transition-colors"
                 >
                   Cancel
@@ -196,53 +237,77 @@ const EntryTicketManager: React.FC = () => {
                     <tr key={ticket.id} className="hover:bg-slate-50">
                       {isEditing === ticket.id ? (
                         <>
-                          <td className="px-6 py-4">
-                            <input
-                              type="text"
-                              value={editForm.name || ''}
-                              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                              className="w-full p-2 border border-slate-300 rounded-lg"
-                            />
-                          </td>
-                          <td className="px-6 py-4">
-                            <select
-                              value={editForm.sightseeingId || ''}
-                              onChange={(e) => setEditForm({ ...editForm, sightseeingId: e.target.value })}
-                              className="w-full p-2 border border-slate-300 rounded-lg"
-                            >
-                              <option value="">Select location</option>
-                              {sightseeings.map(sight => (
-                                <option key={sight.id} value={sight.id}>
-                                  {sight.name} ({formatTransportationMode(sight.transportationMode)})
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-6 py-4">
-                            <input
-                              type="number"
-                              value={editForm.cost || 0}
-                              onChange={(e) => setEditForm({ ...editForm, cost: parseFloat(e.target.value) || 0 })}
-                              className="w-full p-2 border border-slate-300 rounded-lg"
-                            />
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={handleSave}
-                                className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
-                              >
-                                <Save className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setIsEditing(null);
-                                  setEditForm({});
-                                }}
-                                className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
+                          <td colSpan={4} className="px-6 py-4">
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-slate-700 mb-1">Area</label>
+                                  <select
+                                    value={editSelectedArea}
+                                    onChange={(e) => {
+                                      setEditSelectedArea(e.target.value);
+                                      setEditForm({ ...editForm, sightseeingId: '' });
+                                    }}
+                                    className="w-full p-2 border border-slate-300 rounded-lg"
+                                  >
+                                    <option value="">All Areas</option>
+                                    {areas.map(area => (
+                                      <option key={area.id} value={area.id}>{area.name}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-slate-700 mb-1">Sightseeing Location</label>
+                                  <select
+                                    value={editForm.sightseeingId || ''}
+                                    onChange={(e) => setEditForm({ ...editForm, sightseeingId: e.target.value })}
+                                    className="w-full p-2 border border-slate-300 rounded-lg"
+                                  >
+                                    <option value="">Select location</option>
+                                    {getFilteredSightseeingForEdit().map(sight => (
+                                      <option key={sight.id} value={sight.id}>
+                                        {sight.name} ({formatTransportationMode(sight.transportationMode)})
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-slate-700 mb-1">Ticket Name</label>
+                                  <input
+                                    type="text"
+                                    value={editForm.name || ''}
+                                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                    className="w-full p-2 border border-slate-300 rounded-lg"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Cost per Person (Rp)</label>
+                                <input
+                                  type="number"
+                                  value={editForm.cost || 0}
+                                  onChange={(e) => setEditForm({ ...editForm, cost: parseFloat(e.target.value) || 0 })}
+                                  className="w-full p-2 border border-slate-300 rounded-lg"
+                                />
+                              </div>
+                              <div className="flex justify-end space-x-2">
+                                <button
+                                  onClick={handleSave}
+                                  className="px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors text-sm"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setIsEditing(null);
+                                    setEditForm({});
+                                    setEditSelectedArea('');
+                                  }}
+                                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors text-sm"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
                             </div>
                           </td>
                         </>
