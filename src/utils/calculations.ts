@@ -24,14 +24,26 @@ export const getSeasonalPrice = (
 
 export const getVehicleCostByPax = (
   sightseeing: Sightseeing,
-  totalPax: number
+  totalPax: number,
+  transportations: Transportation[]
 ): number => {
   if (!sightseeing.vehicleCosts) return 0;
 
-  if (totalPax <= 6) return sightseeing.vehicleCosts.avanza;
-  if (totalPax <= 14) return sightseeing.vehicleCosts.hiace;
-  if (totalPax <= 20) return sightseeing.vehicleCosts.elfGiga;
-  return sightseeing.vehicleCosts.bus;
+  const cabVehicles = transportations.filter(t => t.type === 'cab');
+
+  const sortedVehicles = cabVehicles
+    .filter(v => sightseeing.vehicleCosts && v.vehicleName in sightseeing.vehicleCosts)
+    .sort((a, b) => a.minOccupancy - b.minOccupancy);
+
+  const suitableVehicle = sortedVehicles.find(v =>
+    totalPax >= v.minOccupancy && totalPax <= v.maxOccupancy
+  ) || sortedVehicles[sortedVehicles.length - 1];
+
+  if (suitableVehicle && sightseeing.vehicleCosts) {
+    return sightseeing.vehicleCosts[suitableVehicle.vehicleName] || 0;
+  }
+
+  return 0;
 };
 
 export const calculateItineraryCost = (
@@ -72,7 +84,7 @@ export const calculateItineraryCost = (
       dayPlan.sightseeing.forEach(sightseeingId => {
         const sightseeing = sightseeings.find(s => s.id === sightseeingId);
         if (sightseeing && sightseeing.transportationMode === 'cab') {
-          totalCost += getVehicleCostByPax(sightseeing, totalPax);
+          totalCost += getVehicleCostByPax(sightseeing, totalPax, transportations);
         }
       });
     } else {

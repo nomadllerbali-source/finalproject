@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { generateUUID } from '../../utils/uuid';
+import { getVehicleCostByPax } from '../../utils/calculations';
 import {
   addLetterheadHeader,
   addPageWithLetterhead,
@@ -346,11 +347,7 @@ const AdminFinalSummary: React.FC<AdminFinalSummaryProps> = ({ itinerary, onBack
         dayPlan.sightseeing.forEach((sightseeingId: string) => {
           const sightseeing = sightseeings.find(s => s.id === sightseeingId);
           if (sightseeing && sightseeing.vehicleCosts) {
-            let vehicleCost = 0;
-            if (totalPax <= 6) vehicleCost = sightseeing.vehicleCosts.avanza;
-            else if (totalPax <= 14) vehicleCost = sightseeing.vehicleCosts.hiace;
-            else if (totalPax <= 20) vehicleCost = sightseeing.vehicleCosts.elfGiga;
-            else vehicleCost = sightseeing.vehicleCosts.bus;
+            const vehicleCost = getVehicleCostByPax(sightseeing, totalPax, transportations);
 
             sightseeingCost += vehicleCost;
             daySightseeingCost += vehicleCost;

@@ -88,7 +88,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
         dayPlan.sightseeing.forEach(sightseeingId => {
           const sightseeing = sightseeings.find(s => s.id === sightseeingId);
           if (sightseeing && sightseeing.transportationMode === 'cab' && sightseeing.vehicleCosts) {
-            const vehicleCost = getVehicleCostByPax(sightseeing, totalPax);
+            const vehicleCost = getVehicleCostByPax(sightseeing, totalPax, state.transportations);
             if (sightseeingCosts.has(sightseeing.name)) {
               const existing = sightseeingCosts.get(sightseeing.name)!;
               sightseeingCosts.set(sightseeing.name, { cost: vehicleCost, days: existing.days + 1 });

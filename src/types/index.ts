@@ -78,12 +78,7 @@ export interface Hotel {
   roomTypes: RoomType[];
 }
 
-export interface VehicleCost {
-  avanza: number;
-  hiace: number;
-  elfGiga: number;
-  bus: number;
-}
+export type VehicleCost = Record<string, number>;
 
 export interface Sightseeing {
   id: string;

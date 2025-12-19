@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase';
 
 const SightseeingManager: React.FC = () => {
   const { state, addSightseeing, updateSightseeingData, deleteSightseeingData } = useData();
-  const { sightseeings } = state;
+  const { sightseeings, transportations } = state;
   const [areas, setAreas] = useState<Area[]>([]);
   const [filterArea, setFilterArea] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,19 +19,27 @@ const SightseeingManager: React.FC = () => {
     displayName: '',
     description: '',
     transportationMode: 'cab',
-    vehicleCosts: {
-      avanza: 0,
-      hiace: 0,
-      elfGiga: 0,
-      bus: 0
-    },
+    vehicleCosts: {},
     areaId: '',
     areaName: ''
   });
 
   useEffect(() => {
     fetchAreas();
-  }, []);
+    initializeVehicleCosts();
+  }, [transportations]);
+
+  const initializeVehicleCosts = () => {
+    const cabVehicles = transportations.filter(t => t.type === 'cab');
+    const initialCosts: VehicleCost = {};
+    cabVehicles.forEach(vehicle => {
+      initialCosts[vehicle.vehicleName] = 0;
+    });
+    setNewSightseeing(prev => ({
+      ...prev,
+      vehicleCosts: initialCosts
+    }));
+  };
 
   const fetchAreas = async () => {
     try {
@@ -76,12 +84,17 @@ const SightseeingManager: React.FC = () => {
       await addSightseeing(sightseeing);
     }
 
+    const cabVehicles = transportations.filter(t => t.type === 'cab');
+    const initialCosts: VehicleCost = {};
+    cabVehicles.forEach(vehicle => {
+      initialCosts[vehicle.vehicleName] = 0;
+    });
     setNewSightseeing({
       name: '',
       displayName: '',
       description: '',
       transportationMode: 'cab',
-      vehicleCosts: { avanza: 0, hiace: 0, elfGiga: 0, bus: 0 },
+      vehicleCosts: initialCosts,
       areaId: '',
       areaName: ''
     });
@@ -90,7 +103,21 @@ const SightseeingManager: React.FC = () => {
 
   const handleEdit = (sightseeing: Sightseeing) => {
     setIsEditing(sightseeing.id);
-    setEditForm(sightseeing);
+
+    if (sightseeing.transportationMode === 'cab') {
+      const cabVehicles = transportations.filter(t => t.type === 'cab');
+      const updatedCosts = { ...sightseeing.vehicleCosts };
+
+      cabVehicles.forEach(vehicle => {
+        if (!(vehicle.vehicleName in updatedCosts)) {
+          updatedCosts[vehicle.vehicleName] = 0;
+        }
+      });
+
+      setEditForm({ ...sightseeing, vehicleCosts: updatedCosts });
+    } else {
+      setEditForm(sightseeing);
+    }
   };
 
   const handleSave = async () => {
@@ -107,13 +134,13 @@ const SightseeingManager: React.FC = () => {
     }
   };
 
-  const updateVehicleCost = (vehicle: keyof VehicleCost, value: number, isNew: boolean = false) => {
+  const updateVehicleCost = (vehicleName: string, value: number, isNew: boolean = false) => {
     if (isNew) {
       setNewSightseeing({
         ...newSightseeing,
         vehicleCosts: {
           ...newSightseeing.vehicleCosts!,
-          [vehicle]: value
+          [vehicleName]: value
         }
       });
     } else if (editForm.vehicleCosts) {
@@ -121,7 +148,7 @@ const SightseeingManager: React.FC = () => {
         ...editForm,
         vehicleCosts: {
           ...editForm.vehicleCosts,
-          [vehicle]: value
+          [vehicleName]: value
         }
       });
     }
@@ -130,25 +157,30 @@ const SightseeingManager: React.FC = () => {
   const renderVehicleCostInputs = (vehicleCosts: VehicleCost | undefined, isNew: boolean = false) => {
     if (!vehicleCosts) return null;
 
-    const vehicles = [
-      { key: 'avanza' as keyof VehicleCost, name: 'Avanza', pax: '1-6 pax' },
-      { key: 'hiace' as keyof VehicleCost, name: 'Hiace', pax: '6-14 pax' },
-      { key: 'elfGiga' as keyof VehicleCost, name: 'ELF Giga', pax: '14-20 pax' },
-      { key: 'bus' as keyof VehicleCost, name: 'Bus', pax: '20-45 pax' }
-    ];
+    const cabVehicles = transportations.filter(t => t.type === 'cab');
+
+    if (cabVehicles.length === 0) {
+      return (
+        <div className="text-slate-500 text-sm">
+          No cab vehicles found. Please add vehicles in the Transportation Manager first.
+        </div>
+      );
+    }
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {vehicles.map(vehicle => (
-          <div key={vehicle.key}>
+        {cabVehicles.map(vehicle => (
+          <div key={vehicle.id}>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              {vehicle.name} Cost (Rp)
-              <span className="text-xs text-slate-500 block">{vehicle.pax}</span>
+              {vehicle.vehicleName} Cost (Rp)
+              <span className="text-xs text-slate-500 block">
+                {vehicle.minOccupancy}-{vehicle.maxOccupancy} pax
+              </span>
             </label>
             <input
               type="number"
-              value={vehicleCosts[vehicle.key]}
-              onChange={(e) => updateVehicleCost(vehicle.key, parseFloat(e.target.value) || 0, isNew)}
+              value={vehicleCosts[vehicle.vehicleName] || 0}
+              onChange={(e) => updateVehicleCost(vehicle.vehicleName, parseFloat(e.target.value) || 0, isNew)}
               className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -504,22 +536,18 @@ const SightseeingManager: React.FC = () => {
                           Vehicle Costs
                         </h4>
                         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                          <div className="bg-slate-50 p-3 rounded-lg">
-                            <div className="text-sm font-medium text-slate-700">Avanza (1-6 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.avanza.toLocaleString('id-ID')}</div>
-                          </div>
-                          <div className="bg-slate-50 p-3 rounded-lg">
-                            <div className="text-sm font-medium text-slate-700">Hiace (6-14 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.hiace.toLocaleString('id-ID')}</div>
-                          </div>
-                          <div className="bg-slate-50 p-3 rounded-lg">
-                            <div className="text-sm font-medium text-slate-700">ELF Giga (14-20 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.elfGiga.toLocaleString('id-ID')}</div>
-                          </div>
-                          <div className="bg-slate-50 p-3 rounded-lg">
-                            <div className="text-sm font-medium text-slate-700">Bus (20-45 pax)</div>
-                            <div className="text-lg font-bold text-slate-900">Rp {sight.vehicleCosts.bus.toLocaleString('id-ID')}</div>
-                          </div>
+                          {Object.entries(sight.vehicleCosts).map(([vehicleName, cost]) => {
+                            const vehicle = transportations.find(t => t.vehicleName === vehicleName && t.type === 'cab');
+                            return (
+                              <div key={vehicleName} className="bg-slate-50 p-3 rounded-lg">
+                                <div className="text-sm font-medium text-slate-700">
+                                  {vehicleName}
+                                  {vehicle && ` (${vehicle.minOccupancy}-${vehicle.maxOccupancy} pax)`}
+                                </div>
+                                <div className="text-lg font-bold text-slate-900">Rp {cost.toLocaleString('id-ID')}</div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
