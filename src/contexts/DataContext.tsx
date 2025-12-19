@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { 
-  Client, Transportation, Hotel, Sightseeing, Activity, EntryTicket, 
-  Meal, Itinerary, ItineraryChange, FixedItinerary
+import {
+  Client, Transportation, Hotel, Sightseeing, Activity, EntryTicket,
+  Meal, Itinerary, ItineraryChange, FixedItinerary, Area
 } from '../types';
 import { isSupabaseConfigured } from '../lib/supabase';
 import {
@@ -27,6 +27,7 @@ interface DataState {
   meals: Meal[];
   itineraries: Itinerary[];
   fixedItineraries: FixedItinerary[];
+  areas: Area[];
 }
 
 type DataAction = 
@@ -786,7 +787,8 @@ const initialState: DataState = {
   entryTickets: demoEntryTickets,
   meals: demoMeals,
   itineraries: [],
-  fixedItineraries: demoFixedItineraries
+  fixedItineraries: demoFixedItineraries,
+  areas: []
 };
 
 const dataReducer = (state: DataState, action: DataAction): DataState => {
@@ -1095,7 +1097,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               itineraries: parsedData.itineraries || [],
               fixedItineraries: [...demoFixedItineraries, ...(parsedData.fixedItineraries || [])].filter((item, index, self) =>
                 index === self.findIndex(f => f.id === item.id)
-              )
+              ),
+              areas: parsedData.areas || []
             };
             dispatch({ type: 'SET_DATA', payload: mergedData });
           } catch (error) {

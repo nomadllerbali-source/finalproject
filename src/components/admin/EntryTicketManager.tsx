@@ -6,7 +6,7 @@ import Layout from '../Layout';
 
 const EntryTicketManager: React.FC = () => {
   const { state, addEntryTicket, updateEntryTicketData, deleteEntryTicketData } = useData();
-  const { entryTickets, sightseeings, areas } = state;
+  const { entryTickets, sightseeings, areas = [] } = state;
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<EntryTicket>>({});
