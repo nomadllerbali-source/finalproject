@@ -76,6 +76,8 @@ export interface Hotel {
   place: string;
   starCategory: '3-star' | '4-star' | '5-star';
   roomTypes: RoomType[];
+  areaId?: string;
+  areaName?: string;
 }
 
 export type VehicleCost = Record<string, number>;
