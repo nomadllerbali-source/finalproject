@@ -69,6 +69,10 @@ const SightseeingManager: React.FC = () => {
       alert('Please select an area first');
       return;
     }
+
+    console.log('DEBUG: newSightseeing before saving:', newSightseeing);
+    console.log('DEBUG: displayName value:', newSightseeing.displayName);
+
     // Create sightseeing for all transportation modes
     const transportationModes = ['cab', 'self-drive-car', 'self-drive-scooter'];
 
@@ -84,6 +88,7 @@ const SightseeingManager: React.FC = () => {
         areaId: newSightseeing.areaId,
         areaName: newSightseeing.areaName
       };
+      console.log('DEBUG: Sightseeing object being saved:', sightseeing);
       await addSightseeing(sightseeing);
     }
 

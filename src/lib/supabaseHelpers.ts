@@ -157,17 +157,22 @@ export const fromDbSightseeing = (row: SightseeingsRow): Sightseeing => ({
   areaName: row.area_name || undefined
 });
 
-export const toDbSightseeing = (s: Sightseeing) => ({
-  id: s.id,
-  name: s.name,
-  display_name: s.displayName !== undefined && s.displayName !== '' ? s.displayName : null,
-  description: s.description,
-  transportation_mode: s.transportationMode,
-  vehicle_costs: s.vehicleCosts || null,
-  entry_ticket_ids: s.entryTicketIds || null,
-  area_id: s.areaId || null,
-  area_name: s.areaName || null
-});
+export const toDbSightseeing = (s: Sightseeing) => {
+  console.log('DEBUG toDbSightseeing - Input displayName:', s.displayName);
+  const dbData = {
+    id: s.id,
+    name: s.name,
+    display_name: s.displayName !== undefined && s.displayName !== '' ? s.displayName : null,
+    description: s.description,
+    transportation_mode: s.transportationMode,
+    vehicle_costs: s.vehicleCosts || null,
+    entry_ticket_ids: s.entryTicketIds || null,
+    area_id: s.areaId || null,
+    area_name: s.areaName || null
+  };
+  console.log('DEBUG toDbSightseeing - Output display_name:', dbData.display_name);
+  return dbData;
+};
 
 export const fromDbActivity = (row: ActivitiesRow & { activity_options?: ActivityOptionsRow[] }): Activity => ({
   id: row.id,
