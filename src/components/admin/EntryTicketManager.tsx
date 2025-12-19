@@ -22,9 +22,20 @@ const EntryTicketManager: React.FC = () => {
     getSightseeingName(ticket.sightseeingId).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  function formatTransportationMode(mode: string): string {
+    const modeLabels: Record<string, string> = {
+      'cab': 'Cab',
+      'self-drive-car': 'Self-Drive Car',
+      'self-drive-scooter': 'Self-Drive Scooter'
+    };
+    return modeLabels[mode] || mode;
+  }
+
   function getSightseeingName(sightseeingId: string): string {
     const sightseeing = sightseeings.find(s => s.id === sightseeingId);
-    return sightseeing ? sightseeing.name : 'Unknown Location';
+    if (!sightseeing) return 'Unknown Location';
+    const modeName = formatTransportationMode(sightseeing.transportationMode);
+    return `${sightseeing.name} (${modeName})`;
   }
 
   const handleAdd = async () => {
@@ -123,7 +134,9 @@ const EntryTicketManager: React.FC = () => {
                   >
                     <option value="">Select location</option>
                     {sightseeings.map(sight => (
-                      <option key={sight.id} value={sight.id}>{sight.name}</option>
+                      <option key={sight.id} value={sight.id}>
+                        {sight.name} ({formatTransportationMode(sight.transportationMode)})
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -199,7 +212,9 @@ const EntryTicketManager: React.FC = () => {
                             >
                               <option value="">Select location</option>
                               {sightseeings.map(sight => (
-                                <option key={sight.id} value={sight.id}>{sight.name}</option>
+                                <option key={sight.id} value={sight.id}>
+                                  {sight.name} ({formatTransportationMode(sight.transportationMode)})
+                                </option>
                               ))}
                             </select>
                           </td>
