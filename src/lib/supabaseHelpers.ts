@@ -160,7 +160,7 @@ export const fromDbSightseeing = (row: SightseeingsRow): Sightseeing => ({
 export const toDbSightseeing = (s: Sightseeing) => ({
   id: s.id,
   name: s.name,
-  display_name: s.displayName || null,
+  display_name: s.displayName !== undefined && s.displayName !== '' ? s.displayName : null,
   description: s.description,
   transportation_mode: s.transportationMode,
   vehicle_costs: s.vehicleCosts || null,
