@@ -953,6 +953,7 @@ const DataContext = createContext<{
   dispatch: React.Dispatch<DataAction>;
   updateItinerary: (itinerary: Itinerary, changeType: ItineraryChange['changeType'], description: string) => Promise<void>;
   getLatestItinerary: (clientId: string) => Itinerary | null;
+  refreshAllData: () => Promise<void>;
   addClient: (client: Client) => Promise<void>;
   updateClientData: (client: Client) => Promise<void>;
   deleteClientData: (clientId: string) => Promise<void>;

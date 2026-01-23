@@ -649,6 +649,17 @@ export const deleteEntryTicket = async (id: string) => {
   if (error) throw error;
 };
 
+export const bulkInsertEntryTickets = async (tickets: EntryTicket[]) => {
+  if (!supabase) return [];
+  const dbTickets = tickets.map(et => {
+    const { id, ...insertData } = toDbEntryTicket(et);
+    return insertData;
+  });
+  const { data, error } = await supabase.from('entry_tickets').insert(dbTickets).select();
+  if (error) throw error;
+  return data.map(fromDbEntryTicket);
+};
+
 export const insertMeal = async (m: Meal) => {
   if (!supabase) return null;
   const dbData = toDbMeal(m);
