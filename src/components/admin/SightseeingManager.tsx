@@ -560,16 +560,18 @@ const SightseeingManager: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="mb-6">
-                    <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
-                      <Ticket className="h-4 w-4 mr-2 text-teal-600" />
-                      Entry Tickets (Optional - for Cab mode only)
-                    </h4>
-                    <p className="text-sm text-slate-600 mb-3">
-                      Select entry tickets that should be automatically included when this sightseeing is selected in an itinerary.
-                    </p>
-                    {renderEntryTicketSelection(newSightseeing.areaId, newSightseeing.entryTicketIds, true)}
-                  </div>
+                  {!isNusaPenidaArea(newSightseeing.areaName) && (
+                    <div className="mb-6">
+                      <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
+                        <Ticket className="h-4 w-4 mr-2 text-teal-600" />
+                        Entry Tickets (Optional - for Cab mode only)
+                      </h4>
+                      <p className="text-sm text-slate-600 mb-3">
+                        Select entry tickets that should be automatically included when this sightseeing is selected in an itinerary.
+                      </p>
+                      {renderEntryTicketSelection(newSightseeing.areaId, newSightseeing.entryTicketIds, true)}
+                    </div>
+                  )}
                 </>
               )}
 
@@ -763,16 +765,18 @@ const SightseeingManager: React.FC = () => {
                           </div>
                         )}
 
-                        <div className="mb-6">
-                          <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
-                            <Ticket className="h-4 w-4 mr-2 text-teal-600" />
-                            Entry Tickets (Optional - for Cab mode only)
-                          </h4>
-                          <p className="text-sm text-slate-600 mb-3">
-                            Select entry tickets that should be automatically included when this sightseeing is selected in an itinerary.
-                          </p>
-                          {renderEntryTicketSelection(editForm.areaId, editForm.entryTicketIds, false)}
-                        </div>
+                        {!isNusaPenidaArea(editForm.areaName) && (
+                          <div className="mb-6">
+                            <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
+                              <Ticket className="h-4 w-4 mr-2 text-teal-600" />
+                              Entry Tickets (Optional - for Cab mode only)
+                            </h4>
+                            <p className="text-sm text-slate-600 mb-3">
+                              Select entry tickets that should be automatically included when this sightseeing is selected in an itinerary.
+                            </p>
+                            {renderEntryTicketSelection(editForm.areaId, editForm.entryTicketIds, false)}
+                          </div>
+                        )}
                       </>
                     )}
 
