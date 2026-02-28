@@ -1128,27 +1128,45 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
               <p className="text-green-50 text-sm mt-1">Comprehensive breakdown of all costs with detailed calculations and pricing logic</p>
             </div>
 
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="p-6 space-y-6">
               {/* Transportation */}
               {costBreakdown.transportation > 0 && (
-                <div className="bg-white rounded-lg p-4 border border-blue-200">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                      <MapPin className="h-5 w-5 text-blue-600" />
+                <div className="bg-white rounded-lg p-5 border-2 border-blue-200 shadow-sm">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-blue-100 p-3 rounded-lg mr-3">
+                      <MapPin className="h-6 w-6 text-blue-600" />
                     </div>
-                    <h4 className="font-bold text-blue-900">Transportation</h4>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-blue-900 text-lg">Transportation</h4>
+                      <p className="text-sm text-slate-600">{itinerary.client.transportationMode} rental</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {formatCurrency(convertToIDR(costBreakdown.transportation || 0, itinerary.exchangeRate || 1), 'IDR')}
+                      </div>
+                      <div className="text-sm text-slate-600">{formatCurrency(costBreakdown.transportation || 0, 'USD')}</div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {formatCurrency(convertToIDR(costBreakdown.transportation, itinerary.exchangeRate), 'IDR')}
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                    <div className="font-semibold text-blue-900 mb-2 flex items-center">
+                      <span className="mr-2">📊</span> Calculation Details:
                     </div>
-                    <div className="text-sm text-slate-600">
-                      {itinerary.client.transportationMode} rental
-                    </div>
-                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2">
-                      <div className="font-semibold mb-1">Calculation:</div>
-                      <div>{formatCurrency(costBreakdown.transportation / itinerary.client.numberOfDays, 'USD')}/day × {itinerary.client.numberOfDays} days</div>
-                      <div className="mt-1 text-blue-600 font-semibold">= {formatCurrency(costBreakdown.transportation, 'USD')}</div>
+                    <div className="space-y-1 text-sm text-slate-700">
+                      <div className="flex justify-between">
+                        <span>Rate per day:</span>
+                        <span className="font-mono">{formatCurrency((costBreakdown.transportation || 0) / itinerary.client.numberOfDays, 'USD')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Number of days:</span>
+                        <span className="font-mono">{itinerary.client.numberOfDays} days</span>
+                      </div>
+                      <div className="border-t border-blue-200 pt-2 mt-2 flex justify-between font-semibold text-blue-700">
+                        <span>Total Cost:</span>
+                        <span className="font-mono">{formatCurrency(costBreakdown.transportation || 0, 'USD')}</span>
+                      </div>
+                      <div className="text-xs text-slate-600 mt-1">
+                        Formula: ${((costBreakdown.transportation || 0) / itinerary.client.numberOfDays).toFixed(2)}/day × {itinerary.client.numberOfDays} days = ${(costBreakdown.transportation || 0).toFixed(2)}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1156,30 +1174,51 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
               {/* Accommodation */}
               {costBreakdown.hotels.length > 0 && (
-                <div className="bg-white rounded-lg p-4 border border-purple-200">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-purple-100 p-2 rounded-lg mr-3">
-                      <Building2 className="h-5 w-5 text-purple-600" />
+                <div className="bg-white rounded-lg p-5 border-2 border-purple-200 shadow-sm">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-purple-100 p-3 rounded-lg mr-3">
+                      <Building2 className="h-6 w-6 text-purple-600" />
                     </div>
-                    <h4 className="font-bold text-purple-900">Accommodation</h4>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-2xl font-bold text-purple-600">
-                      {formatCurrency(convertToIDR(costBreakdown.hotels.reduce((sum, h) => sum + h.total, 0), itinerary.exchangeRate), 'IDR')}
+                    <div className="flex-1">
+                      <h4 className="font-bold text-purple-900 text-lg">Accommodation</h4>
+                      <p className="text-sm text-slate-600">{costBreakdown.hotels.length} location(s) • Seasonal pricing</p>
                     </div>
-                    <div className="text-sm text-slate-600">
-                      Hotels & room charges with seasonal pricing
-                    </div>
-                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2 space-y-1">
-                      <div className="font-semibold mb-1">Calculation:</div>
-                      {costBreakdown.hotels.map((hotel, idx) => (
-                        <div key={idx}>
-                          {hotel.nights} night{hotel.nights > 1 ? 's' : ''} × {formatCurrency(hotel.pricePerNight, 'USD')}
-                        </div>
-                      ))}
-                      <div className="mt-1 pt-1 border-t border-slate-300 text-purple-600 font-semibold">
-                        = {formatCurrency(costBreakdown.hotels.reduce((sum, h) => sum + h.total, 0), 'USD')}
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {formatCurrency(convertToIDR(costBreakdown.hotels.reduce((sum, h) => sum + (h.total || 0), 0), itinerary.exchangeRate || 1), 'IDR')}
                       </div>
+                      <div className="text-sm text-slate-600">{formatCurrency(costBreakdown.hotels.reduce((sum, h) => sum + (h.total || 0), 0), 'USD')}</div>
+                    </div>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-4 border border-purple-100 space-y-3">
+                    <div className="font-semibold text-purple-900 flex items-center">
+                      <span className="mr-2">📊</span> Calculation Details:
+                    </div>
+                    {costBreakdown.hotels.map((hotel, idx) => (
+                      <div key={idx} className="bg-white rounded p-3 border border-purple-100">
+                        <div className="font-medium text-purple-900 mb-2">{hotel.name} - {hotel.roomType}</div>
+                        <div className="space-y-1 text-sm text-slate-700">
+                          <div className="flex justify-between">
+                            <span>Price per night:</span>
+                            <span className="font-mono">{formatCurrency(hotel.pricePerNight || 0, 'USD')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Number of nights:</span>
+                            <span className="font-mono">{hotel.nights} night{hotel.nights > 1 ? 's' : ''}</span>
+                          </div>
+                          <div className="border-t border-purple-200 pt-2 mt-2 flex justify-between font-semibold text-purple-700">
+                            <span>Subtotal:</span>
+                            <span className="font-mono">{formatCurrency(hotel.total || 0, 'USD')}</span>
+                          </div>
+                          <div className="text-xs text-slate-600">
+                            Formula: ${(hotel.pricePerNight || 0).toFixed(2)}/night × {hotel.nights} = ${(hotel.total || 0).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t-2 border-purple-300 pt-3 mt-3 flex justify-between font-bold text-purple-800 text-base">
+                      <span>Total Accommodation:</span>
+                      <span className="font-mono">{formatCurrency(costBreakdown.hotels.reduce((sum, h) => sum + (h.total || 0), 0), 'USD')}</span>
                     </div>
                   </div>
                 </div>
@@ -1187,25 +1226,51 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
               {/* Sightseeing */}
               {costBreakdown.sightseeing.length > 0 && (
-                <div className="bg-white rounded-lg p-4 border border-teal-200">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-teal-100 p-2 rounded-lg mr-3">
-                      <MapPin className="h-5 w-5 text-teal-600" />
+                <div className="bg-white rounded-lg p-5 border-2 border-teal-200 shadow-sm">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-teal-100 p-3 rounded-lg mr-3">
+                      <MapPin className="h-6 w-6 text-teal-600" />
                     </div>
-                    <h4 className="font-bold text-teal-900">Sightseeing</h4>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-2xl font-bold text-teal-600">
-                      {formatCurrency(convertToIDR(costBreakdown.sightseeing.reduce((sum, s) => sum + s.vehicleCost, 0), itinerary.exchangeRate), 'IDR')}
+                    <div className="flex-1">
+                      <h4 className="font-bold text-teal-900 text-lg">Sightseeing</h4>
+                      <p className="text-sm text-slate-600">Vehicle costs based on {totalPax} passenger{totalPax > 1 ? 's' : ''}</p>
                     </div>
-                    <div className="text-sm text-slate-600">
-                      Vehicle costs based on group size
-                    </div>
-                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2">
-                      <div className="font-semibold mb-1">For {totalPax} passenger{totalPax > 1 ? 's' : ''}</div>
-                      <div className="mt-1 text-teal-600 font-semibold">
-                        = {formatCurrency(costBreakdown.sightseeing.reduce((sum, s) => sum + s.vehicleCost, 0), 'USD')}
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-teal-600">
+                        {formatCurrency(convertToIDR(costBreakdown.sightseeing.reduce((sum, s) => sum + (s.vehicleCost || 0), 0), itinerary.exchangeRate || 1), 'IDR')}
                       </div>
+                      <div className="text-sm text-slate-600">{formatCurrency(costBreakdown.sightseeing.reduce((sum, s) => sum + (s.vehicleCost || 0), 0), 'USD')}</div>
+                    </div>
+                  </div>
+                  <div className="bg-teal-50 rounded-lg p-4 border border-teal-100 space-y-3">
+                    <div className="font-semibold text-teal-900 flex items-center">
+                      <span className="mr-2">📊</span> Calculation Details:
+                    </div>
+                    {costBreakdown.sightseeing.map((sight, idx) => (
+                      <div key={idx} className="bg-white rounded p-3 border border-teal-100">
+                        <div className="font-medium text-teal-900 mb-2">{sight.displayName || sight.name}</div>
+                        <div className="space-y-1 text-sm text-slate-700">
+                          <div className="flex justify-between">
+                            <span>Vehicle cost:</span>
+                            <span className="font-mono">{formatCurrency((sight.vehicleCost || 0) / sight.days, 'USD')}/trip</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Number of trips:</span>
+                            <span className="font-mono">{sight.days} {sight.days > 1 ? 'trips' : 'trip'}</span>
+                          </div>
+                          <div className="border-t border-teal-200 pt-2 mt-2 flex justify-between font-semibold text-teal-700">
+                            <span>Subtotal:</span>
+                            <span className="font-mono">{formatCurrency(sight.vehicleCost || 0, 'USD')}</span>
+                          </div>
+                          <div className="text-xs text-slate-600">
+                            Suitable vehicle selected for {totalPax} passengers
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t-2 border-teal-300 pt-3 mt-3 flex justify-between font-bold text-teal-800 text-base">
+                      <span>Total Sightseeing:</span>
+                      <span className="font-mono">{formatCurrency(costBreakdown.sightseeing.reduce((sum, s) => sum + (s.vehicleCost || 0), 0), 'USD')}</span>
                     </div>
                   </div>
                 </div>
@@ -1213,25 +1278,55 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
               {/* Activities */}
               {costBreakdown.activities.length > 0 && (
-                <div className="bg-white rounded-lg p-4 border border-orange-200">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-orange-100 p-2 rounded-lg mr-3">
-                      <Camera className="h-5 w-5 text-orange-600" />
+                <div className="bg-white rounded-lg p-5 border-2 border-orange-200 shadow-sm">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-orange-100 p-3 rounded-lg mr-3">
+                      <Camera className="h-6 w-6 text-orange-600" />
                     </div>
-                    <h4 className="font-bold text-orange-900">Activities</h4>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-2xl font-bold text-orange-600">
-                      {formatCurrency(convertToIDR(costBreakdown.activities.reduce((sum, a) => sum + a.totalCost, 0), itinerary.exchangeRate), 'IDR')}
+                    <div className="flex-1">
+                      <h4 className="font-bold text-orange-900 text-lg">Activities</h4>
+                      <p className="text-sm text-slate-600">{costBreakdown.activities.length} experience(s) • Group calculations</p>
                     </div>
-                    <div className="text-sm text-slate-600">
-                      Adventure & experiences with group calculations
-                    </div>
-                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2">
-                      <div className="font-semibold mb-1">Costs calculated per activity capacity requirements</div>
-                      <div className="mt-1 text-orange-600 font-semibold">
-                        = {formatCurrency(costBreakdown.activities.reduce((sum, a) => sum + a.totalCost, 0), 'USD')}
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {formatCurrency(convertToIDR(costBreakdown.activities.reduce((sum, a) => sum + (a.totalCost || 0), 0), itinerary.exchangeRate || 1), 'IDR')}
                       </div>
+                      <div className="text-sm text-slate-600">{formatCurrency(costBreakdown.activities.reduce((sum, a) => sum + (a.totalCost || 0), 0), 'USD')}</div>
+                    </div>
+                  </div>
+                  <div className="bg-orange-50 rounded-lg p-4 border border-orange-100 space-y-3">
+                    <div className="font-semibold text-orange-900 flex items-center">
+                      <span className="mr-2">📊</span> Calculation Details:
+                    </div>
+                    {costBreakdown.activities.map((activity, idx) => (
+                      <div key={idx} className="bg-white rounded p-3 border border-orange-100">
+                        <div className="font-medium text-orange-900 mb-2">{activity.name} - {activity.option}</div>
+                        <div className="space-y-1 text-sm text-slate-700">
+                          <div className="flex justify-between">
+                            <span>Cost per {activity.costForHowMany} {activity.costForHowMany > 1 ? 'people' : 'person'}:</span>
+                            <span className="font-mono">{formatCurrency(activity.cost || 0, 'USD')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Total passengers:</span>
+                            <span className="font-mono">{totalPax} pax</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Groups needed:</span>
+                            <span className="font-mono">{Math.ceil(totalPax / activity.costForHowMany)}</span>
+                          </div>
+                          <div className="border-t border-orange-200 pt-2 mt-2 flex justify-between font-semibold text-orange-700">
+                            <span>Subtotal:</span>
+                            <span className="font-mono">{formatCurrency(activity.totalCost || 0, 'USD')}</span>
+                          </div>
+                          <div className="text-xs text-slate-600">
+                            Formula: ${(activity.cost || 0).toFixed(2)} × {Math.ceil(totalPax / activity.costForHowMany)} = ${(activity.totalCost || 0).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t-2 border-orange-300 pt-3 mt-3 flex justify-between font-bold text-orange-800 text-base">
+                      <span>Total Activities:</span>
+                      <span className="font-mono">{formatCurrency(costBreakdown.activities.reduce((sum, a) => sum + (a.totalCost || 0), 0), 'USD')}</span>
                     </div>
                   </div>
                 </div>
@@ -1239,30 +1334,51 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
               {/* Entry Tickets */}
               {costBreakdown.entryTickets.length > 0 && (
-                <div className="bg-white rounded-lg p-4 border border-indigo-200">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-indigo-100 p-2 rounded-lg mr-3">
-                      <Ticket className="h-5 w-5 text-indigo-600" />
+                <div className="bg-white rounded-lg p-5 border-2 border-indigo-200 shadow-sm">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-indigo-100 p-3 rounded-lg mr-3">
+                      <Ticket className="h-6 w-6 text-indigo-600" />
                     </div>
-                    <h4 className="font-bold text-indigo-900">Entry Tickets</h4>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-2xl font-bold text-indigo-600">
-                      {formatCurrency(convertToIDR(costBreakdown.entryTickets.reduce((sum, t) => sum + t.totalCost, 0), itinerary.exchangeRate), 'IDR')}
+                    <div className="flex-1">
+                      <h4 className="font-bold text-indigo-900 text-lg">Entry Tickets</h4>
+                      <p className="text-sm text-slate-600">{costBreakdown.entryTickets.length} attraction(s) • Per person pricing</p>
                     </div>
-                    <div className="text-sm text-slate-600">
-                      Attraction entries calculated per person
-                    </div>
-                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2">
-                      <div className="font-semibold mb-1">Calculation:</div>
-                      {costBreakdown.entryTickets.map((ticket, idx) => (
-                        <div key={idx}>
-                          {formatCurrency(ticket.costPerPerson, 'USD')} × {totalPax} = {formatCurrency(ticket.totalCost, 'USD')}
-                        </div>
-                      ))}
-                      <div className="mt-1 pt-1 border-t border-slate-300 text-indigo-600 font-semibold">
-                        = {formatCurrency(costBreakdown.entryTickets.reduce((sum, t) => sum + t.totalCost, 0), 'USD')}
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-indigo-600">
+                        {formatCurrency(convertToIDR(costBreakdown.entryTickets.reduce((sum, t) => sum + (t.totalCost || 0), 0), itinerary.exchangeRate || 1), 'IDR')}
                       </div>
+                      <div className="text-sm text-slate-600">{formatCurrency(costBreakdown.entryTickets.reduce((sum, t) => sum + (t.totalCost || 0), 0), 'USD')}</div>
+                    </div>
+                  </div>
+                  <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100 space-y-3">
+                    <div className="font-semibold text-indigo-900 flex items-center">
+                      <span className="mr-2">📊</span> Calculation Details:
+                    </div>
+                    {costBreakdown.entryTickets.map((ticket, idx) => (
+                      <div key={idx} className="bg-white rounded p-3 border border-indigo-100">
+                        <div className="font-medium text-indigo-900 mb-2">{ticket.name}</div>
+                        <div className="space-y-1 text-sm text-slate-700">
+                          <div className="flex justify-between">
+                            <span>Cost per person:</span>
+                            <span className="font-mono">{formatCurrency(ticket.costPerPerson || 0, 'USD')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Number of passengers:</span>
+                            <span className="font-mono">{totalPax} pax</span>
+                          </div>
+                          <div className="border-t border-indigo-200 pt-2 mt-2 flex justify-between font-semibold text-indigo-700">
+                            <span>Subtotal:</span>
+                            <span className="font-mono">{formatCurrency(ticket.totalCost || 0, 'USD')}</span>
+                          </div>
+                          <div className="text-xs text-slate-600">
+                            Formula: ${(ticket.costPerPerson || 0).toFixed(2)}/person × {totalPax} pax = ${(ticket.totalCost || 0).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t-2 border-indigo-300 pt-3 mt-3 flex justify-between font-bold text-indigo-800 text-base">
+                      <span>Total Entry Tickets:</span>
+                      <span className="font-mono">{formatCurrency(costBreakdown.entryTickets.reduce((sum, t) => sum + (t.totalCost || 0), 0), 'USD')}</span>
                     </div>
                   </div>
                 </div>
@@ -1270,25 +1386,51 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
 
               {/* Meals */}
               {costBreakdown.meals.length > 0 && (
-                <div className="bg-white rounded-lg p-4 border border-green-200">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-green-100 p-2 rounded-lg mr-3">
-                      <Utensils className="h-5 w-5 text-green-600" />
+                <div className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-green-100 p-3 rounded-lg mr-3">
+                      <Utensils className="h-6 w-6 text-green-600" />
                     </div>
-                    <h4 className="font-bold text-green-900">Meals</h4>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-2xl font-bold text-green-600">
-                      {formatCurrency(convertToIDR(costBreakdown.meals.reduce((sum, m) => sum + m.totalCost, 0), itinerary.exchangeRate), 'IDR')}
+                    <div className="flex-1">
+                      <h4 className="font-bold text-green-900 text-lg">Meals</h4>
+                      <p className="text-sm text-slate-600">{costBreakdown.meals.length} meal(s) • Per person pricing</p>
                     </div>
-                    <div className="text-sm text-slate-600">
-                      Food & beverages calculated per person
-                    </div>
-                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2">
-                      <div className="font-semibold mb-1">Various restaurants and meal types included</div>
-                      <div className="mt-1 text-green-600 font-semibold">
-                        = {formatCurrency(costBreakdown.meals.reduce((sum, m) => sum + m.totalCost, 0), 'USD')}
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-green-600">
+                        {formatCurrency(convertToIDR(costBreakdown.meals.reduce((sum, m) => sum + (m.totalCost || 0), 0), itinerary.exchangeRate || 1), 'IDR')}
                       </div>
+                      <div className="text-sm text-slate-600">{formatCurrency(costBreakdown.meals.reduce((sum, m) => sum + (m.totalCost || 0), 0), 'USD')}</div>
+                    </div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4 border border-green-100 space-y-3">
+                    <div className="font-semibold text-green-900 flex items-center">
+                      <span className="mr-2">📊</span> Calculation Details:
+                    </div>
+                    {costBreakdown.meals.map((meal, idx) => (
+                      <div key={idx} className="bg-white rounded p-3 border border-green-100">
+                        <div className="font-medium text-green-900 mb-2">{meal.type} at {meal.place}</div>
+                        <div className="space-y-1 text-sm text-slate-700">
+                          <div className="flex justify-between">
+                            <span>Cost per person:</span>
+                            <span className="font-mono">{formatCurrency(meal.costPerPerson || 0, 'USD')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Number of passengers:</span>
+                            <span className="font-mono">{totalPax} pax</span>
+                          </div>
+                          <div className="border-t border-green-200 pt-2 mt-2 flex justify-between font-semibold text-green-700">
+                            <span>Subtotal:</span>
+                            <span className="font-mono">{formatCurrency(meal.totalCost || 0, 'USD')}</span>
+                          </div>
+                          <div className="text-xs text-slate-600">
+                            Formula: ${(meal.costPerPerson || 0).toFixed(2)}/person × {totalPax} pax = ${(meal.totalCost || 0).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t-2 border-green-300 pt-3 mt-3 flex justify-between font-bold text-green-800 text-base">
+                      <span>Total Meals:</span>
+                      <span className="font-mono">{formatCurrency(costBreakdown.meals.reduce((sum, m) => sum + (m.totalCost || 0), 0), 'USD')}</span>
                     </div>
                   </div>
                 </div>
@@ -1296,46 +1438,84 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
             </div>
 
             {/* Pricing Calculation Summary */}
-            <div className="bg-gradient-to-r from-green-100 to-teal-100 px-6 py-4 border-t-2 border-green-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <div className="text-slate-600 font-medium mb-1">Base Services Total:</div>
-                  <div className="text-lg font-bold text-green-700">
-                    {formatCurrency(convertToIDR(itinerary.totalBaseCost, itinerary.exchangeRate), 'IDR')}
+            <div className="bg-gradient-to-r from-green-100 to-teal-100 px-6 py-5 border-t-2 border-green-300">
+              <div className="mb-4">
+                <h4 className="font-bold text-green-900 text-lg mb-2 flex items-center">
+                  <span className="mr-2">🧮</span> Complete Pricing Summary
+                </h4>
+                <p className="text-sm text-slate-700">All calculations verified and totaled</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="bg-white rounded-lg p-4 border-2 border-green-300">
+                  <div className="text-slate-600 font-semibold mb-2 text-sm">Base Services Total:</div>
+                  <div className="text-xl font-bold text-green-700">
+                    {formatCurrency(convertToIDR(itinerary.totalBaseCost || 0, itinerary.exchangeRate || 1), 'IDR')}
                   </div>
-                  <div className="text-xs text-slate-600">{formatCurrency(itinerary.totalBaseCost, 'USD')}</div>
-                </div>
-                <div>
-                  <div className="text-slate-600 font-medium mb-1">Cost per Person:</div>
-                  <div className="text-lg font-bold text-blue-700">
-                    {formatCurrency(convertToIDR(itinerary.totalBaseCost / totalPax, itinerary.exchangeRate), 'IDR')}
-                  </div>
-                  <div className="text-xs text-slate-600">{formatCurrency(itinerary.totalBaseCost / totalPax, 'USD')}</div>
-                </div>
-                <div>
-                  <div className="text-slate-600 font-medium mb-1">Passenger Count:</div>
-                  <div className="text-lg font-bold text-slate-700">{totalPax} pax</div>
-                  <div className="text-xs text-slate-600">
-                    {itinerary.client.numberOfPax.adults} adults, {itinerary.client.numberOfPax.children} children
+                  <div className="text-xs text-slate-600 mt-1">{formatCurrency(itinerary.totalBaseCost || 0, 'USD')}</div>
+                  <div className="text-xs text-slate-500 mt-2">
+                    Sum of all service costs
                   </div>
                 </div>
-                <div>
-                  <div className="text-slate-600 font-medium mb-1">Cost per Day:</div>
-                  <div className="text-lg font-bold text-teal-700">
-                    {formatCurrency(convertToIDR(itinerary.totalBaseCost / itinerary.client.numberOfDays, itinerary.exchangeRate), 'IDR')}
+
+                <div className="bg-white rounded-lg p-4 border-2 border-blue-300">
+                  <div className="text-slate-600 font-semibold mb-2 text-sm">Cost per Person:</div>
+                  <div className="text-xl font-bold text-blue-700">
+                    {formatCurrency(convertToIDR((itinerary.totalBaseCost || 0) / (totalPax || 1), itinerary.exchangeRate || 1), 'IDR')}
                   </div>
-                  <div className="text-xs text-slate-600">{formatCurrency(itinerary.totalBaseCost / itinerary.client.numberOfDays, 'USD')}</div>
+                  <div className="text-xs text-slate-600 mt-1">{formatCurrency((itinerary.totalBaseCost || 0) / (totalPax || 1), 'USD')}</div>
+                  <div className="text-xs text-slate-500 mt-2">
+                    Total ÷ {totalPax} pax
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border-2 border-purple-300">
+                  <div className="text-slate-600 font-semibold mb-2 text-sm">Cost per Day:</div>
+                  <div className="text-xl font-bold text-purple-700">
+                    {formatCurrency(convertToIDR((itinerary.totalBaseCost || 0) / (itinerary.client.numberOfDays || 1), itinerary.exchangeRate || 1), 'IDR')}
+                  </div>
+                  <div className="text-xs text-slate-600 mt-1">{formatCurrency((itinerary.totalBaseCost || 0) / (itinerary.client.numberOfDays || 1), 'USD')}</div>
+                  <div className="text-xs text-slate-500 mt-2">
+                    Total ÷ {itinerary.client.numberOfDays} days
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border-2 border-slate-300">
+                  <div className="text-slate-600 font-semibold mb-2 text-sm">Passenger Count:</div>
+                  <div className="text-xl font-bold text-slate-700">{totalPax} pax</div>
+                  <div className="text-xs text-slate-600 mt-1">
+                    {itinerary.client.numberOfPax.adults} adults + {itinerary.client.numberOfPax.children} children
+                  </div>
+                  <div className="text-xs text-slate-500 mt-2">
+                    Total travelers
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border-2 border-teal-300">
+                  <div className="text-slate-600 font-semibold mb-2 text-sm">Trip Duration:</div>
+                  <div className="text-xl font-bold text-teal-700">{itinerary.client.numberOfDays} days</div>
+                  <div className="text-xs text-slate-600 mt-1">
+                    {itinerary.client.transportationMode}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-2">
+                    Transportation mode
+                  </div>
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-green-300">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="text-slate-600 font-medium">Trip Duration:</div>
-                    <div className="text-sm text-slate-600">{itinerary.client.numberOfDays} days</div>
+
+              <div className="mt-5 pt-4 border-t-2 border-green-300 bg-white rounded-lg p-4">
+                <div className="text-center">
+                  <div className="text-sm text-slate-600 font-medium mb-1">GRAND TOTAL CALCULATION</div>
+                  <div className="text-xs text-slate-500 mb-3">
+                    Transportation + Accommodation + Sightseeing + Activities + Entry Tickets + Meals
                   </div>
-                  <div className="text-right">
-                    <div className="text-slate-600 font-medium">Transportation Mode:</div>
-                    <div className="text-sm font-semibold text-slate-700">{itinerary.client.transportationMode}</div>
+                  <div className="flex items-center justify-center gap-4">
+                    <div>
+                      <div className="text-3xl font-bold text-green-700">
+                        {formatCurrency(convertToIDR(itinerary.totalBaseCost || 0, itinerary.exchangeRate || 1), 'IDR')}
+                      </div>
+                      <div className="text-sm text-slate-600 mt-1">{formatCurrency(itinerary.totalBaseCost || 0, 'USD')}</div>
+                    </div>
                   </div>
                 </div>
               </div>
