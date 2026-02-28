@@ -104,6 +104,7 @@ export interface Sightseeing {
   vehicleCosts?: VehicleCost;
   personBasedOptions?: PersonBasedOption[];
   entryTicketIds?: string[];
+  pickupLocations?: string[];
   areaId?: string;
   areaName?: string;
 }

@@ -153,6 +153,7 @@ export const fromDbSightseeing = (row: SightseeingsRow): Sightseeing => ({
   transportationMode: row.transportation_mode as any,
   vehicleCosts: row.vehicle_costs || undefined,
   entryTicketIds: row.entry_ticket_ids || undefined,
+  pickupLocations: row.pickup_locations ? (Array.isArray(row.pickup_locations) ? row.pickup_locations : []) : undefined,
   areaId: row.area_id || undefined,
   areaName: row.area_name || undefined
 });
@@ -167,6 +168,7 @@ export const toDbSightseeing = (s: Sightseeing) => {
     transportation_mode: s.transportationMode,
     vehicle_costs: s.vehicleCosts || null,
     entry_ticket_ids: s.entryTicketIds || null,
+    pickup_locations: s.pickupLocations || null,
     area_id: s.areaId || null,
     area_name: s.areaName || null
   };
@@ -254,6 +256,7 @@ export const fromDbDayPlan = (row: DayPlansRow): DayPlan => ({
   day: row.day,
   areaId: row.area_id || undefined,
   areaName: row.area_name || undefined,
+  pickupLocation: row.pickup_location || undefined,
   sightseeing: row.sightseeing_ids || [],
   hotel: row.hotel_id && row.room_type_id && row.hotel_place ? {
     place: row.hotel_place,
@@ -270,6 +273,7 @@ export const toDbDayPlan = (dp: DayPlan, itineraryId: string): DayPlansInsert =>
   day: dp.day,
   area_id: dp.areaId || null,
   area_name: dp.areaName || null,
+  pickup_location: dp.pickupLocation || null,
   sightseeing_ids: dp.sightseeing,
   hotel_place: dp.hotel?.place || null,
   hotel_id: dp.hotel?.hotelId || null,

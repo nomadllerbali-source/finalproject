@@ -438,31 +438,66 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
             </div>
 
             {/* Nusa Penida Pickup Location */}
-            {dayPlan.areaName?.toLowerCase().includes('nusa penida') && (
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-4">
-                <label className="block text-sm font-medium text-blue-900 mb-2">
-                  <MapPin className="h-4 w-4 inline mr-1" />
-                  Pickup Location
-                </label>
-                <input
-                  type="text"
-                  value={dayPlan.pickupLocation || ''}
-                  onChange={(e) => {
-                    const updatedDayPlans = [...dayPlans];
-                    updatedDayPlans[dayIndex] = {
-                      ...updatedDayPlans[dayIndex],
-                      pickupLocation: e.target.value
-                    };
-                    setDayPlans(updatedDayPlans);
-                  }}
-                  placeholder="Enter pickup location in Nusa Penida..."
-                  className="w-full p-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                />
-                <p className="text-sm text-blue-700 mt-2">
-                  Specify where in Nusa Penida you'd like to be picked up for the tour.
-                </p>
-              </div>
-            )}
+            {dayPlan.areaName?.toLowerCase().includes('nusa penida') && (() => {
+              const nusaPenidaSightseeings = getFilteredSightseeing(dayIndex);
+              const allPickupLocations = new Set<string>();
+
+              nusaPenidaSightseeings.forEach(sight => {
+                if (sight.pickupLocations && Array.isArray(sight.pickupLocations)) {
+                  sight.pickupLocations.forEach(loc => allPickupLocations.add(loc));
+                }
+              });
+
+              const pickupLocationsList = Array.from(allPickupLocations);
+
+              return (
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-4">
+                  <label className="block text-sm font-medium text-blue-900 mb-2">
+                    <MapPin className="h-4 w-4 inline mr-1" />
+                    Pickup Location
+                  </label>
+                  {pickupLocationsList.length > 0 ? (
+                    <select
+                      value={dayPlan.pickupLocation || ''}
+                      onChange={(e) => {
+                        const updatedDayPlans = [...dayPlans];
+                        updatedDayPlans[dayIndex] = {
+                          ...updatedDayPlans[dayIndex],
+                          pickupLocation: e.target.value
+                        };
+                        setDayPlans(updatedDayPlans);
+                      }}
+                      className="w-full p-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    >
+                      <option value="">Select pickup location...</option>
+                      {pickupLocationsList.map((location, idx) => (
+                        <option key={idx} value={location}>{location}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={dayPlan.pickupLocation || ''}
+                      onChange={(e) => {
+                        const updatedDayPlans = [...dayPlans];
+                        updatedDayPlans[dayIndex] = {
+                          ...updatedDayPlans[dayIndex],
+                          pickupLocation: e.target.value
+                        };
+                        setDayPlans(updatedDayPlans);
+                      }}
+                      placeholder="Enter pickup location in Nusa Penida..."
+                      className="w-full p-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    />
+                  )}
+                  <p className="text-sm text-blue-700 mt-2">
+                    {pickupLocationsList.length > 0
+                      ? 'Select where in Nusa Penida you\'d like to be picked up for the tour.'
+                      : 'Enter where in Nusa Penida you\'d like to be picked up for the tour.'}
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* Nusa Penida Trip Toggle */}
             {dayPlan.areaName?.toLowerCase().includes('nusa penida') && dayPlan.sightseeing.length > 0 && (() => {
