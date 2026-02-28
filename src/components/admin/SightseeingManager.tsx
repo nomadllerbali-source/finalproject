@@ -14,6 +14,8 @@ const SightseeingManager: React.FC = () => {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Sightseeing>>({});
   const [showAddForm, setShowAddForm] = useState(false);
+  const [entryTicketSearchTerm, setEntryTicketSearchTerm] = useState('');
+  const [editEntryTicketSearchTerm, setEditEntryTicketSearchTerm] = useState('');
   const [newSightseeing, setNewSightseeing] = useState<Omit<Sightseeing, 'id'>>({
     name: '',
     displayName: '',
@@ -107,11 +109,13 @@ const SightseeingManager: React.FC = () => {
       areaId: '',
       areaName: ''
     });
+    setEntryTicketSearchTerm('');
     setShowAddForm(false);
   };
 
   const handleEdit = (sightseeing: Sightseeing) => {
     setIsEditing(sightseeing.id);
+    setEditEntryTicketSearchTerm('');
 
     if (sightseeing.transportationMode === 'cab') {
       const cabVehicles = transportations.filter(t => t.type === 'cab');
@@ -134,6 +138,7 @@ const SightseeingManager: React.FC = () => {
       await updateSightseeingData(editForm as Sightseeing);
       setIsEditing(null);
       setEditForm({});
+      setEditEntryTicketSearchTerm('');
     }
   };
 
@@ -248,31 +253,56 @@ const SightseeingManager: React.FC = () => {
       );
     }
 
+    const searchTerm = isNew ? entryTicketSearchTerm : editEntryTicketSearchTerm;
+    const filteredTickets = availableTickets.filter(ticket =>
+      ticket.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
       <div className="space-y-3">
-        <p className="text-sm text-slate-600">
-          Select entry tickets that are included with this sightseeing tour:
-        </p>
-        {availableTickets.map(ticket => (
-          <label
-            key={ticket.id}
-            className="flex items-start space-x-3 p-3 border-2 border-slate-200 rounded-lg hover:bg-teal-50 hover:border-teal-300 cursor-pointer transition-all"
-          >
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-600">
+            Select entry tickets that are included with this sightseeing tour:
+          </p>
+          <div className="relative w-64">
+            <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
             <input
-              type="checkbox"
-              checked={selectedTicketIds?.includes(ticket.id) || false}
-              onChange={() => toggleEntryTicket(ticket.id, isNew)}
-              className="mt-1 h-5 w-5 text-teal-600 focus:ring-teal-500 border-slate-300 rounded"
+              type="text"
+              placeholder="Search tickets..."
+              value={searchTerm}
+              onChange={(e) => isNew ? setEntryTicketSearchTerm(e.target.value) : setEditEntryTicketSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
             />
-            <div className="flex-1">
-              <div className="font-semibold text-slate-900">{ticket.name}</div>
-              <div className="text-sm text-slate-600 mt-1">
-                Adult: Rp {ticket.adultCost.toLocaleString('id-ID')} |
-                Child: Rp {ticket.childCost.toLocaleString('id-ID')}
+          </div>
+        </div>
+        {filteredTickets.length === 0 ? (
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-center">
+            <p className="text-slate-600 text-sm">
+              No entry tickets found matching "{searchTerm}"
+            </p>
+          </div>
+        ) : (
+          filteredTickets.map(ticket => (
+            <label
+              key={ticket.id}
+              className="flex items-start space-x-3 p-3 border-2 border-slate-200 rounded-lg hover:bg-teal-50 hover:border-teal-300 cursor-pointer transition-all"
+            >
+              <input
+                type="checkbox"
+                checked={selectedTicketIds?.includes(ticket.id) || false}
+                onChange={() => toggleEntryTicket(ticket.id, isNew)}
+                className="mt-1 h-5 w-5 text-teal-600 focus:ring-teal-500 border-slate-300 rounded"
+              />
+              <div className="flex-1">
+                <div className="font-semibold text-slate-900">{ticket.name}</div>
+                <div className="text-sm text-slate-600 mt-1">
+                  Adult: Rp {ticket.adultCost.toLocaleString('id-ID')} |
+                  Child: Rp {ticket.childCost.toLocaleString('id-ID')}
+                </div>
               </div>
-            </div>
-          </label>
-        ))}
+            </label>
+          ))
+        )}
       </div>
     );
   };
@@ -417,7 +447,10 @@ const SightseeingManager: React.FC = () => {
 
               <div className="flex justify-end space-x-3">
                 <button
-                  onClick={() => setShowAddForm(false)}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setEntryTicketSearchTerm('');
+                  }}
                   className="px-4 py-2 text-slate-600 hover:text-slate-800 transition-colors"
                 >
                   Cancel
@@ -588,6 +621,7 @@ const SightseeingManager: React.FC = () => {
                         onClick={() => {
                           setIsEditing(null);
                           setEditForm({});
+                          setEditEntryTicketSearchTerm('');
                         }}
                         className="px-4 py-2 text-slate-600 hover:text-slate-800 transition-colors"
                       >
