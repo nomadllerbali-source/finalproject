@@ -541,37 +541,24 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
 
                       if (!sight || !sight.vehicleCosts) return null;
 
-                      const pickupLocations = ['Kuta', 'Ubud', 'Kitamnai'];
-                      const cabVehicles = state.transportations.filter(t => t.type === 'cab');
-
                       return (
                         <div className="bg-white rounded-lg p-4 border-2 border-blue-300">
                           <h5 className="font-semibold text-slate-900 mb-3 flex items-center">
                             <Car className="h-5 w-5 mr-2 text-blue-600" />
-                            Vehicle Costs by Pickup Location
+                            Vehicle Cost Per Person
                           </h5>
-                          <div className="space-y-3">
-                            {cabVehicles.map(vehicle => (
-                              <div key={vehicle.id} className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                <div className="font-medium text-slate-900 mb-2">
-                                  {vehicle.vehicleName} ({vehicle.minOccupancy}-{vehicle.maxOccupancy} pax)
+                          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                            {[1, 2, 3, 4, 5, 6].map(personCount => {
+                              const cost = sight.vehicleCosts?.[`${personCount}_person`] || 0;
+                              return (
+                                <div key={personCount} className="bg-blue-100 px-2 py-1 rounded text-center">
+                                  <div className="text-xs text-blue-600">{personCount} Person{personCount > 1 ? 's' : ''}</div>
+                                  <div className="text-xs font-bold text-blue-900">
+                                    Rp {cost.toLocaleString('id-ID')}
+                                  </div>
                                 </div>
-                                <div className="grid grid-cols-3 gap-2">
-                                  {pickupLocations.map(location => {
-                                    const key = `${vehicle.vehicleName}_${location}`;
-                                    const cost = sight.vehicleCosts?.[key] || 0;
-                                    return (
-                                      <div key={key} className="bg-white p-2 rounded border border-blue-200 text-center">
-                                        <div className="text-xs text-slate-600">From {location}</div>
-                                        <div className="text-sm font-bold text-blue-900">
-                                          Rp {cost.toLocaleString('id-ID')}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       );
