@@ -203,45 +203,56 @@ const SightseeingManager: React.FC = () => {
     if (!vehicleCosts) return null;
 
     const isNusaPenida = isNusaPenidaArea(areaName);
-
-    if (isNusaPenida) {
-      const pickupLocations = ['Kuta', 'Ubud', 'Kitamnai'];
-      return (
-        <div className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <p className="text-sm text-blue-800 font-medium">
-              <MapPin className="h-4 w-4 inline mr-1" />
-              Nusa Penida Special Pricing
-            </p>
-            <p className="text-xs text-blue-700 mt-1">
-              For Nusa Penida tours, enter the vehicle cost based on pickup location.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {pickupLocations.map(location => (
-              <div key={location}>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Pickup from {location} (Rp)
-                </label>
-                <input
-                  type="number"
-                  value={vehicleCosts[location] || 0}
-                  onChange={(e) => updateVehicleCost(location, parseFloat(e.target.value) || 0, isNew)}
-                  className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
     const cabVehicles = transportations.filter(t => t.type === 'cab');
 
     if (cabVehicles.length === 0) {
       return (
         <div className="text-slate-500 text-sm">
           No cab vehicles found. Please add vehicles in the Transportation Manager first.
+        </div>
+      );
+    }
+
+    if (isNusaPenida) {
+      const pickupLocations = ['Kuta', 'Ubud', 'Kitamnai'];
+      return (
+        <div className="space-y-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800 font-medium">
+              <MapPin className="h-4 w-4 inline mr-1" />
+              Nusa Penida Special Pricing
+            </p>
+            <p className="text-xs text-blue-700 mt-1">
+              For Nusa Penida tours, enter vehicle costs for each pickup location.
+            </p>
+          </div>
+
+          {cabVehicles.map(vehicle => (
+            <div key={vehicle.id} className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <h5 className="font-semibold text-slate-900 mb-3 flex items-center">
+                <Car className="h-4 w-4 mr-2 text-blue-600" />
+                {vehicle.vehicleName} ({vehicle.minOccupancy}-{vehicle.maxOccupancy} pax)
+              </h5>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {pickupLocations.map(location => {
+                  const key = `${vehicle.vehicleName}_${location}`;
+                  return (
+                    <div key={key}>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Pickup from {location} (Rp)
+                      </label>
+                      <input
+                        type="number"
+                        value={vehicleCosts[key] || 0}
+                        onChange={(e) => updateVehicleCost(key, parseFloat(e.target.value) || 0, isNew)}
+                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       );
     }
@@ -391,11 +402,13 @@ const SightseeingManager: React.FC = () => {
 
                       let initialCosts: VehicleCost = {};
                       if (isNusaPenidaArea(areaName)) {
-                        initialCosts = {
-                          'Kuta': 0,
-                          'Ubud': 0,
-                          'Kitamnai': 0
-                        };
+                        const cabVehicles = transportations.filter(t => t.type === 'cab');
+                        const pickupLocations = ['Kuta', 'Ubud', 'Kitamnai'];
+                        cabVehicles.forEach(vehicle => {
+                          pickupLocations.forEach(location => {
+                            initialCosts[`${vehicle.vehicleName}_${location}`] = 0;
+                          });
+                        });
                       } else {
                         const cabVehicles = transportations.filter(t => t.type === 'cab');
                         cabVehicles.forEach(vehicle => {
@@ -581,11 +594,13 @@ const SightseeingManager: React.FC = () => {
 
                             let initialCosts: VehicleCost = {};
                             if (isNusaPenidaArea(areaName)) {
-                              initialCosts = {
-                                'Kuta': 0,
-                                'Ubud': 0,
-                                'Kitamnai': 0
-                              };
+                              const cabVehicles = transportations.filter(t => t.type === 'cab');
+                              const pickupLocations = ['Kuta', 'Ubud', 'Kitamnai'];
+                              cabVehicles.forEach(vehicle => {
+                                pickupLocations.forEach(location => {
+                                  initialCosts[`${vehicle.vehicleName}_${location}`] = 0;
+                                });
+                              });
                             } else {
                               const cabVehicles = transportations.filter(t => t.type === 'cab');
                               cabVehicles.forEach(vehicle => {
@@ -753,31 +768,57 @@ const SightseeingManager: React.FC = () => {
                       <div className="p-6 border-b border-slate-200">
                         <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
                           <Car className="h-4 w-4 mr-2 text-blue-600" />
-                          {isNusaPenidaArea(sight.areaName) ? 'Pickup Location Costs' : 'Vehicle Costs'}
+                          {isNusaPenidaArea(sight.areaName) ? 'Vehicle Costs by Pickup Location' : 'Vehicle Costs'}
                         </h4>
                         {isNusaPenidaArea(sight.areaName) && (
                           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                             <p className="text-xs text-blue-800">
                               <MapPin className="h-3 w-3 inline mr-1" />
-                              Nusa Penida - Costs based on pickup location
+                              Nusa Penida - Costs vary by vehicle type and pickup location
                             </p>
                           </div>
                         )}
-                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                          {Object.entries(sight.vehicleCosts).map(([vehicleName, cost]) => {
-                            const vehicle = transportations.find(t => t.vehicleName === vehicleName && t.type === 'cab');
-                            const isPickupLocation = isNusaPenidaArea(sight.areaName);
-                            return (
-                              <div key={vehicleName} className="bg-slate-50 p-3 rounded-lg">
-                                <div className="text-sm font-medium text-slate-700">
-                                  {isPickupLocation ? `Pickup from ${vehicleName}` : vehicleName}
-                                  {vehicle && !isPickupLocation && ` (${vehicle.minOccupancy}-${vehicle.maxOccupancy} pax)`}
+                        {isNusaPenidaArea(sight.areaName) ? (
+                          <div className="space-y-4">
+                            {transportations.filter(t => t.type === 'cab').map(vehicle => {
+                              const pickupLocations = ['Kuta', 'Ubud', 'Kitamnai'];
+                              return (
+                                <div key={vehicle.id} className="bg-slate-50 p-4 rounded-lg">
+                                  <h5 className="font-semibold text-slate-900 mb-3 text-sm">
+                                    {vehicle.vehicleName} ({vehicle.minOccupancy}-{vehicle.maxOccupancy} pax)
+                                  </h5>
+                                  <div className="grid grid-cols-3 gap-3">
+                                    {pickupLocations.map(location => {
+                                      const key = `${vehicle.vehicleName}_${location}`;
+                                      const cost = sight.vehicleCosts?.[key] || 0;
+                                      return (
+                                        <div key={key} className="bg-white p-2 rounded border border-slate-200">
+                                          <div className="text-xs text-slate-600">From {location}</div>
+                                          <div className="text-sm font-bold text-slate-900">Rp {cost.toLocaleString('id-ID')}</div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
                                 </div>
-                                <div className="text-lg font-bold text-slate-900">Rp {cost.toLocaleString('id-ID')}</div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {Object.entries(sight.vehicleCosts).map(([vehicleName, cost]) => {
+                              const vehicle = transportations.find(t => t.vehicleName === vehicleName && t.type === 'cab');
+                              return (
+                                <div key={vehicleName} className="bg-slate-50 p-3 rounded-lg">
+                                  <div className="text-sm font-medium text-slate-700">
+                                    {vehicleName}
+                                    {vehicle && ` (${vehicle.minOccupancy}-${vehicle.maxOccupancy} pax)`}
+                                  </div>
+                                  <div className="text-lg font-bold text-slate-900">Rp {cost.toLocaleString('id-ID')}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     )}
                     {sight.transportationMode === 'cab' && sight.entryTicketIds && sight.entryTicketIds.length > 0 && (
