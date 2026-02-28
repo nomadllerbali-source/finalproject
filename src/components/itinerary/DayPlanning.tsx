@@ -380,6 +380,27 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
       alert('Please select a sightseeing spot for each day before proceeding to review.');
       return;
     }
+
+    // Validate Nusa Penida days have pickup location and vehicle selected
+    const nusaPenidaDays = dayPlans.filter(dayPlan =>
+      dayPlan.areaName?.toLowerCase().includes('nusa penida')
+    );
+
+    for (const dayPlan of nusaPenidaDays) {
+      const selectedSight = sightseeings.find(s => s.id === dayPlan.sightseeing[0]);
+
+      if (selectedSight?.vehicleCostsByLocation && selectedSight.vehicleCostsByLocation.length > 0) {
+        if (!dayPlan.pickupLocation) {
+          alert(`Day ${dayPlan.day}: Please select a pickup location for your Nusa Penida tour.`);
+          return;
+        }
+        if (!dayPlan.selectedVehicle) {
+          alert(`Day ${dayPlan.day}: Please select a vehicle for your Nusa Penida tour.`);
+          return;
+        }
+      }
+    }
+
     onNext(dayPlans);
   };
 
@@ -438,96 +459,133 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
             </div>
 
             {/* Nusa Penida Pickup Location */}
-            {dayPlan.areaName?.toLowerCase().includes('nusa penida') && (() => {
-              const nusaPenidaSightseeings = getFilteredSightseeing(dayIndex);
-              const allPickupLocations = new Set<string>();
+            {dayPlan.areaName?.toLowerCase().includes('nusa penida') && dayPlan.sightseeing.length > 0 && (() => {
+              const selectedSight = sightseeings.find(s => s.id === dayPlan.sightseeing[0]);
+              if (!selectedSight?.vehicleCostsByLocation || selectedSight.vehicleCostsByLocation.length === 0) return null;
 
-              nusaPenidaSightseeings.forEach(sight => {
-                if (sight.pickupLocations && Array.isArray(sight.pickupLocations)) {
-                  sight.pickupLocations.forEach(loc => allPickupLocations.add(loc));
-                }
-              });
-
-              const pickupLocationsList = Array.from(allPickupLocations);
+              const availableLocations = selectedSight.vehicleCostsByLocation.map(loc => loc.location);
 
               return (
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-4">
                   <label className="block text-sm font-medium text-blue-900 mb-2">
                     <MapPin className="h-4 w-4 inline mr-1" />
-                    Pickup Location
+                    Pickup Location <span className="text-red-500">*</span>
                   </label>
-                  {pickupLocationsList.length > 0 ? (
-                    <select
-                      value={dayPlan.pickupLocation || ''}
-                      onChange={(e) => {
-                        const updatedDayPlans = [...dayPlans];
-                        updatedDayPlans[dayIndex] = {
-                          ...updatedDayPlans[dayIndex],
-                          pickupLocation: e.target.value
-                        };
-                        setDayPlans(updatedDayPlans);
-                      }}
-                      className="w-full p-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                    >
-                      <option value="">Select pickup location...</option>
-                      {pickupLocationsList.map((location, idx) => (
-                        <option key={idx} value={location}>{location}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={dayPlan.pickupLocation || ''}
-                      onChange={(e) => {
-                        const updatedDayPlans = [...dayPlans];
-                        updatedDayPlans[dayIndex] = {
-                          ...updatedDayPlans[dayIndex],
-                          pickupLocation: e.target.value
-                        };
-                        setDayPlans(updatedDayPlans);
-                      }}
-                      placeholder="Enter pickup location in Nusa Penida..."
-                      className="w-full p-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                    />
-                  )}
+                  <select
+                    value={dayPlan.pickupLocation || ''}
+                    onChange={(e) => {
+                      const updatedDayPlans = [...dayPlans];
+                      updatedDayPlans[dayIndex] = {
+                        ...updatedDayPlans[dayIndex],
+                        pickupLocation: e.target.value,
+                        selectedVehicle: '',
+                        vehicleCost: undefined
+                      };
+                      setDayPlans(updatedDayPlans);
+                    }}
+                    className="w-full p-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  >
+                    <option value="">Select pickup location...</option>
+                    {availableLocations.map((location, idx) => (
+                      <option key={idx} value={location}>{location}</option>
+                    ))}
+                  </select>
                   <p className="text-sm text-blue-700 mt-2">
-                    {pickupLocationsList.length > 0
-                      ? 'Select where in Nusa Penida you\'d like to be picked up for the tour.'
-                      : 'Enter where in Nusa Penida you\'d like to be picked up for the tour.'}
+                    Select where in Nusa Penida you'd like to be picked up for the tour.
                   </p>
                 </div>
               );
             })()}
 
-            {/* Nusa Penida Trip Toggle */}
-            {dayPlan.areaName?.toLowerCase().includes('nusa penida') && dayPlan.sightseeing.length > 0 && (() => {
+            {/* Nusa Penida Vehicle Selection */}
+            {dayPlan.areaName?.toLowerCase().includes('nusa penida') && dayPlan.sightseeing.length > 0 && dayPlan.pickupLocation && (() => {
               const selectedSight = sightseeings.find(s => s.id === dayPlan.sightseeing[0]);
-              if (!selectedSight || !selectedSight.vehicleCosts) return null;
+              if (!selectedSight?.vehicleCostsByLocation) return null;
+
+              const locationData = selectedSight.vehicleCostsByLocation.find(
+                loc => loc.location === dayPlan.pickupLocation
+              );
+
+              if (!locationData?.costs) return null;
+
+              const totalPax = client.numberOfPax.adults + client.numberOfPax.children;
+              const availableVehicles: Array<{name: string, cost: number, capacity: string}> = [];
+
+              Object.entries(locationData.costs).forEach(([vehicleName, cost]) => {
+                const transportOption = state.transportations.find(
+                  t => t.vehicleName.toLowerCase() === vehicleName.toLowerCase()
+                );
+
+                if (transportOption && totalPax >= transportOption.minOccupancy && totalPax <= transportOption.maxOccupancy) {
+                  availableVehicles.push({
+                    name: vehicleName,
+                    cost: cost as number,
+                    capacity: `${transportOption.minOccupancy}-${transportOption.maxOccupancy} pax`
+                  });
+                }
+              });
+
+              if (availableVehicles.length === 0) {
+                return (
+                  <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+                    <p className="text-yellow-800 font-medium">
+                      No vehicles available for {totalPax} passengers from {dayPlan.pickupLocation}.
+                    </p>
+                  </div>
+                );
+              }
 
               return (
-                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-purple-900 flex items-center mb-3">
-                    <Car className="h-5 w-5 mr-2" />
-                    Trip Cost Per Person
-                  </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-                    {[1, 2, 3, 4, 5, 6].map(personCount => {
-                      const cost = selectedSight.vehicleCosts?.[`${personCount}_person`] || 0;
-                      return (
-                        <div key={personCount} className="bg-purple-100 px-3 py-2 rounded text-center">
-                          <div className="text-xs text-purple-600 font-medium">
-                            {personCount} Person{personCount > 1 ? 's' : ''}
-                          </div>
-                          <div className="text-sm font-bold text-purple-900 mt-1">
-                            Rp {cost.toLocaleString('id-ID')}
+                <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-lg p-4">
+                  <label className="block text-sm font-medium text-teal-900 mb-3">
+                    <Car className="h-4 w-4 inline mr-1" />
+                    Select Vehicle <span className="text-red-500">*</span>
+                  </label>
+                  <p className="text-sm text-teal-700 mb-3">
+                    Choose your vehicle for {totalPax} passenger{totalPax > 1 ? 's' : ''} from {dayPlan.pickupLocation}
+                  </p>
+                  <div className="space-y-3">
+                    {availableVehicles.map((vehicle) => (
+                      <label
+                        key={vehicle.name}
+                        className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          dayPlan.selectedVehicle === vehicle.name
+                            ? 'border-teal-500 bg-teal-100'
+                            : 'border-teal-200 bg-white hover:border-teal-300 hover:bg-teal-50'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="radio"
+                            name={`vehicle-day-${dayIndex}`}
+                            checked={dayPlan.selectedVehicle === vehicle.name}
+                            onChange={() => {
+                              const updatedDayPlans = [...dayPlans];
+                              updatedDayPlans[dayIndex] = {
+                                ...updatedDayPlans[dayIndex],
+                                selectedVehicle: vehicle.name,
+                                vehicleCost: vehicle.cost
+                              };
+                              setDayPlans(updatedDayPlans);
+                            }}
+                            className="h-4 w-4 text-teal-600 focus:ring-teal-500"
+                          />
+                          <div>
+                            <div className="font-semibold text-teal-900">{vehicle.name}</div>
+                            <div className="text-sm text-teal-600">{vehicle.capacity}</div>
                           </div>
                         </div>
-                      );
-                    })}
+                        <div className="text-right">
+                          <div className="font-bold text-teal-900">Rp {vehicle.cost.toLocaleString('id-ID')}</div>
+                          <div className="text-xs text-teal-600">per trip</div>
+                        </div>
+                      </label>
+                    ))}
                   </div>
                 </div>
               );
             })()}
+
 
             {/* Sightseeing List Heading for Nusa Penida */}
             {dayPlan.areaName?.toLowerCase().includes('nusa penida') && (
