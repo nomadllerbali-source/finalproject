@@ -445,7 +445,7 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
                   <h4 className="font-semibold text-purple-900 flex items-center mb-3">
                     <Car className="h-5 w-5 mr-2" />
-                    Vehicle Cost Per Person
+                    Trip Cost Per Person
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
                     {[1, 2, 3, 4, 5, 6].map(personCount => {
