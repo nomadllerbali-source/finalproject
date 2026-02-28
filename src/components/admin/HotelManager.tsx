@@ -5,6 +5,7 @@ import { Building2, Plus, Edit2, Trash2, Save, X, Star, Search, MapPin, RefreshC
 import Layout from '../Layout';
 import { supabase } from '../../lib/supabase';
 import { fetchAllData } from '../../lib/supabaseHelpers';
+import { generateUUID } from '../../utils/uuid';
 
 const HotelManager: React.FC = () => {
   const { state, addHotel, updateHotelData, deleteHotelData } = useData();
@@ -67,7 +68,7 @@ const HotelManager: React.FC = () => {
 
   const addRoomType = (isNew: boolean = false) => {
     const newRoomType: RoomType = {
-      id: Date.now().toString(),
+      id: generateUUID(),
       name: '',
       peakSeasonPrice: 0,
       seasonPrice: 0,

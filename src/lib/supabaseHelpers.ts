@@ -528,12 +528,13 @@ export const insertHotel = async (h: Hotel) => {
   if (hotelError) throw hotelError;
 
   if (h.roomTypes.length > 0) {
-    const roomTypesToInsert = h.roomTypes.map(rt => {
-      const { id, ...roomData } = toDbRoomType(rt, hotelData.id);
-      return roomData;
-    });
+    const roomTypesToInsert = h.roomTypes.map(rt => toDbRoomType(rt, hotelData.id));
+    console.log('Inserting room types for new hotel:', roomTypesToInsert);
     const { error: roomTypesError } = await supabase.from('room_types').insert(roomTypesToInsert);
-    if (roomTypesError) throw roomTypesError;
+    if (roomTypesError) {
+      console.error('Error inserting room types:', roomTypesError);
+      throw roomTypesError;
+    }
   }
 
   return fromDbHotel({ ...hotelData, room_types: h.roomTypes.map(rt => toDbRoomType(rt, hotelData.id)) });
