@@ -425,10 +425,13 @@ export const fetchAllData = async () => {
       if (fixedItinerariesError) throw fixedItinerariesError;
 
       console.log('Data fetched successfully');
+      console.log('Hotels raw data:', hotelsData);
+      const hotels = hotelsData?.map(fromDbHotel) || [];
+      console.log('Hotels after conversion:', hotels.map(h => ({ id: h.id, name: h.name, roomTypesCount: h.roomTypes.length })));
       return {
         clients: clientsData?.map(fromDbClient) || [],
         transportations: transportationsData?.map(fromDbTransportation) || [],
-        hotels: hotelsData?.map(fromDbHotel) || [],
+        hotels,
         sightseeings: sightseeingsData?.map(fromDbSightseeing) || [],
         activities: activitiesData?.map(fromDbActivity) || [],
         entryTickets: entryTicketsData?.map(fromDbEntryTicket) || [],
@@ -538,19 +541,24 @@ export const insertHotel = async (h: Hotel) => {
 
 export const updateHotel = async (h: Hotel) => {
   if (!supabase) return null;
+  console.log('Updating hotel:', h.id, 'with', h.roomTypes.length, 'room types');
   const { data: hotelData, error: hotelError } = await supabase.from('hotels').update(toDbHotel(h)).eq('id', h.id).select().single();
   if (hotelError) throw hotelError;
 
-  // Delete existing room types and insert new ones
   const { error: deleteError } = await supabase.from('room_types').delete().eq('hotel_id', h.id);
   if (deleteError) throw deleteError;
 
   if (h.roomTypes.length > 0) {
     const roomTypesToInsert = h.roomTypes.map(rt => toDbRoomType(rt, h.id));
-    const { error: insertError } = await supabase.from('room_types').insert(roomTypesToInsert);
-    if (insertError) throw insertError;
+    console.log('Inserting room types:', roomTypesToInsert);
+    const { data: insertedRoomTypes, error: insertError } = await supabase.from('room_types').insert(roomTypesToInsert).select();
+    if (insertError) {
+      console.error('Error inserting room types:', insertError);
+      throw insertError;
+    }
+    console.log('Successfully inserted room types:', insertedRoomTypes);
   }
-  
+
   return fromDbHotel({ ...hotelData, room_types: h.roomTypes.map(rt => toDbRoomType(rt, h.id)) });
 };
 

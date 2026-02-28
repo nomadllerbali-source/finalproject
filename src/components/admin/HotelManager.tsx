@@ -80,9 +80,11 @@ const HotelManager: React.FC = () => {
         roomTypes: [...newHotel.roomTypes, newRoomType]
       });
     } else if (editForm.roomTypes) {
+      const updatedRoomTypes = [...editForm.roomTypes, newRoomType];
+      console.log('Adding room type. New count:', updatedRoomTypes.length);
       setEditForm({
         ...editForm,
-        roomTypes: [...editForm.roomTypes, newRoomType]
+        roomTypes: updatedRoomTypes
       });
     }
   };
@@ -136,12 +138,16 @@ const HotelManager: React.FC = () => {
   };
 
   const handleEdit = (hotel: Hotel) => {
+    console.log('Editing hotel:', hotel);
+    console.log('Hotel has room types:', hotel.roomTypes?.length || 0);
     setIsEditing(hotel.id);
     setEditForm(hotel);
   };
 
   const handleSave = async () => {
     if (isEditing && editForm.id) {
+      console.log('Saving hotel with data:', editForm);
+      console.log('Room types count:', editForm.roomTypes?.length || 0);
       await updateHotelData(editForm as Hotel);
       setIsEditing(null);
       setEditForm({});
