@@ -1118,6 +1118,230 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
             )}
           </div>
 
+          {/* Pricing Logic Box */}
+          <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-xl shadow-sm border-2 border-green-200 mb-6 md:mb-8 overflow-hidden">
+            <div className="px-6 py-4 bg-gradient-to-r from-green-600 to-teal-600">
+              <h3 className="text-xl font-bold text-white flex items-center">
+                <span className="text-2xl mr-2">💰</span>
+                Complete Cost Analysis & Calculations
+              </h3>
+              <p className="text-green-50 text-sm mt-1">Comprehensive breakdown of all costs with detailed calculations and pricing logic</p>
+            </div>
+
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Transportation */}
+              {costBreakdown.transportation > 0 && (
+                <div className="bg-white rounded-lg p-4 border border-blue-200">
+                  <div className="flex items-center mb-3">
+                    <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                      <MapPin className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <h4 className="font-bold text-blue-900">Transportation</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {formatCurrency(convertToIDR(costBreakdown.transportation, itinerary.exchangeRate), 'IDR')}
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      {itinerary.client.transportationMode} rental
+                    </div>
+                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2">
+                      <div className="font-semibold mb-1">Calculation:</div>
+                      <div>{formatCurrency(costBreakdown.transportation / itinerary.client.numberOfDays, 'USD')}/day × {itinerary.client.numberOfDays} days</div>
+                      <div className="mt-1 text-blue-600 font-semibold">= {formatCurrency(costBreakdown.transportation, 'USD')}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Accommodation */}
+              {costBreakdown.hotels.length > 0 && (
+                <div className="bg-white rounded-lg p-4 border border-purple-200">
+                  <div className="flex items-center mb-3">
+                    <div className="bg-purple-100 p-2 rounded-lg mr-3">
+                      <Building2 className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <h4 className="font-bold text-purple-900">Accommodation</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {formatCurrency(convertToIDR(costBreakdown.hotels.reduce((sum, h) => sum + h.total, 0), itinerary.exchangeRate), 'IDR')}
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      Hotels & room charges with seasonal pricing
+                    </div>
+                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2 space-y-1">
+                      <div className="font-semibold mb-1">Calculation:</div>
+                      {costBreakdown.hotels.map((hotel, idx) => (
+                        <div key={idx}>
+                          {hotel.nights} night{hotel.nights > 1 ? 's' : ''} × {formatCurrency(hotel.pricePerNight, 'USD')}
+                        </div>
+                      ))}
+                      <div className="mt-1 pt-1 border-t border-slate-300 text-purple-600 font-semibold">
+                        = {formatCurrency(costBreakdown.hotels.reduce((sum, h) => sum + h.total, 0), 'USD')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Sightseeing */}
+              {costBreakdown.sightseeing.length > 0 && (
+                <div className="bg-white rounded-lg p-4 border border-teal-200">
+                  <div className="flex items-center mb-3">
+                    <div className="bg-teal-100 p-2 rounded-lg mr-3">
+                      <MapPin className="h-5 w-5 text-teal-600" />
+                    </div>
+                    <h4 className="font-bold text-teal-900">Sightseeing</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl font-bold text-teal-600">
+                      {formatCurrency(convertToIDR(costBreakdown.sightseeing.reduce((sum, s) => sum + s.vehicleCost, 0), itinerary.exchangeRate), 'IDR')}
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      Vehicle costs based on group size
+                    </div>
+                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2">
+                      <div className="font-semibold mb-1">For {totalPax} passenger{totalPax > 1 ? 's' : ''}</div>
+                      <div className="mt-1 text-teal-600 font-semibold">
+                        = {formatCurrency(costBreakdown.sightseeing.reduce((sum, s) => sum + s.vehicleCost, 0), 'USD')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Activities */}
+              {costBreakdown.activities.length > 0 && (
+                <div className="bg-white rounded-lg p-4 border border-orange-200">
+                  <div className="flex items-center mb-3">
+                    <div className="bg-orange-100 p-2 rounded-lg mr-3">
+                      <Camera className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <h4 className="font-bold text-orange-900">Activities</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl font-bold text-orange-600">
+                      {formatCurrency(convertToIDR(costBreakdown.activities.reduce((sum, a) => sum + a.totalCost, 0), itinerary.exchangeRate), 'IDR')}
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      Adventure & experiences with group calculations
+                    </div>
+                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2">
+                      <div className="font-semibold mb-1">Costs calculated per activity capacity requirements</div>
+                      <div className="mt-1 text-orange-600 font-semibold">
+                        = {formatCurrency(costBreakdown.activities.reduce((sum, a) => sum + a.totalCost, 0), 'USD')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Entry Tickets */}
+              {costBreakdown.entryTickets.length > 0 && (
+                <div className="bg-white rounded-lg p-4 border border-indigo-200">
+                  <div className="flex items-center mb-3">
+                    <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                      <Ticket className="h-5 w-5 text-indigo-600" />
+                    </div>
+                    <h4 className="font-bold text-indigo-900">Entry Tickets</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl font-bold text-indigo-600">
+                      {formatCurrency(convertToIDR(costBreakdown.entryTickets.reduce((sum, t) => sum + t.totalCost, 0), itinerary.exchangeRate), 'IDR')}
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      Attraction entries calculated per person
+                    </div>
+                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2">
+                      <div className="font-semibold mb-1">Calculation:</div>
+                      {costBreakdown.entryTickets.map((ticket, idx) => (
+                        <div key={idx}>
+                          {formatCurrency(ticket.costPerPerson, 'USD')} × {totalPax} = {formatCurrency(ticket.totalCost, 'USD')}
+                        </div>
+                      ))}
+                      <div className="mt-1 pt-1 border-t border-slate-300 text-indigo-600 font-semibold">
+                        = {formatCurrency(costBreakdown.entryTickets.reduce((sum, t) => sum + t.totalCost, 0), 'USD')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Meals */}
+              {costBreakdown.meals.length > 0 && (
+                <div className="bg-white rounded-lg p-4 border border-green-200">
+                  <div className="flex items-center mb-3">
+                    <div className="bg-green-100 p-2 rounded-lg mr-3">
+                      <Utensils className="h-5 w-5 text-green-600" />
+                    </div>
+                    <h4 className="font-bold text-green-900">Meals</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl font-bold text-green-600">
+                      {formatCurrency(convertToIDR(costBreakdown.meals.reduce((sum, m) => sum + m.totalCost, 0), itinerary.exchangeRate), 'IDR')}
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      Food & beverages calculated per person
+                    </div>
+                    <div className="text-xs text-slate-500 bg-slate-50 rounded p-2 mt-2">
+                      <div className="font-semibold mb-1">Various restaurants and meal types included</div>
+                      <div className="mt-1 text-green-600 font-semibold">
+                        = {formatCurrency(costBreakdown.meals.reduce((sum, m) => sum + m.totalCost, 0), 'USD')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Pricing Calculation Summary */}
+            <div className="bg-gradient-to-r from-green-100 to-teal-100 px-6 py-4 border-t-2 border-green-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <div className="text-slate-600 font-medium mb-1">Base Services Total:</div>
+                  <div className="text-lg font-bold text-green-700">
+                    {formatCurrency(convertToIDR(itinerary.totalBaseCost, itinerary.exchangeRate), 'IDR')}
+                  </div>
+                  <div className="text-xs text-slate-600">{formatCurrency(itinerary.totalBaseCost, 'USD')}</div>
+                </div>
+                <div>
+                  <div className="text-slate-600 font-medium mb-1">Cost per Person:</div>
+                  <div className="text-lg font-bold text-blue-700">
+                    {formatCurrency(convertToIDR(itinerary.totalBaseCost / totalPax, itinerary.exchangeRate), 'IDR')}
+                  </div>
+                  <div className="text-xs text-slate-600">{formatCurrency(itinerary.totalBaseCost / totalPax, 'USD')}</div>
+                </div>
+                <div>
+                  <div className="text-slate-600 font-medium mb-1">Passenger Count:</div>
+                  <div className="text-lg font-bold text-slate-700">{totalPax} pax</div>
+                  <div className="text-xs text-slate-600">
+                    {itinerary.client.numberOfPax.adults} adults, {itinerary.client.numberOfPax.children} children
+                  </div>
+                </div>
+                <div>
+                  <div className="text-slate-600 font-medium mb-1">Cost per Day:</div>
+                  <div className="text-lg font-bold text-teal-700">
+                    {formatCurrency(convertToIDR(itinerary.totalBaseCost / itinerary.client.numberOfDays, itinerary.exchangeRate), 'IDR')}
+                  </div>
+                  <div className="text-xs text-slate-600">{formatCurrency(itinerary.totalBaseCost / itinerary.client.numberOfDays, 'USD')}</div>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-green-300">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="text-slate-600 font-medium">Trip Duration:</div>
+                    <div className="text-sm text-slate-600">{itinerary.client.numberOfDays} days</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-slate-600 font-medium">Transportation Mode:</div>
+                    <div className="text-sm font-semibold text-slate-700">{itinerary.client.transportationMode}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Detailed Cost Breakdown */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 mb-6 md:mb-8">
             <div className="px-6 py-4 border-b border-slate-200">
