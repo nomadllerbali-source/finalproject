@@ -412,7 +412,8 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                   updatedDayPlans[dayIndex] = {
                     ...updatedDayPlans[dayIndex],
                     areaId: e.target.value,
-                    areaName: selectedArea?.name || ''
+                    areaName: selectedArea?.name || '',
+                    sightseeing: []
                   };
                   setDayPlans(updatedDayPlans);
 
@@ -435,6 +436,33 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                   : 'Showing all available sightseeing spots from all areas.'}
               </p>
             </div>
+
+            {/* Nusa Penida Pickup Location */}
+            {dayPlan.areaName?.toLowerCase().includes('nusa penida') && (
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-4">
+                <label className="block text-sm font-medium text-blue-900 mb-2">
+                  <MapPin className="h-4 w-4 inline mr-1" />
+                  Pickup Location
+                </label>
+                <input
+                  type="text"
+                  value={dayPlan.pickupLocation || ''}
+                  onChange={(e) => {
+                    const updatedDayPlans = [...dayPlans];
+                    updatedDayPlans[dayIndex] = {
+                      ...updatedDayPlans[dayIndex],
+                      pickupLocation: e.target.value
+                    };
+                    setDayPlans(updatedDayPlans);
+                  }}
+                  placeholder="Enter pickup location in Nusa Penida..."
+                  className="w-full p-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                />
+                <p className="text-sm text-blue-700 mt-2">
+                  Specify where in Nusa Penida you'd like to be picked up for the tour.
+                </p>
+              </div>
+            )}
 
             {/* Nusa Penida Trip Toggle */}
             {dayPlan.areaName?.toLowerCase().includes('nusa penida') && dayPlan.sightseeing.length > 0 && (() => {
@@ -466,25 +494,35 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
               );
             })()}
 
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search sightseeing spots by name or description..."
-                value={searchTerms.sightseeing}
-                onChange={(e) => updateSearchTerm('sightseeing', e.target.value)}
-                className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              {searchTerms.sightseeing && (
-                <button
-                  onClick={() => clearSearch('sightseeing')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              )}
-            </div>
+            {/* Sightseeing List Heading for Nusa Penida */}
+            {dayPlan.areaName?.toLowerCase().includes('nusa penida') && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-900 mb-2">Select Your Nusa Penida Tour</h4>
+                <p className="text-blue-700 text-sm">Choose from the available sightseeing options for Nusa Penida below.</p>
+              </div>
+            )}
+
+            {/* Search Bar - Only show if not Nusa Penida */}
+            {!dayPlan.areaName?.toLowerCase().includes('nusa penida') && (
+              <div className="relative">
+                <Search className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search sightseeing spots by name or description..."
+                  value={searchTerms.sightseeing}
+                  onChange={(e) => updateSearchTerm('sightseeing', e.target.value)}
+                  className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {searchTerms.sightseeing && (
+                  <button
+                    onClick={() => clearSearch('sightseeing')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Selected Sightseeing */}
             {dayPlan.sightseeing.length > 0 && (

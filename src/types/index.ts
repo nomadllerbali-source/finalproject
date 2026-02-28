@@ -146,6 +146,7 @@ export interface DayPlan {
   day: number;
   areaId?: string;
   areaName?: string;
+  pickupLocation?: string;
   sightseeing: string[];
   hotel: {
     place: string;
