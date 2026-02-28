@@ -725,14 +725,20 @@ const SightseeingManager: React.FC = () => {
                       <Car className="h-4 w-4 mr-2 text-blue-600" />
                       Vehicle Costs (for Cab mode)
                     </h4>
-                    {isNusaPenidaArea(newSightseeing.areaName) && newSightseeing.vehicleCostsByLocation && newSightseeing.vehicleCostsByLocation.length > 0 && (
-                      <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
-                        <p className="text-sm text-green-800 font-medium">
-                          Vehicle costs pre-populated from existing Nusa Penida sightseeing. You can modify as needed.
-                        </p>
-                      </div>
+                    {isNusaPenidaArea(newSightseeing.areaName) ? (
+                      <>
+                        {newSightseeing.vehicleCostsByLocation && newSightseeing.vehicleCostsByLocation.length > 0 && (
+                          <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p className="text-sm text-green-800 font-medium">
+                              Vehicle costs pre-populated from existing Nusa Penida sightseeing. You can modify as needed.
+                            </p>
+                          </div>
+                        )}
+                        {renderLocationBasedVehicleCosts(true)}
+                      </>
+                    ) : (
+                      renderVehicleCostInputs(newSightseeing.vehicleCosts, true, newSightseeing.areaName)
                     )}
-                    {renderLocationBasedVehicleCosts(true)}
                   </div>
 
                   {isNusaPenidaArea(newSightseeing.areaName) && (
@@ -937,7 +943,11 @@ const SightseeingManager: React.FC = () => {
                             <Car className="h-4 w-4 mr-2 text-blue-600" />
                             Vehicle Costs (for Cab mode)
                           </h4>
-                          {renderLocationBasedVehicleCosts(false)}
+                          {isNusaPenidaArea(editForm.areaName) ? (
+                            renderLocationBasedVehicleCosts(false)
+                          ) : (
+                            renderVehicleCostInputs(editForm.vehicleCosts, false, editForm.areaName)
+                          )}
                         </div>
 
                         {isNusaPenidaArea(editForm.areaName) && (
