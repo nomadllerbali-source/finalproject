@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
-import { Sightseeing, VehicleCost, PersonBasedOption, Area } from '../../types';
+import { Sightseeing, VehicleCost, PersonBasedOption, Area, LocationVehicleCost } from '../../types';
 import { MapPin, Plus, Edit2, Trash2, Save, X, Search, Car, Ticket, Users } from 'lucide-react';
 import Layout from '../Layout';
 import { supabase } from '../../lib/supabase';
@@ -22,12 +22,15 @@ const SightseeingManager: React.FC = () => {
     description: '',
     transportationMode: 'cab',
     vehicleCosts: {},
+    vehicleCostsByLocation: [],
     personBasedOptions: [],
     entryTicketIds: [],
     pickupLocations: [],
     areaId: '',
     areaName: ''
   });
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState('');
 
   useEffect(() => {
     fetchAreas();
@@ -84,6 +87,7 @@ const SightseeingManager: React.FC = () => {
         description: newSightseeing.description,
         transportationMode: mode as 'cab' | 'self-drive-car' | 'self-drive-scooter',
         vehicleCosts: mode === 'cab' ? newSightseeing.vehicleCosts : undefined,
+        vehicleCostsByLocation: mode === 'cab' ? newSightseeing.vehicleCostsByLocation : undefined,
         personBasedOptions: mode === 'cab' ? newSightseeing.personBasedOptions : undefined,
         entryTicketIds: mode === 'cab' ? newSightseeing.entryTicketIds : undefined,
         pickupLocations: newSightseeing.pickupLocations,
@@ -104,6 +108,7 @@ const SightseeingManager: React.FC = () => {
       description: '',
       transportationMode: 'cab',
       vehicleCosts: initialCosts,
+      vehicleCostsByLocation: [],
       personBasedOptions: [],
       entryTicketIds: [],
       pickupLocations: [],
@@ -112,6 +117,8 @@ const SightseeingManager: React.FC = () => {
     });
     setEntryTicketSearchTerm('');
     setShowAddForm(false);
+    setShowLocationPicker(false);
+    setSelectedLocation('');
   };
 
   const handleEdit = (sightseeing: Sightseeing) => {
@@ -199,6 +206,169 @@ const SightseeingManager: React.FC = () => {
         entryTicketIds: updatedIds
       });
     }
+  };
+
+  const renderLocationBasedVehicleCosts = (isNew: boolean = false) => {
+    const vehicleCostsByLocation = isNew ? newSightseeing.vehicleCostsByLocation || [] : editForm.vehicleCostsByLocation || [];
+    const cabVehicles = transportations.filter(t => t.type === 'cab');
+    const availableLocations = ['Kuta', 'Ubud', 'Kitamani'];
+
+    const addLocationVehicleCosts = (location: string) => {
+      const initialCosts: Record<string, number> = {};
+      cabVehicles.forEach(vehicle => {
+        initialCosts[vehicle.vehicleName] = 0;
+      });
+
+      const newLocationCost: LocationVehicleCost = {
+        location,
+        costs: initialCosts
+      };
+
+      if (isNew) {
+        setNewSightseeing({
+          ...newSightseeing,
+          vehicleCostsByLocation: [...vehicleCostsByLocation, newLocationCost]
+        });
+      } else {
+        setEditForm({
+          ...editForm,
+          vehicleCostsByLocation: [...vehicleCostsByLocation, newLocationCost]
+        });
+      }
+      setShowLocationPicker(false);
+      setSelectedLocation('');
+    };
+
+    const updateLocationVehicleCost = (locationIndex: number, vehicleName: string, cost: number) => {
+      const updated = [...vehicleCostsByLocation];
+      updated[locationIndex].costs[vehicleName] = cost;
+
+      if (isNew) {
+        setNewSightseeing({ ...newSightseeing, vehicleCostsByLocation: updated });
+      } else {
+        setEditForm({ ...editForm, vehicleCostsByLocation: updated });
+      }
+    };
+
+    const removeLocationVehicleCosts = (locationIndex: number) => {
+      const updated = vehicleCostsByLocation.filter((_, idx) => idx !== locationIndex);
+      if (isNew) {
+        setNewSightseeing({ ...newSightseeing, vehicleCostsByLocation: updated });
+      } else {
+        setEditForm({ ...editForm, vehicleCostsByLocation: updated });
+      }
+    };
+
+    const usedLocations = vehicleCostsByLocation.map(lvc => lvc.location);
+    const remainingLocations = availableLocations.filter(loc => !usedLocations.includes(loc));
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-800 font-medium">
+            <MapPin className="h-4 w-4 inline mr-1" />
+            Location-Based Vehicle Costs
+          </p>
+          <p className="text-xs text-blue-700 mt-1">
+            Add vehicle costs for different pickup locations. Each location can have different pricing.
+          </p>
+        </div>
+
+        {vehicleCostsByLocation.map((locationCost, locationIndex) => (
+          <div key={locationIndex} className="bg-white border-2 border-slate-300 rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h5 className="font-semibold text-slate-900 flex items-center">
+                <MapPin className="h-5 w-5 mr-2 text-blue-600" />
+                Pickup from {locationCost.location}
+              </h5>
+              <button
+                onClick={() => removeLocationVehicleCosts(locationIndex)}
+                className="text-red-600 hover:text-red-800 transition-colors"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {cabVehicles.map(vehicle => (
+                <div key={vehicle.id}>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    {vehicle.vehicleName} (Rp)
+                    <span className="text-xs text-slate-500 block">
+                      {vehicle.minOccupancy}-{vehicle.maxOccupancy} pax
+                    </span>
+                  </label>
+                  <input
+                    type="number"
+                    value={locationCost.costs[vehicle.vehicleName] || 0}
+                    onChange={(e) => updateLocationVehicleCost(locationIndex, vehicle.vehicleName, parseFloat(e.target.value) || 0)}
+                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {remainingLocations.length > 0 && (
+          <div>
+            {!showLocationPicker ? (
+              <button
+                onClick={() => setShowLocationPicker(true)}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Vehicle Costs for Location
+              </button>
+            ) : (
+              <div className="bg-slate-50 border-2 border-blue-300 rounded-lg p-4">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Select Pickup Location
+                </label>
+                <div className="flex gap-3">
+                  <select
+                    value={selectedLocation}
+                    onChange={(e) => setSelectedLocation(e.target.value)}
+                    className="flex-1 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Choose location...</option>
+                    {remainingLocations.map(loc => (
+                      <option key={loc} value={loc}>{loc}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => {
+                      if (selectedLocation) {
+                        addLocationVehicleCosts(selectedLocation);
+                      }
+                    }}
+                    disabled={!selectedLocation}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowLocationPicker(false);
+                      setSelectedLocation('');
+                    }}
+                    className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {vehicleCostsByLocation.length === 0 && (
+          <div className="text-center py-8 text-slate-500">
+            No location-based vehicle costs added yet. Click "Add Vehicle Costs for Location" to start.
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderVehicleCostInputs = (vehicleCosts: VehicleCost | undefined, isNew: boolean = false, areaName?: string) => {
@@ -567,7 +737,7 @@ const SightseeingManager: React.FC = () => {
                       <Car className="h-4 w-4 mr-2 text-blue-600" />
                       Vehicle Costs (for Cab mode)
                     </h4>
-                    {renderVehicleCostInputs(newSightseeing.vehicleCosts, true, newSightseeing.areaName)}
+                    {renderLocationBasedVehicleCosts(true)}
                   </div>
 
                   {isNusaPenidaArea(newSightseeing.areaName) && (
@@ -792,7 +962,7 @@ const SightseeingManager: React.FC = () => {
                             <Car className="h-4 w-4 mr-2 text-blue-600" />
                             Vehicle Costs (for Cab mode)
                           </h4>
-                          {renderVehicleCostInputs(editForm.vehicleCosts, false, editForm.areaName)}
+                          {renderLocationBasedVehicleCosts(false)}
                         </div>
 
                         {isNusaPenidaArea(editForm.areaName) && (
