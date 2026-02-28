@@ -118,14 +118,18 @@ export const fromDbHotel = (row: HotelsRow & { room_types?: RoomTypesRow[] }): H
   name: row.name,
   place: row.place,
   starCategory: row.star_category as any,
-  roomTypes: row.room_types ? row.room_types.map(fromDbRoomType) : []
+  roomTypes: row.room_types ? row.room_types.map(fromDbRoomType) : [],
+  areaId: row.area_id || undefined,
+  areaName: row.area_name || undefined
 });
 
 export const toDbHotel = (h: Hotel) => ({
   id: h.id,
   name: h.name,
   place: h.place,
-  star_category: h.starCategory
+  star_category: h.starCategory,
+  area_id: h.areaId || null,
+  area_name: h.areaName || null
 });
 
 export const fromDbRoomType = (row: RoomTypesRow): RoomType => ({

@@ -584,27 +584,35 @@ const HotelManager: React.FC = () => {
 
                     <div className="p-6">
                       <h4 className="text-md font-semibold text-slate-900 mb-4">Room Types & Pricing</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {hotel.roomTypes.map((roomType) => (
-                          <div key={roomType.id} className="bg-slate-50 p-4 rounded-lg">
-                            <h5 className="font-medium text-slate-900 mb-3">{roomType.name}</h5>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span className="text-slate-600">Peak Season:</span>
-                                <span className="font-medium">Rp {roomType.peakSeasonPrice.toLocaleString('id-ID')}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-slate-600">Season:</span>
-                                <span className="font-medium">Rp {roomType.seasonPrice.toLocaleString('id-ID')}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-slate-600">Off-Season:</span>
-                                <span className="font-medium">Rp {roomType.offSeasonPrice.toLocaleString('id-ID')}</span>
+                      {hotel.roomTypes && hotel.roomTypes.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {hotel.roomTypes.map((roomType) => (
+                            <div key={roomType.id} className="bg-slate-50 p-4 rounded-lg">
+                              <h5 className="font-medium text-slate-900 mb-3">{roomType.name}</h5>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-slate-600">Peak Season:</span>
+                                  <span className="font-medium">Rp {roomType.peakSeasonPrice.toLocaleString('id-ID')}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-600">Season:</span>
+                                  <span className="font-medium">Rp {roomType.seasonPrice.toLocaleString('id-ID')}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-600">Off-Season:</span>
+                                  <span className="font-medium">Rp {roomType.offSeasonPrice.toLocaleString('id-ID')}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                          <p className="text-amber-800 text-sm">
+                            No room types added yet. Click Edit to add room types and pricing.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
