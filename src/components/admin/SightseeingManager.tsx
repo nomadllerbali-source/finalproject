@@ -621,14 +621,21 @@ const SightseeingManager: React.FC = () => {
                       const areaName = selectedArea?.name || '';
 
                       let initialCosts: VehicleCost = {};
+                      let initialVehicleCostsByLocation: LocationVehicleCost[] = [];
+
                       if (isNusaPenidaArea(areaName)) {
-                        const cabVehicles = transportations.filter(t => t.type === 'cab');
-                        const pickupLocations = ['Kuta', 'Ubud', 'Kitamnai'];
-                        cabVehicles.forEach(vehicle => {
-                          pickupLocations.forEach(location => {
-                            initialCosts[`${vehicle.vehicleName}_${location}`] = 0;
-                          });
-                        });
+                        // Find existing Nusa Penida sightseeing with vehicle costs
+                        const existingNusaPenidaSightseeing = sightseeings.find(s =>
+                          isNusaPenidaArea(s.areaName) &&
+                          s.transportationMode === 'cab' &&
+                          s.vehicleCostsByLocation &&
+                          s.vehicleCostsByLocation.length > 0
+                        );
+
+                        if (existingNusaPenidaSightseeing && existingNusaPenidaSightseeing.vehicleCostsByLocation) {
+                          // Copy the vehicle costs from existing sightseeing
+                          initialVehicleCostsByLocation = JSON.parse(JSON.stringify(existingNusaPenidaSightseeing.vehicleCostsByLocation));
+                        }
                       } else {
                         const cabVehicles = transportations.filter(t => t.type === 'cab');
                         cabVehicles.forEach(vehicle => {
@@ -640,7 +647,8 @@ const SightseeingManager: React.FC = () => {
                         ...newSightseeing,
                         areaId: e.target.value,
                         areaName: areaName,
-                        vehicleCosts: initialCosts
+                        vehicleCosts: initialCosts,
+                        vehicleCostsByLocation: initialVehicleCostsByLocation
                       });
                     }}
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -717,6 +725,13 @@ const SightseeingManager: React.FC = () => {
                       <Car className="h-4 w-4 mr-2 text-blue-600" />
                       Vehicle Costs (for Cab mode)
                     </h4>
+                    {isNusaPenidaArea(newSightseeing.areaName) && newSightseeing.vehicleCostsByLocation && newSightseeing.vehicleCostsByLocation.length > 0 && (
+                      <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
+                        <p className="text-sm text-green-800 font-medium">
+                          Vehicle costs pre-populated from existing Nusa Penida sightseeing. You can modify as needed.
+                        </p>
+                      </div>
+                    )}
                     {renderLocationBasedVehicleCosts(true)}
                   </div>
 
