@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { Hotel, RoomType, Area } from '../../types';
-import { Building2, Plus, Edit2, Trash2, Save, X, Star, Search, MapPin } from 'lucide-react';
+import { Building2, Plus, Edit2, Trash2, Save, X, Star, Search, MapPin, RefreshCw } from 'lucide-react';
 import Layout from '../Layout';
 import { supabase } from '../../lib/supabase';
+import { fetchAllData } from '../../lib/supabaseHelpers';
 
 const HotelManager: React.FC = () => {
   const { state, addHotel, updateHotelData, deleteHotelData } = useData();
@@ -14,6 +15,7 @@ const HotelManager: React.FC = () => {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Hotel>>({});
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [newHotel, setNewHotel] = useState<Omit<Hotel, 'id'>>({
     name: '',
     place: '',
@@ -26,6 +28,20 @@ const HotelManager: React.FC = () => {
   useEffect(() => {
     fetchAreas();
   }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const data = await fetchAllData();
+      if (data) {
+        window.dispatchEvent(new CustomEvent('refreshData', { detail: data }));
+      }
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const fetchAreas = async () => {
     try {
@@ -163,13 +179,23 @@ const HotelManager: React.FC = () => {
                   className="w-full pl-10 pr-4 py-2.5 sm:py-2 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 touch-target"
                 />
               </div>
-              <button
-                onClick={() => setShowAddForm(!showAddForm)}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors touch-target flex-shrink-0"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Hotel
-              </button>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="inline-flex items-center justify-center px-3 py-2.5 sm:py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50 flex-shrink-0"
+                  title="Refresh hotel data"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
+                <button
+                  onClick={() => setShowAddForm(!showAddForm)}
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center px-4 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors touch-target flex-shrink-0"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Hotel
+                </button>
+              </div>
             </div>
           </div>
 
