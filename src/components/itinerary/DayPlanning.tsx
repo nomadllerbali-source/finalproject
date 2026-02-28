@@ -516,12 +516,11 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
                                 className="mt-1 h-5 w-5 text-purple-600 focus:ring-purple-500"
                               />
                               <div className="flex-1">
-                                <div className="font-semibold text-purple-900">{item.option.name}</div>
-                                <div className="text-xs text-purple-600 mt-1">{item.sightName}</div>
-                                <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mt-2">
+                                <div className="font-semibold text-purple-900 mb-2">{item.option.name}</div>
+                                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                   {Object.entries(item.option.costPerPax).map(([count, cost]) => (
                                     <div key={count} className="bg-purple-100 px-2 py-1 rounded text-center">
-                                      <div className="text-xs text-purple-600">{count}p</div>
+                                      <div className="text-xs text-purple-600">{count} Person</div>
                                       <div className="text-xs font-bold text-purple-900">
                                         Rp {(cost as number).toLocaleString('id-ID')}
                                       </div>
