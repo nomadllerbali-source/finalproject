@@ -168,6 +168,10 @@ const SightseeingManager: React.FC = () => {
     }
   };
 
+  const isNusaPenidaArea = (areaName?: string) => {
+    return areaName?.toLowerCase().includes('nusa penida');
+  };
+
   const getFilteredEntryTickets = (areaId?: string) => {
     if (!areaId) return [];
     return entryTickets.filter(ticket => ticket.areaId === areaId);
@@ -195,8 +199,42 @@ const SightseeingManager: React.FC = () => {
     }
   };
 
-  const renderVehicleCostInputs = (vehicleCosts: VehicleCost | undefined, isNew: boolean = false) => {
+  const renderVehicleCostInputs = (vehicleCosts: VehicleCost | undefined, isNew: boolean = false, areaName?: string) => {
     if (!vehicleCosts) return null;
+
+    const isNusaPenida = isNusaPenidaArea(areaName);
+
+    if (isNusaPenida) {
+      const pickupLocations = ['Kuta', 'Ubud', 'Kitamnai'];
+      return (
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <p className="text-sm text-blue-800 font-medium">
+              <MapPin className="h-4 w-4 inline mr-1" />
+              Nusa Penida Special Pricing
+            </p>
+            <p className="text-xs text-blue-700 mt-1">
+              For Nusa Penida tours, enter the vehicle cost based on pickup location.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {pickupLocations.map(location => (
+              <div key={location}>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Pickup from {location} (Rp)
+                </label>
+                <input
+                  type="number"
+                  value={vehicleCosts[location] || 0}
+                  onChange={(e) => updateVehicleCost(location, parseFloat(e.target.value) || 0, isNew)}
+                  className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
 
     const cabVehicles = transportations.filter(t => t.type === 'cab');
 
@@ -349,10 +387,27 @@ const SightseeingManager: React.FC = () => {
                     value={newSightseeing.areaId}
                     onChange={(e) => {
                       const selectedArea = areas.find(a => a.id === e.target.value);
+                      const areaName = selectedArea?.name || '';
+
+                      let initialCosts: VehicleCost = {};
+                      if (isNusaPenidaArea(areaName)) {
+                        initialCosts = {
+                          'Kuta': 0,
+                          'Ubud': 0,
+                          'Kitamnai': 0
+                        };
+                      } else {
+                        const cabVehicles = transportations.filter(t => t.type === 'cab');
+                        cabVehicles.forEach(vehicle => {
+                          initialCosts[vehicle.vehicleName] = 0;
+                        });
+                      }
+
                       setNewSightseeing({
                         ...newSightseeing,
                         areaId: e.target.value,
-                        areaName: selectedArea?.name || ''
+                        areaName: areaName,
+                        vehicleCosts: initialCosts
                       });
                     }}
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -429,7 +484,7 @@ const SightseeingManager: React.FC = () => {
                       <Car className="h-4 w-4 mr-2 text-blue-600" />
                       Vehicle Costs (for Cab mode)
                     </h4>
-                    {renderVehicleCostInputs(newSightseeing.vehicleCosts, true)}
+                    {renderVehicleCostInputs(newSightseeing.vehicleCosts, true, newSightseeing.areaName)}
                   </div>
 
                   <div className="mb-6">
@@ -522,10 +577,27 @@ const SightseeingManager: React.FC = () => {
                           value={editForm.areaId}
                           onChange={(e) => {
                             const selectedArea = areas.find(a => a.id === e.target.value);
+                            const areaName = selectedArea?.name || '';
+
+                            let initialCosts: VehicleCost = {};
+                            if (isNusaPenidaArea(areaName)) {
+                              initialCosts = {
+                                'Kuta': 0,
+                                'Ubud': 0,
+                                'Kitamnai': 0
+                              };
+                            } else {
+                              const cabVehicles = transportations.filter(t => t.type === 'cab');
+                              cabVehicles.forEach(vehicle => {
+                                initialCosts[vehicle.vehicleName] = 0;
+                              });
+                            }
+
                             setEditForm({
                               ...editForm,
                               areaId: e.target.value,
-                              areaName: selectedArea?.name || ''
+                              areaName: areaName,
+                              vehicleCosts: initialCosts
                             });
                           }}
                           className="w-full p-3 border border-slate-300 rounded-lg"
@@ -600,7 +672,7 @@ const SightseeingManager: React.FC = () => {
                             <Car className="h-4 w-4 mr-2 text-blue-600" />
                             Vehicle Costs (for Cab mode)
                           </h4>
-                          {renderVehicleCostInputs(editForm.vehicleCosts)}
+                          {renderVehicleCostInputs(editForm.vehicleCosts, false, editForm.areaName)}
                         </div>
 
                         <div className="mb-6">
@@ -681,16 +753,25 @@ const SightseeingManager: React.FC = () => {
                       <div className="p-6 border-b border-slate-200">
                         <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
                           <Car className="h-4 w-4 mr-2 text-blue-600" />
-                          Vehicle Costs
+                          {isNusaPenidaArea(sight.areaName) ? 'Pickup Location Costs' : 'Vehicle Costs'}
                         </h4>
+                        {isNusaPenidaArea(sight.areaName) && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                            <p className="text-xs text-blue-800">
+                              <MapPin className="h-3 w-3 inline mr-1" />
+                              Nusa Penida - Costs based on pickup location
+                            </p>
+                          </div>
+                        )}
                         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
                           {Object.entries(sight.vehicleCosts).map(([vehicleName, cost]) => {
                             const vehicle = transportations.find(t => t.vehicleName === vehicleName && t.type === 'cab');
+                            const isPickupLocation = isNusaPenidaArea(sight.areaName);
                             return (
                               <div key={vehicleName} className="bg-slate-50 p-3 rounded-lg">
                                 <div className="text-sm font-medium text-slate-700">
-                                  {vehicleName}
-                                  {vehicle && ` (${vehicle.minOccupancy}-${vehicle.maxOccupancy} pax)`}
+                                  {isPickupLocation ? `Pickup from ${vehicleName}` : vehicleName}
+                                  {vehicle && !isPickupLocation && ` (${vehicle.minOccupancy}-${vehicle.maxOccupancy} pax)`}
                                 </div>
                                 <div className="text-lg font-bold text-slate-900">Rp {cost.toLocaleString('id-ID')}</div>
                               </div>
