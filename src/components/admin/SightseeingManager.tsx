@@ -1039,7 +1039,7 @@ const SightseeingManager: React.FC = () => {
                       </div>
                     </div>
 
-                    {sight.transportationMode === 'cab' && sight.vehicleCosts && (
+                    {sight.transportationMode === 'cab' && (sight.vehicleCosts || sight.vehicleCostsByLocation) && (
                       <div className="p-6 border-b border-slate-200">
                         <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
                           <Car className="h-4 w-4 mr-2 text-blue-600" />
@@ -1054,45 +1054,55 @@ const SightseeingManager: React.FC = () => {
                           </div>
                         )}
                         {isNusaPenidaArea(sight.areaName) ? (
-                          <div className="space-y-4">
-                            {transportations.filter(t => t.type === 'cab').map(vehicle => {
-                              const pickupLocations = ['Kuta', 'Ubud', 'Kitamnai'];
-                              return (
-                                <div key={vehicle.id} className="bg-slate-50 p-4 rounded-lg">
-                                  <h5 className="font-semibold text-slate-900 mb-3 text-sm">
-                                    {vehicle.vehicleName} ({vehicle.minOccupancy}-{vehicle.maxOccupancy} pax)
+                          sight.vehicleCostsByLocation && sight.vehicleCostsByLocation.length > 0 ? (
+                            <div className="space-y-4">
+                              {sight.vehicleCostsByLocation.map((locationCost, idx) => (
+                                <div key={idx} className="bg-slate-50 p-4 rounded-lg border border-slate-300">
+                                  <h5 className="font-semibold text-slate-900 mb-3 flex items-center">
+                                    <MapPin className="h-4 w-4 mr-2 text-blue-600" />
+                                    Pickup from {locationCost.location}
                                   </h5>
-                                  <div className="grid grid-cols-3 gap-3">
-                                    {pickupLocations.map(location => {
-                                      const key = `${vehicle.vehicleName}_${location}`;
-                                      const cost = sight.vehicleCosts?.[key] || 0;
+                                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                    {Object.entries(locationCost.costs).map(([vehicleName, cost]) => {
+                                      const vehicle = transportations.find(t => t.vehicleName === vehicleName && t.type === 'cab');
                                       return (
-                                        <div key={key} className="bg-white p-2 rounded border border-slate-200">
-                                          <div className="text-xs text-slate-600">From {location}</div>
-                                          <div className="text-sm font-bold text-slate-900">Rp {cost.toLocaleString('id-ID')}</div>
+                                        <div key={vehicleName} className="bg-white p-3 rounded border border-slate-200">
+                                          <div className="text-xs text-slate-600 mb-1">
+                                            {vehicleName}
+                                            {vehicle && <span className="block text-teal-600">({vehicle.minOccupancy}-{vehicle.maxOccupancy} pax)</span>}
+                                          </div>
+                                          <div className="text-sm font-bold text-slate-900">Rp {(cost as number).toLocaleString('id-ID')}</div>
                                         </div>
                                       );
                                     })}
                                   </div>
                                 </div>
-                              );
-                            })}
-                          </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                              <p className="text-amber-800 text-sm">
+                                No location-based vehicle costs added yet. Edit this sightseeing to add costs.
+                              </p>
+                            </div>
+                          )
                         ) : (
-                          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {Object.entries(sight.vehicleCosts).map(([vehicleName, cost]) => {
-                              const vehicle = transportations.find(t => t.vehicleName === vehicleName && t.type === 'cab');
-                              return (
-                                <div key={vehicleName} className="bg-slate-50 p-3 rounded-lg">
-                                  <div className="text-sm font-medium text-slate-700">
-                                    {vehicleName}
-                                    {vehicle && ` (${vehicle.minOccupancy}-${vehicle.maxOccupancy} pax)`}
+                          sight.vehicleCosts ? (
+                            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                              {Object.entries(sight.vehicleCosts).map(([vehicleName, cost]) => {
+                                const vehicle = transportations.find(t => t.vehicleName === vehicleName && t.type === 'cab');
+                                return (
+                                  <div key={vehicleName} className="bg-slate-50 p-3 rounded-lg">
+                                    <div className="text-sm font-medium text-slate-700">
+                                      {vehicleName}
+                                      {vehicle && ` (${vehicle.minOccupancy}-${vehicle.maxOccupancy} pax)`}
+                                    </div>
+                                    <div className="text-lg font-bold text-slate-900">Rp {cost.toLocaleString('id-ID')}</div>
                                   </div>
-                                  <div className="text-lg font-bold text-slate-900">Rp {cost.toLocaleString('id-ID')}</div>
-                                </div>
-                              );
-                            })}
-                          </div>
+                                );
+                              })}
+                            </div>
+                          ) : null
                         )}
                       </div>
                     )}
