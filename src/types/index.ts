@@ -82,6 +82,19 @@ export interface Hotel {
 
 export type VehicleCost = Record<string, number>;
 
+export interface PersonBasedOption {
+  id: string;
+  name: string;
+  costPerPax: {
+    '1': number;
+    '2': number;
+    '3': number;
+    '4': number;
+    '5': number;
+    '6': number;
+  };
+}
+
 export interface Sightseeing {
   id: string;
   name: string;
@@ -89,6 +102,7 @@ export interface Sightseeing {
   description: string;
   transportationMode: 'cab' | 'self-drive-car' | 'self-drive-scooter';
   vehicleCosts?: VehicleCost;
+  personBasedOptions?: PersonBasedOption[];
   entryTicketIds?: string[];
   areaId?: string;
   areaName?: string;

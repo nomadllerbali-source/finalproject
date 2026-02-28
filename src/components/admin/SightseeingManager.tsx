@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
-import { Sightseeing, VehicleCost, Area } from '../../types';
-import { MapPin, Plus, Edit2, Trash2, Save, X, Search, Car, Ticket } from 'lucide-react';
+import { Sightseeing, VehicleCost, PersonBasedOption, Area } from '../../types';
+import { MapPin, Plus, Edit2, Trash2, Save, X, Search, Car, Ticket, Users } from 'lucide-react';
 import Layout from '../Layout';
 import { supabase } from '../../lib/supabase';
 
@@ -22,6 +22,7 @@ const SightseeingManager: React.FC = () => {
     description: '',
     transportationMode: 'cab',
     vehicleCosts: {},
+    personBasedOptions: [],
     entryTicketIds: [],
     areaId: '',
     areaName: ''
@@ -72,10 +73,6 @@ const SightseeingManager: React.FC = () => {
       return;
     }
 
-    console.log('DEBUG: newSightseeing before saving:', newSightseeing);
-    console.log('DEBUG: displayName value:', newSightseeing.displayName);
-
-    // Create sightseeing for all transportation modes
     const transportationModes = ['cab', 'self-drive-car', 'self-drive-scooter'];
 
     for (const mode of transportationModes) {
@@ -86,11 +83,11 @@ const SightseeingManager: React.FC = () => {
         description: newSightseeing.description,
         transportationMode: mode as 'cab' | 'self-drive-car' | 'self-drive-scooter',
         vehicleCosts: mode === 'cab' ? newSightseeing.vehicleCosts : undefined,
+        personBasedOptions: mode === 'cab' ? newSightseeing.personBasedOptions : undefined,
         entryTicketIds: mode === 'cab' ? newSightseeing.entryTicketIds : undefined,
         areaId: newSightseeing.areaId,
         areaName: newSightseeing.areaName
       };
-      console.log('DEBUG: Sightseeing object being saved:', sightseeing);
       await addSightseeing(sightseeing);
     }
 
@@ -105,6 +102,7 @@ const SightseeingManager: React.FC = () => {
       description: '',
       transportationMode: 'cab',
       vehicleCosts: initialCosts,
+      personBasedOptions: [],
       entryTicketIds: [],
       areaId: '',
       areaName: ''
@@ -164,6 +162,80 @@ const SightseeingManager: React.FC = () => {
           ...editForm.vehicleCosts,
           [vehicleName]: value
         }
+      });
+    }
+  };
+
+  const addPersonBasedOption = (isNew: boolean = false) => {
+    const newOption: PersonBasedOption = {
+      id: Date.now().toString(),
+      name: '',
+      costPerPax: {
+        '1': 0,
+        '2': 0,
+        '3': 0,
+        '4': 0,
+        '5': 0,
+        '6': 0
+      }
+    };
+
+    if (isNew) {
+      setNewSightseeing({
+        ...newSightseeing,
+        personBasedOptions: [...(newSightseeing.personBasedOptions || []), newOption]
+      });
+    } else {
+      setEditForm({
+        ...editForm,
+        personBasedOptions: [...(editForm.personBasedOptions || []), newOption]
+      });
+    }
+  };
+
+  const removePersonBasedOption = (optionId: string, isNew: boolean = false) => {
+    if (isNew) {
+      setNewSightseeing({
+        ...newSightseeing,
+        personBasedOptions: (newSightseeing.personBasedOptions || []).filter(opt => opt.id !== optionId)
+      });
+    } else {
+      setEditForm({
+        ...editForm,
+        personBasedOptions: (editForm.personBasedOptions || []).filter(opt => opt.id !== optionId)
+      });
+    }
+  };
+
+  const updatePersonBasedOption = (optionId: string, field: 'name' | string, value: string | number, isNew: boolean = false) => {
+    const updateOptions = (options: PersonBasedOption[]) => {
+      return options.map(opt => {
+        if (opt.id === optionId) {
+          if (field === 'name') {
+            return { ...opt, name: value as string };
+          } else {
+            return {
+              ...opt,
+              costPerPax: {
+                ...opt.costPerPax,
+                [field]: value as number
+              }
+            };
+          }
+        }
+        return opt;
+      });
+    };
+
+    if (isNew) {
+      setNewSightseeing({
+        ...newSightseeing,
+        personBasedOptions: updateOptions(newSightseeing.personBasedOptions || [])
+      });
+    } else {
+      setEditForm({
+        ...editForm,
+        personBasedOptions: updateOptions(editForm.personBasedOptions || [])
       });
     }
   };
@@ -279,6 +351,83 @@ const SightseeingManager: React.FC = () => {
     );
   };
 
+  const renderPersonBasedOptions = (options: PersonBasedOption[] | undefined, isNew: boolean = false, areaName?: string) => {
+    if (!isNusaPenidaArea(areaName)) return null;
+
+    const currentOptions = options || [];
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <p className="text-sm text-purple-800 font-medium flex items-center">
+            <Users className="h-4 w-4 mr-1" />
+            Person-Based Pricing Options
+          </p>
+          <p className="text-xs text-purple-700 mt-1">
+            Add custom options with different costs per person (e.g., "West Tour", "East Tour", "Full Island")
+          </p>
+        </div>
+
+        {currentOptions.map((option, index) => (
+          <div key={option.id} className="bg-white border-2 border-purple-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h5 className="font-semibold text-slate-900">Option {index + 1}</h5>
+              <button
+                onClick={() => removePersonBasedOption(option.id, isNew)}
+                className="text-red-600 hover:bg-red-50 p-1 rounded"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Option Name (e.g., "West Tour", "East Tour", "Full Island")
+              </label>
+              <input
+                type="text"
+                value={option.name}
+                onChange={(e) => updatePersonBasedOption(option.id, 'name', e.target.value, isNew)}
+                placeholder="Enter option name"
+                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Cost Per Person (Rp)
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                {['1', '2', '3', '4', '5', '6'].map(count => (
+                  <div key={count}>
+                    <label className="block text-xs text-slate-600 mb-1">
+                      {count} {count === '1' ? 'Person' : 'Persons'}
+                    </label>
+                    <input
+                      type="number"
+                      value={option.costPerPax[count as keyof typeof option.costPerPax]}
+                      onChange={(e) => updatePersonBasedOption(option.id, count, parseFloat(e.target.value) || 0, isNew)}
+                      className="w-full p-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="0"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <button
+          onClick={() => addPersonBasedOption(isNew)}
+          className="w-full py-3 border-2 border-dashed border-purple-300 rounded-lg text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-colors flex items-center justify-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Option
+        </button>
+      </div>
+    );
+  };
+
   const renderEntryTicketSelection = (areaId: string | undefined, selectedTicketIds: string[] | undefined, isNew: boolean = false) => {
     if (!areaId) {
       return (
@@ -359,7 +508,6 @@ const SightseeingManager: React.FC = () => {
   return (
     <Layout title="Sightseeing Management" subtitle="Manage sightseeing spots and transportation costs" hideHeader={true}>
       <div className="space-y-6">
-        {/* Search and Add Section */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">
           <div className="px-6 py-4 border-b border-slate-200">
             <div className="flex items-center justify-between">
@@ -500,6 +648,19 @@ const SightseeingManager: React.FC = () => {
                     {renderVehicleCostInputs(newSightseeing.vehicleCosts, true, newSightseeing.areaName)}
                   </div>
 
+                  {isNusaPenidaArea(newSightseeing.areaName) && (
+                    <div className="mb-6">
+                      <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
+                        <Users className="h-4 w-4 mr-2 text-purple-600" />
+                        Person-Based Options (Optional - for Nusa Penida only)
+                      </h4>
+                      <p className="text-sm text-slate-600 mb-3">
+                        Create custom tour options with different costs based on number of persons. All costs are per person.
+                      </p>
+                      {renderPersonBasedOptions(newSightseeing.personBasedOptions, true, newSightseeing.areaName)}
+                    </div>
+                  )}
+
                   <div className="mb-6">
                     <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
                       <Ticket className="h-4 w-4 mr-2 text-teal-600" />
@@ -536,7 +697,6 @@ const SightseeingManager: React.FC = () => {
           )}
         </div>
 
-        {/* Sightseeing List */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
@@ -561,6 +721,7 @@ const SightseeingManager: React.FC = () => {
             </select>
           </div>
         </div>
+
         <div className="space-y-4">
           {filteredSightseeings.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
@@ -569,8 +730,8 @@ const SightseeingManager: React.FC = () => {
                 {searchTerm ? 'No sightseeing spots found' : 'No sightseeing spots yet'}
               </h4>
               <p className="text-slate-500 mt-1">
-                {searchTerm 
-                  ? 'Try adjusting your search terms' 
+                {searchTerm
+                  ? 'Try adjusting your search terms'
                   : 'Add your first sightseeing spot to get started.'
                 }
               </p>
@@ -689,6 +850,19 @@ const SightseeingManager: React.FC = () => {
                           </h4>
                           {renderVehicleCostInputs(editForm.vehicleCosts, false, editForm.areaName)}
                         </div>
+
+                        {isNusaPenidaArea(editForm.areaName) && (
+                          <div className="mb-6">
+                            <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
+                              <Users className="h-4 w-4 mr-2 text-purple-600" />
+                              Person-Based Options (Optional - for Nusa Penida only)
+                            </h4>
+                            <p className="text-sm text-slate-600 mb-3">
+                              Create custom tour options with different costs based on number of persons. All costs are per person.
+                            </p>
+                            {renderPersonBasedOptions(editForm.personBasedOptions, false, editForm.areaName)}
+                          </div>
+                        )}
 
                         <div className="mb-6">
                           <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
@@ -821,6 +995,31 @@ const SightseeingManager: React.FC = () => {
                         )}
                       </div>
                     )}
+
+                    {sight.transportationMode === 'cab' && sight.personBasedOptions && sight.personBasedOptions.length > 0 && (
+                      <div className="p-6 border-b border-slate-200">
+                        <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
+                          <Users className="h-4 w-4 mr-2 text-purple-600" />
+                          Person-Based Options
+                        </h4>
+                        <div className="space-y-3">
+                          {sight.personBasedOptions.map(option => (
+                            <div key={option.id} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                              <h5 className="font-semibold text-purple-900 mb-2">{option.name}</h5>
+                              <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                                {Object.entries(option.costPerPax).map(([count, cost]) => (
+                                  <div key={count} className="bg-white p-2 rounded border border-purple-200">
+                                    <div className="text-xs text-purple-600">{count} {count === '1' ? 'Person' : 'Persons'}</div>
+                                    <div className="text-sm font-bold text-purple-900">Rp {cost.toLocaleString('id-ID')}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {sight.transportationMode === 'cab' && sight.entryTicketIds && sight.entryTicketIds.length > 0 && (
                       <div className="p-6">
                         <h4 className="text-md font-semibold text-slate-900 mb-4 flex items-center">
