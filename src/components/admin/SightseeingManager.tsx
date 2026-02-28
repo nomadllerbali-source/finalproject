@@ -166,79 +166,6 @@ const SightseeingManager: React.FC = () => {
     }
   };
 
-  const addPersonBasedOption = (isNew: boolean = false) => {
-    const newOption: PersonBasedOption = {
-      id: Date.now().toString(),
-      name: '',
-      costPerPax: {
-        '1': 0,
-        '2': 0,
-        '3': 0,
-        '4': 0,
-        '5': 0,
-        '6': 0
-      }
-    };
-
-    if (isNew) {
-      setNewSightseeing({
-        ...newSightseeing,
-        personBasedOptions: [...(newSightseeing.personBasedOptions || []), newOption]
-      });
-    } else {
-      setEditForm({
-        ...editForm,
-        personBasedOptions: [...(editForm.personBasedOptions || []), newOption]
-      });
-    }
-  };
-
-  const removePersonBasedOption = (optionId: string, isNew: boolean = false) => {
-    if (isNew) {
-      setNewSightseeing({
-        ...newSightseeing,
-        personBasedOptions: (newSightseeing.personBasedOptions || []).filter(opt => opt.id !== optionId)
-      });
-    } else {
-      setEditForm({
-        ...editForm,
-        personBasedOptions: (editForm.personBasedOptions || []).filter(opt => opt.id !== optionId)
-      });
-    }
-  };
-
-  const updatePersonBasedOption = (optionId: string, field: 'name' | string, value: string | number, isNew: boolean = false) => {
-    const updateOptions = (options: PersonBasedOption[]) => {
-      return options.map(opt => {
-        if (opt.id === optionId) {
-          if (field === 'name') {
-            return { ...opt, name: value as string };
-          } else {
-            return {
-              ...opt,
-              costPerPax: {
-                ...opt.costPerPax,
-                [field]: value as number
-              }
-            };
-          }
-        }
-        return opt;
-      });
-    };
-
-    if (isNew) {
-      setNewSightseeing({
-        ...newSightseeing,
-        personBasedOptions: updateOptions(newSightseeing.personBasedOptions || [])
-      });
-    } else {
-      setEditForm({
-        ...editForm,
-        personBasedOptions: updateOptions(editForm.personBasedOptions || [])
-      });
-    }
-  };
 
   const isNusaPenidaArea = (areaName?: string) => {
     return areaName?.toLowerCase().includes('nusa penida');
@@ -354,76 +281,48 @@ const SightseeingManager: React.FC = () => {
   const renderPersonBasedOptions = (options: PersonBasedOption[] | undefined, isNew: boolean = false, areaName?: string) => {
     if (!isNusaPenidaArea(areaName)) return null;
 
-    const currentOptions = options || [];
+    const vehicleCosts = isNew ? newSightseeing.vehicleCosts || {} : editForm.vehicleCosts || {};
 
     return (
       <div className="space-y-4">
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
           <p className="text-sm text-purple-800 font-medium flex items-center">
             <Users className="h-4 w-4 mr-1" />
-            Person-Based Pricing Options
+            Vehicle Cost Per Person
           </p>
           <p className="text-xs text-purple-700 mt-1">
-            Add custom options with different costs per person (e.g., "West Tour", "East Tour", "Full Island")
+            Enter the cost per person for different group sizes (1-6 persons)
           </p>
         </div>
 
-        {currentOptions.map((option, index) => (
-          <div key={option.id} className="bg-white border-2 border-purple-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h5 className="font-semibold text-slate-900">Option {index + 1}</h5>
-              <button
-                onClick={() => removePersonBasedOption(option.id, isNew)}
-                className="text-red-600 hover:bg-red-50 p-1 rounded"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="mb-3">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Option Name (e.g., "West Tour", "East Tour", "Full Island")
-              </label>
-              <input
-                type="text"
-                value={option.name}
-                onChange={(e) => updatePersonBasedOption(option.id, 'name', e.target.value, isNew)}
-                placeholder="Enter option name"
-                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Cost Per Person (Rp)
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-                {['1', '2', '3', '4', '5', '6'].map(count => (
-                  <div key={count}>
-                    <label className="block text-xs text-slate-600 mb-1">
-                      {count} {count === '1' ? 'Person' : 'Persons'}
-                    </label>
-                    <input
-                      type="number"
-                      value={option.costPerPax[count as keyof typeof option.costPerPax]}
-                      onChange={(e) => updatePersonBasedOption(option.id, count, parseFloat(e.target.value) || 0, isNew)}
-                      className="w-full p-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="0"
-                    />
-                  </div>
-                ))}
+        <div className="bg-white border-2 border-purple-200 rounded-lg p-4">
+          <label className="block text-sm font-medium text-slate-700 mb-3">
+            Cost Per Person (Rp)
+          </label>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[1, 2, 3, 4, 5, 6].map(count => (
+              <div key={count}>
+                <label className="block text-xs text-slate-600 mb-1 font-medium">
+                  {count} {count === 1 ? 'Person' : 'Persons'}
+                </label>
+                <input
+                  type="number"
+                  value={vehicleCosts[`${count}_person`] || 0}
+                  onChange={(e) => {
+                    const newCosts = { ...vehicleCosts, [`${count}_person`]: parseFloat(e.target.value) || 0 };
+                    if (isNew) {
+                      setNewSightseeing(prev => ({ ...prev, vehicleCosts: newCosts }));
+                    } else {
+                      setEditForm(prev => ({ ...prev, vehicleCosts: newCosts }));
+                    }
+                  }}
+                  className="w-full p-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="0"
+                />
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-
-        <button
-          onClick={() => addPersonBasedOption(isNew)}
-          className="w-full py-3 border-2 border-dashed border-purple-300 rounded-lg text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-colors flex items-center justify-center"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Option
-        </button>
+        </div>
       </div>
     );
   };

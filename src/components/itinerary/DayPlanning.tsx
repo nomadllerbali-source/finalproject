@@ -437,136 +437,34 @@ const DayPlanning: React.FC<DayPlanningProps> = ({ client, onNext, onBack, isAge
             </div>
 
             {/* Nusa Penida Trip Toggle */}
-            {dayPlan.areaName?.toLowerCase().includes('nusa penida') && (
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-purple-900 flex items-center">
-                      <MapPin className="h-5 w-5 mr-2" />
-                      Nusa Penida Special Pricing
-                    </h4>
-                    <p className="text-sm text-purple-700 mt-1">
-                      Enable to see person-based tour options with vehicle pricing based on group size
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={nusaPenidaTripEnabled[dayIndex] || false}
-                      onChange={(e) => {
-                        setNusaPenidaTripEnabled(prev => ({ ...prev, [dayIndex]: e.target.checked }));
-                        if (!e.target.checked) {
-                          setSelectedNusaPenidaOption(prev => ({ ...prev, [dayIndex]: '' }));
-                        }
-                      }}
-                      className="sr-only peer"
-                    />
-                    <div className="w-14 h-7 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-600"></div>
-                  </label>
-                </div>
+            {dayPlan.areaName?.toLowerCase().includes('nusa penida') && dayPlan.sightseeing.length > 0 && (() => {
+              const selectedSight = sightseeings.find(s => s.id === dayPlan.sightseeing[0]);
+              if (!selectedSight || !selectedSight.vehicleCosts) return null;
 
-                {/* Show Nusa Penida Options */}
-                {nusaPenidaTripEnabled[dayIndex] && (
-                  <div className="mt-4 space-y-4">
-                    <div className="bg-white rounded-lg p-4 border-2 border-purple-300">
-                      <h5 className="font-semibold text-slate-900 mb-3">Select Tour Option</h5>
-                      <div className="space-y-3">
-                        {(() => {
-                          const nusaPenidaSights = filteredSightseeing.filter(s =>
-                            s.areaName?.toLowerCase().includes('nusa penida') &&
-                            s.personBasedOptions &&
-                            s.personBasedOptions.length > 0
-                          );
-
-                          const allOptions: Array<{ sightId: string; sightName: string; option: any }> = [];
-                          nusaPenidaSights.forEach(sight => {
-                            sight.personBasedOptions?.forEach(opt => {
-                              allOptions.push({
-                                sightId: sight.id,
-                                sightName: sight.displayName || sight.name,
-                                option: opt
-                              });
-                            });
-                          });
-
-                          if (allOptions.length === 0) {
-                            return (
-                              <div className="text-center py-4 text-slate-500">
-                                <p className="text-sm">No person-based options available for Nusa Penida tours.</p>
-                                <p className="text-xs mt-1">Please add options in Sightseeing Manager first.</p>
-                              </div>
-                            );
-                          }
-
-                          return allOptions.map((item, idx) => (
-                            <label
-                              key={`${item.sightId}-${item.option.id}`}
-                              className="flex items-start space-x-3 p-3 border-2 border-purple-200 rounded-lg hover:bg-purple-50 hover:border-purple-400 cursor-pointer transition-all"
-                            >
-                              <input
-                                type="radio"
-                                name={`nusa-option-${dayIndex}`}
-                                checked={selectedNusaPenidaOption[dayIndex] === `${item.sightId}|||${item.option.id}`}
-                                onChange={() => {
-                                  setSelectedNusaPenidaOption(prev => ({
-                                    ...prev,
-                                    [dayIndex]: `${item.sightId}|||${item.option.id}`
-                                  }));
-                                }}
-                                className="mt-1 h-5 w-5 text-purple-600 focus:ring-purple-500"
-                              />
-                              <div className="flex-1">
-                                <div className="font-semibold text-purple-900 mb-2">{item.option.name}</div>
-                                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                                  {Object.entries(item.option.costPerPax).map(([count, cost]) => (
-                                    <div key={count} className="bg-purple-100 px-2 py-1 rounded text-center">
-                                      <div className="text-xs text-purple-600">{count} Person</div>
-                                      <div className="text-xs font-bold text-purple-900">
-                                        Rp {(cost as number).toLocaleString('id-ID')}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </label>
-                          ));
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Show Vehicle Options */}
-                    {selectedNusaPenidaOption[dayIndex] && (() => {
-                      const [sightId, optionId] = selectedNusaPenidaOption[dayIndex].split('|||');
-                      const sight = sightseeings.find(s => s.id === sightId);
-
-                      if (!sight || !sight.vehicleCosts) return null;
-
+              return (
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-purple-900 flex items-center mb-3">
+                    <Car className="h-5 w-5 mr-2" />
+                    Vehicle Cost Per Person
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                    {[1, 2, 3, 4, 5, 6].map(personCount => {
+                      const cost = selectedSight.vehicleCosts?.[`${personCount}_person`] || 0;
                       return (
-                        <div className="bg-white rounded-lg p-4 border-2 border-blue-300">
-                          <h5 className="font-semibold text-slate-900 mb-3 flex items-center">
-                            <Car className="h-5 w-5 mr-2 text-blue-600" />
-                            Vehicle Cost Per Person
-                          </h5>
-                          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                            {[1, 2, 3, 4, 5, 6].map(personCount => {
-                              const cost = sight.vehicleCosts?.[`${personCount}_person`] || 0;
-                              return (
-                                <div key={personCount} className="bg-blue-100 px-2 py-1 rounded text-center">
-                                  <div className="text-xs text-blue-600">{personCount} Person{personCount > 1 ? 's' : ''}</div>
-                                  <div className="text-xs font-bold text-blue-900">
-                                    Rp {cost.toLocaleString('id-ID')}
-                                  </div>
-                                </div>
-                              );
-                            })}
+                        <div key={personCount} className="bg-purple-100 px-3 py-2 rounded text-center">
+                          <div className="text-xs text-purple-600 font-medium">
+                            {personCount} Person{personCount > 1 ? 's' : ''}
+                          </div>
+                          <div className="text-sm font-bold text-purple-900 mt-1">
+                            Rp {cost.toLocaleString('id-ID')}
                           </div>
                         </div>
                       );
-                    })()}
+                    })}
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              );
+            })()}
 
             {/* Search Bar */}
             <div className="relative">
