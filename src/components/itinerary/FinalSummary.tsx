@@ -38,7 +38,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
     const breakdown = {
       transportation: 0,
       hotels: [] as Array<{ name: string; roomType: string; nights: number; pricePerNight: number; total: number }>,
-      sightseeing: [] as Array<{ name: string; vehicleCost: number; days: number }>,
+      sightseeing: [] as Array<{ name: string; displayName?: string; vehicleCost: number; days: number }>,
       activities: [] as Array<{ name: string; option: string; cost: number; costForHowMany: number; totalCost: number }>,
       entryTickets: [] as Array<{ name: string; costPerPerson: number; totalCost: number }>,
       meals: [] as Array<{ type: string; place: string; costPerPerson: number; totalCost: number }>
@@ -83,24 +83,30 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
     // Sightseeing costs (for cab mode)
     const cabTransportation = transportations.find(t => t.vehicleName === itinerary.client.transportationMode);
     if (cabTransportation && cabTransportation.type === 'cab') {
-      const sightseeingCosts = new Map<string, { cost: number; days: number }>();
+      const sightseeingCosts = new Map<string, { sightseeing: any; cost: number; days: number }>();
       itinerary.dayPlans.forEach(dayPlan => {
         dayPlan.sightseeing.forEach(sightseeingId => {
           const sightseeing = sightseeings.find(s => s.id === sightseeingId);
           if (sightseeing && sightseeing.transportationMode === 'cab' && sightseeing.vehicleCosts) {
             const vehicleCost = getVehicleCostByPax(sightseeing, totalPax, state.transportations);
-            if (sightseeingCosts.has(sightseeing.name)) {
-              const existing = sightseeingCosts.get(sightseeing.name)!;
-              sightseeingCosts.set(sightseeing.name, { cost: vehicleCost, days: existing.days + 1 });
+            const key = sightseeing.id;
+            if (sightseeingCosts.has(key)) {
+              const existing = sightseeingCosts.get(key)!;
+              sightseeingCosts.set(key, { sightseeing, cost: vehicleCost, days: existing.days + 1 });
             } else {
-              sightseeingCosts.set(sightseeing.name, { cost: vehicleCost, days: 1 });
+              sightseeingCosts.set(key, { sightseeing, cost: vehicleCost, days: 1 });
             }
           }
         });
       });
-      
-      sightseeingCosts.forEach((data, name) => {
-        breakdown.sightseeing.push({ name, vehicleCost: data.cost * data.days, days: data.days });
+
+      sightseeingCosts.forEach((data) => {
+        breakdown.sightseeing.push({
+          name: data.sightseeing.name,
+          displayName: data.sightseeing.displayName,
+          vehicleCost: data.cost * data.days,
+          days: data.days
+        });
       });
     }
 
@@ -1116,7 +1122,7 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 mb-6 md:mb-8">
             <div className="px-6 py-4 border-b border-slate-200">
               <h3 className="text-lg font-bold text-slate-900">Detailed Cost Breakdown</h3>
-              <p className="text-slate-600 text-sm">Complete breakdown of all costs included in this package</p>
+              <p className="text-slate-600 text-sm">Complete breakdown showing how each cost was calculated for verification</p>
             </div>
             
             <div className="p-4 md:p-6 space-y-4 md:space-y-6">
@@ -1130,10 +1136,13 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                     Transportation
                   </h4>
                   <div className="ml-11">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-700 text-sm md:text-base">
-                        {itinerary.client.numberOfDays} days {itinerary.client.transportationMode} rental
-                      </span>
+                    <div className="flex justify-between items-start">
+                      <div className="text-slate-700 text-sm md:text-base flex-1 mr-4">
+                        <div>{itinerary.client.numberOfDays} days {itinerary.client.transportationMode} rental</div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          Calculation: {formatCurrency(costBreakdown.transportation / itinerary.client.numberOfDays, 'USD')}/day × {itinerary.client.numberOfDays} days
+                        </div>
+                      </div>
                       <div className="text-right">
                         <div className="font-semibold text-slate-900">{formatCurrency(costBreakdown.transportation, 'USD')}</div>
                         <div className="text-xs text-slate-600">{formatCurrency(convertToIDR(costBreakdown.transportation, itinerary.exchangeRate), 'IDR')}</div>
@@ -1154,11 +1163,11 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                   </h4>
                   <div className="ml-11 space-y-2">
                     {costBreakdown.hotels.map((hotel, index) => (
-                      <div key={index} className="flex justify-between items-center">
+                      <div key={index} className="flex justify-between items-start">
                         <div className="text-slate-700 flex-1 mr-4">
                           <div className="font-medium">{hotel.name} - {hotel.roomType}</div>
-                          <div className="text-sm text-slate-500">
-                            {hotel.nights} night{hotel.nights > 1 ? 's' : ''} × {formatCurrency(hotel.pricePerNight, 'USD')}/night
+                          <div className="text-sm text-slate-500 mt-1">
+                            Calculation: {formatCurrency(hotel.pricePerNight, 'USD')}/night × {hotel.nights} night{hotel.nights > 1 ? 's' : ''}
                           </div>
                         </div>
                         <div className="text-right">
@@ -1182,11 +1191,11 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                   </h4>
                   <div className="ml-11 space-y-2">
                     {costBreakdown.sightseeing.map((sight, index) => (
-                      <div key={index} className="flex justify-between items-center">
+                      <div key={index} className="flex justify-between items-start">
                         <div className="text-slate-700 flex-1 mr-4">
                           <div className="font-medium">{sight.displayName || sight.name}</div>
-                          <div className="text-sm text-slate-500">
-                            Vehicle cost for {totalPax} passengers × {sight.days} day{sight.days > 1 ? 's' : ''}
+                          <div className="text-sm text-slate-500 mt-1">
+                            Calculation: {formatCurrency(sight.vehicleCost / sight.days, 'USD')}/day for {totalPax} pax × {sight.days} day{sight.days > 1 ? 's' : ''}
                           </div>
                         </div>
                         <div className="text-right">
@@ -1210,11 +1219,11 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                   </h4>
                   <div className="ml-11 space-y-2">
                     {costBreakdown.activities.map((activity, index) => (
-                      <div key={index} className="flex justify-between items-center">
+                      <div key={index} className="flex justify-between items-start">
                         <div className="text-slate-700 flex-1 mr-4">
                           <div className="font-medium">{activity.name} - {activity.option}</div>
-                          <div className="text-sm text-slate-500">
-                            {formatCurrency(activity.cost, 'USD')} for {activity.costForHowMany} {activity.costForHowMany === 1 ? 'person' : 'people'} × {Math.ceil(totalPax / activity.costForHowMany)} group{Math.ceil(totalPax / activity.costForHowMany) > 1 ? 's' : ''}
+                          <div className="text-sm text-slate-500 mt-1">
+                            Calculation: {formatCurrency(activity.cost, 'USD')} per {activity.costForHowMany} {activity.costForHowMany === 1 ? 'person' : 'people'} × {Math.ceil(totalPax / activity.costForHowMany)} group{Math.ceil(totalPax / activity.costForHowMany) > 1 ? 's' : ''} (for {totalPax} pax)
                           </div>
                         </div>
                         <div className="text-right">
@@ -1238,11 +1247,11 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                   </h4>
                   <div className="ml-11 space-y-2">
                     {costBreakdown.entryTickets.map((ticket, index) => (
-                      <div key={index} className="flex justify-between items-center">
+                      <div key={index} className="flex justify-between items-start">
                         <div className="text-slate-700 flex-1 mr-4">
                           <div className="font-medium">{ticket.name}</div>
-                          <div className="text-sm text-slate-500">
-                            {formatCurrency(ticket.costPerPerson, 'USD')}/person × {totalPax} passengers
+                          <div className="text-sm text-slate-500 mt-1">
+                            Calculation: {formatCurrency(ticket.costPerPerson, 'USD')}/person × {totalPax} pax
                           </div>
                         </div>
                         <div className="text-right">
@@ -1266,11 +1275,11 @@ const FinalSummary: React.FC<FinalSummaryProps> = ({ itinerary, onBack, onStartN
                   </h4>
                   <div className="ml-11 space-y-2">
                     {costBreakdown.meals.map((meal, index) => (
-                      <div key={index} className="flex justify-between items-center">
+                      <div key={index} className="flex justify-between items-start">
                         <div className="text-slate-700 flex-1 mr-4">
                           <div className="font-medium">{meal.type} at {meal.place}</div>
-                          <div className="text-sm text-slate-500">
-                            {formatCurrency(meal.costPerPerson, 'USD')}/person × {totalPax} passengers
+                          <div className="text-sm text-slate-500 mt-1">
+                            Calculation: {formatCurrency(meal.costPerPerson, 'USD')}/person × {totalPax} pax
                           </div>
                         </div>
                         <div className="text-right">
