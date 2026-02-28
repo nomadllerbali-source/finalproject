@@ -710,26 +710,6 @@ const SightseeingManager: React.FC = () => {
                 />
               </div>
 
-              {isNusaPenidaArea(newSightseeing.areaName) && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <MapPin className="h-4 w-4 inline mr-1" />
-                    Pickup Locations (Optional - for Nusa Penida)
-                    <span className="text-xs text-slate-500 block mt-1">Add available pickup locations, one per line</span>
-                  </label>
-                  <textarea
-                    value={(newSightseeing.pickupLocations || []).join('\n')}
-                    onChange={(e) => {
-                      const locations = e.target.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                      setNewSightseeing({ ...newSightseeing, pickupLocations: locations });
-                    }}
-                    placeholder="Enter pickup locations (one per line)&#10;e.g.:&#10;Sanur&#10;Seminyak&#10;Ubud"
-                    rows={4}
-                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              )}
-
               {newSightseeing.transportationMode === 'cab' && (
                 <>
                   <div className="mb-6">
@@ -934,26 +914,6 @@ const SightseeingManager: React.FC = () => {
                         className="w-full p-3 border border-slate-300 rounded-lg"
                       />
                     </div>
-
-                    {isNusaPenidaArea(editForm.areaName) && (
-                      <div className="mb-6">
-                        <label className="block text-sm font-medium text-slate-700 mb-1">
-                          <MapPin className="h-4 w-4 inline mr-1" />
-                          Pickup Locations (Optional - for Nusa Penida)
-                          <span className="text-xs text-slate-500 block mt-1">Add available pickup locations, one per line</span>
-                        </label>
-                        <textarea
-                          value={(editForm.pickupLocations || []).join('\n')}
-                          onChange={(e) => {
-                            const locations = e.target.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                            setEditForm({ ...editForm, pickupLocations: locations });
-                          }}
-                          placeholder="Enter pickup locations (one per line)&#10;e.g.:&#10;Sanur&#10;Seminyak&#10;Ubud"
-                          rows={4}
-                          className="w-full p-3 border border-slate-300 rounded-lg"
-                        />
-                      </div>
-                    )}
 
                     {editForm.transportationMode === 'cab' && (
                       <>
